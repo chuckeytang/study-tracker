@@ -24,12 +24,18 @@ const dataProvider: DataProvider = {
         field: "id",
         order: "ASC",
       };
+      const { role, ...otherFilters } = params.filter || {}; // 从filter中提取role
+      if (resource === "students" || resource === "teachers") {
+        resource = "users";
+      }
+      console.log("role:", role);
 
       const query = {
         _sort: field,
         _order: order,
         _start: (page - 1) * perPage,
         _end: page * perPage,
+        ...(role ? { role } : {}), // 如果存在 role，则将其添加到查询条件中
         ...params.filter,
       };
       const url = `${apiUrl}/${resource}/search?${stringify(query)}`;
