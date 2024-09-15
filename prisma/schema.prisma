@@ -44,15 +44,16 @@ model Node {
   courseId         Int
   course           Course           @relation(fields: [courseId], references: [id])
   maxLevel         Int              // 最大等级
-  unlockConditions UnlockCondition[] // 解锁条件
-  lockConditions   LockCondition[]  // 锁住条件，优先级大于解锁条件
-  conditions       Condition[]      // 虚拟字段，作为 ConditionNode 的反向关联字段
+
+  unlockDepNodes     Node[] @relation("NodeLink")          // 解锁依赖的多个节点
+  unlockDepNodeCount Int?            // 解锁依赖的节点中需要解锁的最小节点数，若为-1或者null则unlockDepNodes所有节点都需解锁才能解锁该节点
+  unlockConnectingNodes  Node[] @relation("NodeLink")
+  lockDepNodes      Node[] @relation("NodeHideLink")          // 锁住依赖的多个节点
+  lockDepNodeCount  Int?            // 锁住依赖的节点中需要解锁的最小节点数，若为-1则unlockDepNodes所有节点都需解锁才能实现该节点锁住
+  lockConnectingNodes  Node[] @relation("NodeHideLink")
+
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
-
-  // 自引用多对多关系，用于表示无方向的节点连接
-  connectedNodes   Node[] @relation("NodeConnections")
-  connectingNodes  Node[] @relation("NodeConnections")
 }
 
 enum NodeType {
@@ -61,52 +62,17 @@ enum NodeType {
   MINOR_NODE
 }
 
-
-// 解锁条件表：BigCheck 或 Node 的依赖解锁关系
-model UnlockCondition {
-  id              Int              @id @default(autoincrement())
-  currentNodeId Int              // 当前需要解锁的节点 ID
-  currentNodeType NodeType       // 依赖的节点类型
-  currentNode   Node             @relation(fields: [currentNodeId], references: [id])
-  conditionLogic  ConditionLogic   // 解锁逻辑: AND 或 OR
-  conditions      Condition[]      // 解锁条件的详细逻辑
-}
-
-// LockCondition 表：如果某些节点解锁，则当前节点需要锁住
-model LockCondition {
-  id              Int              @id @default(autoincrement())
-  currentNodeId    Int              // 当前需要锁住的节点 ID
-  currentNodeType  NodeType         // 需要锁住的节点类型
-  currentNode      Node             @relation(fields: [currentNodeId], references: [id])
-  conditionLogic  ConditionLogic   // 锁住逻辑: AND 或 OR
-  conditions      Condition[]      // 锁住条件的详细逻辑
-}
-
-// 条件集：解锁或锁住依赖于其他 BigCheck 或 Node 的具体条件
-model Condition {
-  id               Int              @id @default(autoincrement())
-  unlockConditionId Int?            // 所属 UnlockCondition 的 ID (可选，解锁条件使用)
-  unlockCondition  UnlockCondition? @relation(fields: [unlockConditionId], references: [id])
-  lockConditionId   Int?            // 所属 LockCondition 的 ID (可选，锁住条件使用)
-  lockCondition     LockCondition?  @relation(fields: [lockConditionId], references: [id])
-  requiredNodes     Node[]          // 依赖的多个节点
-  requiredNodeCount Int?            // 依赖的节点中需要解锁的最小节点数
-}
-
-enum ConditionLogic {
-  AND
-  OR
-}
-
 // 学生进度表：记录每个学生的课程节点解锁进度
 model CourseProgress {
-  id              Int              @id @default(autoincrement())
-  userId          Int              // 学生 ID
-  user         User             @relation(fields: [userId], references: [id])
-  courseId        Int              // 所属课程
-  nodeId          Int              // 所属节点
-  level           Int              // 学习的等级
-  unlocked        Boolean          // 是否解锁
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id              Int      @id @default(autoincrement())
+  userId          Int      // 学生 ID
+  user            User     @relation(fields: [userId], references: [id])
+  courseId        Int      // 所属课程
+  nodeId          Int      // 所属节点
+  level           Int      // 学习的等级
+  unlocked        Boolean  // 是否解锁
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, nodeId])  // 添加复合唯一约束
 }

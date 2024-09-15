@@ -87,7 +87,7 @@ async function main() {
       nodeType: "BIGCHECK",
       courseId: swimmingCourse.id,
       maxLevel: -1, // BigCheck 没有等级
-      connectedNodes: {
+      unlockDepNodes: {
         create: [
           {
             name: "基础呼吸",
@@ -95,7 +95,7 @@ async function main() {
             description: "学习如何在水中控制呼吸",
             nodeType: "MAJOR_NODE",
             maxLevel: 3,
-            connectedNodes: {
+            unlockDepNodes: {
               create: [
                 {
                   name: "屏气",
@@ -120,7 +120,7 @@ async function main() {
             description: "学习如何在水中保持浮力",
             nodeType: "MAJOR_NODE",
             maxLevel: 3,
-            connectedNodes: {
+            unlockDepNodes: {
               create: [
                 {
                   name: "水中漂浮",
@@ -152,7 +152,7 @@ async function main() {
       nodeType: "BIGCHECK",
       courseId: swimmingCourse.id,
       maxLevel: -1, // BigCheck 没有等级
-      connectedNodes: {
+      unlockDepNodes: {
         create: [
           {
             name: "自由泳",
@@ -160,7 +160,7 @@ async function main() {
             description: "学习自由泳的基础技巧",
             nodeType: "MAJOR_NODE",
             maxLevel: 3,
-            connectedNodes: {
+            unlockDepNodes: {
               create: [
                 {
                   name: "自由泳手部动作",
@@ -192,7 +192,7 @@ async function main() {
             description: "学习蛙泳的基础技巧",
             nodeType: "MAJOR_NODE",
             maxLevel: 3,
-            connectedNodes: {
+            unlockDepNodes: {
               create: [
                 {
                   name: "蛙泳手部动作",
@@ -231,7 +231,7 @@ async function main() {
       nodeType: "BIGCHECK",
       courseId: swimmingCourse.id,
       maxLevel: -1, // BigCheck 没有等级
-      connectedNodes: {
+      unlockDepNodes: {
         create: [
           {
             name: "转身技巧",
@@ -239,7 +239,7 @@ async function main() {
             description: "学习在池壁转身的技巧",
             nodeType: "MAJOR_NODE",
             maxLevel: 3,
-            connectedNodes: {
+            unlockDepNodes: {
               create: [
                 {
                   name: "自由泳转身",
@@ -264,7 +264,7 @@ async function main() {
             description: "提高划水效率，增强游泳速度",
             nodeType: "MAJOR_NODE",
             maxLevel: 3,
-            connectedNodes: {
+            unlockDepNodes: {
               create: [
                 {
                   name: "自由泳划水",
