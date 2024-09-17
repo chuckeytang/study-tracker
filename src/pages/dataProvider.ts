@@ -10,6 +10,22 @@ import { stringify } from "query-string";
 const apiUrl = "/api"; // 基础API URL
 const httpClient = fetchUtils.fetchJson;
 
+const isFile = (field: any) => {
+  return field && field.rawFile;
+};
+
+const convertDataToFormData = (data: any) => {
+  const formData = new FormData();
+  Object.keys(data).forEach((key) => {
+    if (isFile(data[key])) {
+      formData.append(key, data[key].rawFile);
+    } else {
+      formData.append(key, data[key]);
+    }
+  });
+  return formData;
+};
+
 const dataProvider: DataProvider = {
   getList: async (resource, params) => {
     try {
@@ -86,13 +102,51 @@ const dataProvider: DataProvider = {
     };
   },
 
-  update: async (resource, params) =>
-    httpClient(`${apiUrl}/${resource}/update`, {
+  update: async (resource, params) => {
+    // 检查是否有文件需要上传
+    if (Object.values(params.data).some(isFile)) {
+      const formData = convertDataToFormData(params.data);
+      const response = await fetch(`${apiUrl}/${resource}/update`, {
+        method: "PUT",
+        body: formData,
+      });
+      const json = await response.json();
+      return { data: json };
+    }
+
+    return httpClient(`${apiUrl}/${resource}/update`, {
       method: "PUT",
       body: JSON.stringify(params.data),
-    }).then(({ json }) => ({ data: json })),
+    }).then(({ json }) => ({ data: json }));
+  },
 
   updateMany: async (resource, params) => {
+    // 检查是否有任何对象包含文件需要上传
+    if (params.data.some((item: any) => Object.values(item).some(isFile))) {
+      const formDataArray: FormData[] = params.data.map(convertDataToFormData);
+
+      // 使用Promise.all处理多个并发请求
+      const responses = await Promise.all(
+        formDataArray.map((formData, index) =>
+          fetch(`${apiUrl}/${resource}/update`, {
+            method: "PUT",
+            body: formData,
+          })
+        )
+      );
+
+      const jsonArray = await Promise.all(
+        responses.map((response) => response.json())
+      );
+
+      return {
+        data: jsonArray.map((json, index) => ({
+          ...params.data[index],
+          id: json.id,
+        })),
+      };
+    }
+
     const query = {
       id: params.ids,
     };
@@ -108,6 +162,19 @@ const dataProvider: DataProvider = {
     resource: string,
     params: CreateParams
   ) => {
+    // 检查是否有文件需要上传
+    if (Object.values(params.data).some(isFile)) {
+      const formData = convertDataToFormData(params.data);
+      const response = await fetch(`${apiUrl}/${resource}/add`, {
+        method: "POST",
+        body: formData,
+      });
+      const json = await response.json();
+      return {
+        data: { ...params.data, id: json.id },
+      } as CreateResult<RecordType>;
+    }
+
     const url = `${apiUrl}/${resource}/add`;
     const options = {
       method: "POST",
@@ -124,6 +191,32 @@ const dataProvider: DataProvider = {
     resource: string,
     params: { data: RecordType[] }
   ) => {
+    // 检查是否有任何对象包含文件需要上传
+    if (params.data.some((item) => Object.values(item).some(isFile))) {
+      const formDataArray: FormData[] = params.data.map(convertDataToFormData);
+
+      // 使用Promise.all处理多个并发请求
+      const responses = await Promise.all(
+        formDataArray.map((formData) =>
+          fetch(`${apiUrl}/${resource}/createMany`, {
+            method: "POST",
+            body: formData,
+          })
+        )
+      );
+
+      const jsonArray = await Promise.all(
+        responses.map((response) => response.json())
+      );
+
+      return {
+        data: jsonArray.map((json, index) => ({
+          ...params.data[index],
+          id: json.id,
+        })),
+      } as unknown as CreateResult<RecordType>;
+    }
+
     const url = `${apiUrl}/${resource}/createMany`;
     const options = {
       method: "POST",

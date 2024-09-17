@@ -75,6 +75,7 @@ async function main() {
     data: {
       name: "游泳基础课程",
       description: "学习从适应水环境到掌握各种泳姿的技能",
+      iconUrl: "/images/course_default_icon.png",
       teacherId: teacher1.id, // 假设这是一个已存在的教师 ID
     },
   });

@@ -28,6 +28,7 @@ model Course {
   id              Int              @id @default(autoincrement())
   name            String
   description     String
+  iconUrl         String?          // 课程图标的存储地址，可选字段
   teacherId       Int              // 教师 ID
   teacher         User             @relation(fields: [teacherId], references: [id])
   createdAt       DateTime         @default(now())

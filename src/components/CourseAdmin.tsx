@@ -1,4 +1,12 @@
-import { List, Datagrid, TextField, EditButton, Button } from "react-admin";
+import {
+  List,
+  Datagrid,
+  TextField,
+  EditButton,
+  Button,
+  ImageInput,
+  ImageField,
+} from "react-admin";
 import { Create, SimpleForm, TextInput } from "react-admin";
 import { Edit } from "react-admin";
 import { useRecordContext } from "react-admin";
@@ -23,6 +31,7 @@ export const CourseList = (props: any) => (
       <TextField source="id" />
       <TextField source="name" />
       <TextField source="description" />
+      <ImageField source="iconUrl" label="Icon" />
       <EditButton />
       <DesignButton />
     </Datagrid>
@@ -34,6 +43,9 @@ export const CourseCreate = (props: any) => (
     <SimpleForm>
       <TextInput source="name" />
       <TextInput source="description" />
+      <ImageInput source="icon" label="Icon">
+        <ImageField source="src" title="title" />
+      </ImageInput>
     </SimpleForm>
   </Create>
 );
@@ -43,6 +55,13 @@ export const CourseEdit = (props: any) => (
     <SimpleForm>
       <TextInput source="name" />
       <TextInput source="description" />
+      <ImageInput
+        source="icon"
+        label="Icon"
+        accept={{ "image/*": [".png", ".jpg"] }}
+      >
+        <ImageField source="src" title="title" />
+      </ImageInput>
     </SimpleForm>
   </Edit>
 );
