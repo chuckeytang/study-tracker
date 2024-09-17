@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
 import multer from "multer";
 import { createRouter } from "next-connect";

@@ -43,7 +43,11 @@ export const CourseCreate = (props: any) => (
     <SimpleForm>
       <TextInput source="name" />
       <TextInput source="description" />
-      <ImageInput source="icon" label="Icon">
+      <ImageInput
+        source="icon"
+        label="Icon"
+        accept={{ "image/*": [".png", ".jpg"] }}
+      >
         <ImageField source="src" title="title" />
       </ImageInput>
     </SimpleForm>

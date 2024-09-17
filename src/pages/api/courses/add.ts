@@ -50,7 +50,7 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       data: {
         name,
         description,
-        teacherId: Number(teacherId),
+        teacherId: 1,
         iconUrl, // 保存上传的图片URL
       },
     });

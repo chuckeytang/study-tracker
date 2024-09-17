@@ -162,26 +162,27 @@ const dataProvider: DataProvider = {
     resource: string,
     params: CreateParams
   ) => {
-    // 检查是否有文件需要上传
-    if (Object.values(params.data).some(isFile)) {
-      const formData = convertDataToFormData(params.data);
-      const response = await fetch(`${apiUrl}/${resource}/add`, {
-        method: "POST",
-        body: formData,
-      });
-      const json = await response.json();
-      return {
-        data: { ...params.data, id: json.id },
-      } as CreateResult<RecordType>;
-    }
+    // 总是使用 FormData 即使没有文件
+    const formData = new FormData();
+    // 遍历 params.data，处理文件和其他字段
+    Object.keys(params.data).forEach((key) => {
+      const value = params.data[key];
+      if (isFile(value)) {
+        // 如果是文件，添加到 FormData
+        formData.append(key, value.rawFile);
+      } else {
+        // 如果不是文件，作为普通字段添加到 FormData
+        formData.append(key, value);
+      }
+    });
 
-    const url = `${apiUrl}/${resource}/add`;
-    const options = {
+    // 发送 multipart/form-data 请求
+    const response = await fetch(`${apiUrl}/${resource}/add`, {
       method: "POST",
-      body: JSON.stringify(params.data),
-    };
-    const response = await httpClient(url, options);
-    const json = await response.json;
+      body: formData,
+    });
+
+    const json = await response.json();
     return {
       data: { ...params.data, id: json.id },
     } as CreateResult<RecordType>;
