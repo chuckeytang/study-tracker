@@ -1,34 +1,91 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
-const UserInfo = () => {
-  const mockUser = {
-    name: "John Doe",
-    avatar: "👤",
-    coursesStarted: 3,
-  };
+interface User {
+  id: number;
+  name: string;
+  role: string;
+  email: string;
+  avartarPicUrl: string;
+  coursesSelected: number;
+}
+
+const DecLightBulb: React.FC = () => {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="220px" height="233px">
+      <path
+        fill-rule="evenodd"
+        opacity="0.169"
+        fill="rgb(255, 255, 255)"
+        d="M139.334,201.934 C139.334,205.816 137.500,207.759 133.834,207.759 L86.166,207.759 C82.500,207.759 80.667,205.816 80.667,201.934 C80.667,198.050 82.500,196.108 86.166,196.108 L132.000,196.108 C135.666,196.108 139.334,199.992 139.334,201.934 L139.334,201.934 ZM133.834,211.641 L86.166,211.641 C82.500,211.641 78.833,215.526 80.667,219.409 C80.667,221.350 84.333,223.292 86.166,223.292 C89.834,223.292 91.666,225.234 93.500,227.175 C97.166,231.059 100.833,233.000 106.333,233.000 L115.500,233.000 C119.167,233.000 124.667,231.059 126.500,227.175 C128.334,223.292 132.000,223.292 133.834,223.292 C135.666,223.292 139.334,221.350 139.334,219.409 C139.334,213.584 137.500,211.641 133.834,211.641 L133.834,211.641 ZM110.001,33.009 C113.667,33.009 115.500,31.067 115.500,27.184 L115.500,5.825 C115.500,1.942 113.667,-0.000 110.001,-0.000 C106.333,-0.000 104.500,1.942 104.500,5.825 L104.500,27.184 C104.500,31.067 106.333,33.009 110.001,33.009 L110.001,33.009 ZM49.500,54.367 C51.334,56.308 51.334,56.308 53.167,56.308 C55.000,56.308 56.833,56.308 56.833,54.367 C58.667,52.425 58.667,48.542 56.833,46.600 L40.334,31.067 C38.500,29.124 34.833,29.124 33.000,31.067 C29.333,33.009 29.333,36.892 31.167,38.834 L49.500,54.367 ZM34.833,104.850 C34.833,100.967 33.000,99.025 29.333,99.025 L5.500,99.025 C1.834,99.025 -0.000,102.908 -0.000,104.850 C-0.000,106.791 1.834,110.675 5.500,110.675 L29.333,110.675 C33.000,110.675 34.833,108.733 34.833,104.850 L34.833,104.850 ZM49.500,157.275 L33.000,172.809 C29.333,174.750 29.333,176.692 31.167,178.634 C33.000,180.575 34.833,182.517 36.667,182.517 C38.500,182.517 40.334,182.517 40.334,180.575 L56.833,165.042 C58.667,163.100 58.667,159.216 56.833,157.275 C55.000,153.393 51.334,153.393 49.500,157.275 L49.500,157.275 ZM170.500,157.275 C168.667,153.393 165.000,153.393 163.167,157.275 C161.333,159.216 161.333,163.100 163.167,165.042 L179.667,180.575 C181.500,180.575 181.500,182.517 183.334,182.517 C185.167,182.517 187.000,182.517 187.000,180.575 C188.834,178.634 188.834,174.750 187.000,172.809 L170.500,157.275 ZM214.500,99.025 L190.667,99.025 C187.000,99.025 185.167,100.967 185.167,104.850 C185.167,108.733 187.000,110.675 190.667,110.675 L214.500,110.675 C218.167,110.675 220.000,108.733 220.000,104.850 C220.000,102.908 218.167,99.025 214.500,99.025 L214.500,99.025 ZM166.834,56.308 C168.667,56.308 170.500,56.308 170.500,54.367 L187.000,38.834 C188.834,36.892 188.834,33.009 187.000,31.067 C185.167,29.124 181.500,29.124 179.667,31.067 L163.167,46.600 C161.333,48.542 161.333,52.425 163.167,54.367 C165.000,56.308 165.000,56.308 166.834,56.308 L166.834,56.308 ZM139.334,188.342 C139.334,192.225 137.500,194.167 133.834,194.167 L86.166,194.167 C82.500,194.167 80.667,192.225 80.667,188.342 C80.667,184.459 82.500,182.517 86.166,182.517 C82.500,151.450 49.500,143.683 49.500,106.791 C49.500,73.784 77.000,48.542 110.001,48.542 C143.000,48.542 170.500,73.784 170.500,106.791 C170.500,143.683 137.500,151.450 133.834,182.517 C135.666,182.517 139.334,186.400 139.334,188.342 L139.334,188.342 ZM97.166,66.016 C97.166,64.075 93.500,62.133 91.666,64.075 C77.000,69.901 64.167,81.550 60.500,95.142 C60.500,97.083 60.500,99.025 64.167,100.967 L66.001,100.967 C67.833,100.967 69.667,99.025 69.667,97.083 C73.333,85.434 82.500,75.724 93.500,71.842 C97.166,69.901 97.166,67.959 97.166,66.016 L97.166,66.016 Z"
+      />
+    </svg>
+  );
+};
+
+const UserInfo: React.FC<{ userId: number }> = ({ userId }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch(`/api/users/getOne?id=${userId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setUser(data);
+        } else {
+          console.error("Error fetching user:", data.error);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [userId]);
+
+  if (loading) {
+    return <div className="text-center">Loading...</div>;
+  }
+
+  if (!user) {
+    return <div className="text-center">User not found</div>;
+  }
 
   return (
-    <div
-      style={{
-        backgroundColor: "yellow",
-        borderRadius: "10px",
-        padding: "20px",
-        position: "relative",
-        width: "200px",
-        textAlign: "center",
-        height: "150px",
-      }}
-    >
+    <div className="bg-amber-500 rounded-2xl p-5 relative text-center h-[300px] w-full">
       {/* User Avatar */}
-      <div style={{ position: "absolute", top: "-20px", left: "10px" }}>
-        <div className="text-gray-800 text-3xl">{mockUser.avatar}</div>
+      <div className="rounded-3xl absolute -top-14 left-10 flex flex-col">
+        {user.avartarPicUrl ? (
+          <img
+            src={user.avartarPicUrl}
+            alt="User Avatar"
+            className="w-[120px] h-[120px] object-cover rounded-3xl"
+          />
+        ) : (
+          <img
+            src="/images/student_default_avartar.jpg"
+            alt="Default Avatar"
+            className="w-[120px] h-[120px] object-cover rounded-3xl"
+          />
+        )}
+
+        <div className="text-white text-2xl mt-6">{user.name}</div>
       </div>
 
       {/* User Info */}
-      <div style={{ marginTop: "40px" }}>
-        <div className="text-gray-800 text-base">{mockUser.name}</div>
-        <div className="text-gray-800 text-base">
-          Courses Started: {mockUser.coursesStarted}
+      <div className="absolute bottom-16 left-10 flex items-baseline">
+        <div className="text-white text-base">Courses Started:</div>
+        <div className="text-white text-[60px] ml-8">
+          {user.coursesSelected}
+        </div>
+      </div>
+      <div className="absolute bottom-0 left-0 rounded-2xl overflow-hidden h-[300px] w-full">
+        <div className="absolute -bottom-5 -right-5">
+          <DecLightBulb />
         </div>
       </div>
     </div>

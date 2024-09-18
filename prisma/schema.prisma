@@ -15,9 +15,8 @@ model User {
   role            Role             // 使用枚举类型来定义用户角色
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
-  courses         Course[]         // 教授或参与的课程
   progress        CourseProgress[] // 学生的学习进度
-  selectedCourses StudentCourse[]   // 学生选择的课程
+  selectedCourses UserCourse[]    // 学生选择的或者老师教授的课程列表
 }
 
 enum Role {
@@ -31,14 +30,11 @@ model Course {
   name            String
   description     String
   iconUrl         String?          // 课程图标的存储地址，可选字段
-  teacherId       Int              // 教师 ID
-  teacher         User             @relation(fields: [teacherId], references: [id])
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   nodes           Node[]       // 课程下的所有 nodes
-  enrolledStudents StudentCourse[] // 选择了该课程的学生
+  enrolledUsers   UserCourse[] // 选择了该课程的学生，或者上该课程的老师
 }
-
 
 model Node {
   id               Int              @id @default(autoincrement())
@@ -81,7 +77,7 @@ model CourseProgress {
   @@unique([userId, nodeId])  // 添加复合唯一约束
 }
 
-model StudentCourse {
+model UserCourse {
   id         Int      @id @default(autoincrement())
   userId     Int      // 学生 ID
   user       User     @relation(fields: [userId], references: [id])

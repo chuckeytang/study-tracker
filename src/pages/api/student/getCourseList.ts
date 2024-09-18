@@ -1,53 +1,59 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
-import { createRouter } from "next-connect";
+import { createRouter } from "next-connect"; // 使用 next-connect 路由
 
 const prisma = new PrismaClient();
 
 // 使用 createRouter 创建 API 路由
 const router = createRouter<NextApiRequest, NextApiResponse>();
 
-// 处理 GET 请求
+// GET 请求处理逻辑，获取课程列表并标记 isLearning
 router.get(async (req: NextApiRequest, res: NextApiResponse) => {
-  const { userId } = req.query;
-
-  if (!userId) {
-    return res.status(400).json({ error: "Missing userId parameter" });
-  }
+  const { userId } = req.query; // 从查询参数中获取 userId
 
   try {
-    // 查询与该 userId 关联的所有课程
-    const studentCourses = await prisma.studentCourse.findMany({
-      where: {
-        userId: Number(userId),
-      },
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+
+    // 获取所有课程以及选修这些课程的用户
+    const courses = await prisma.course.findMany({
       include: {
-        course: true, // 包含课程详细信息
+        enrolledUsers: {
+          select: {
+            userId: true, // 仅选择 userId 以检查用户是否已选修课程
+          },
+        },
       },
     });
 
-    // 从查询结果中提取课程信息
-    const courses = studentCourses.map((studentCourse) => ({
-      id: studentCourse.course.id,
-      name: studentCourse.course.name,
-      description: studentCourse.course.description,
-      iconUrl: studentCourse.course.iconUrl,
-      teacherId: studentCourse.course.teacherId,
-      createdAt: studentCourse.course.createdAt,
-      updatedAt: studentCourse.course.updatedAt,
-    }));
+    // 构造返回数据，判断是否正在学习课程
+    const courseList = courses.map((course) => {
+      const isLearning = course.enrolledUsers.some(
+        (enrollment) => enrollment.userId === Number(userId)
+      );
+      return {
+        id: course.id,
+        name: course.name,
+        description: course.description,
+        iconUrl: course.iconUrl,
+        isLearning: isLearning, // 如果 userId 存在于 enrolledUsers 列表中，设置为 true
+      };
+    });
 
-    // 返回课程列表
-    res.status(200).json({ courses: courses });
+    // 返回构造后的课程列表
+    res.status(200).json({ courses: courseList });
   } catch (error) {
-    res.status(500).json({ error: `Failed to fetch courses: ${error}` });
+    console.error("Failed to fetch course list:", error);
+    res.status(500).json({ error: "Failed to fetch course list" });
   }
 });
 
 // 在 handler 中添加错误处理
 export default router.handler({
-  onError: (err, req, res) => {
-    res.status(500).json({ error: `Server error: ${err}` });
+  onError: (err: unknown, req, res) => {
+    console.error(err);
+    res.status(500).json({ error: "An unexpected error occurred" });
   },
   onNoMatch: (req, res) => {
     res.status(405).json({ error: `Method '${req.method}' Not Allowed` });

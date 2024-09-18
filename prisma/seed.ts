@@ -73,15 +73,14 @@ async function main() {
   // 创建游泳课程
   const swimmingCourse = await prisma.course.create({
     data: {
-      name: "游泳基础课程",
+      name: "Swimming Courses",
       description: "学习从适应水环境到掌握各种泳姿的技能",
       iconUrl: "/images/course_default_icon.png",
-      teacherId: teacher1.id, // 假设这是一个已存在的教师 ID
     },
   });
 
   // 创建学生与课程的关联
-  const studentCourse = await prisma.studentCourse.create({
+  const userCourse = await prisma.userCourse.create({
     data: {
       userId: student1.id, // 学生 ID
       courseId: swimmingCourse.id, // 课程 ID

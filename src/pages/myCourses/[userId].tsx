@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import UserInfo from "@/components/UserInfo";
+import Link from "next/link";
 
 interface Course {
   id: number;
   name: string;
+  description: string;
+  isLearning: boolean;
   iconUrl?: string; // 可能没有 iconUrl，所以用可选属性
 }
 
@@ -54,57 +57,95 @@ const MyCourses: React.FC = (props) => {
 
   return (
     <div className="flex items-center justify-center bg-[url('/images/bg.jpg')] min-h-screen bg-cover">
-      <div className="rounded-2xl bg-stone-100 w-3/4 my-10 min-h-screen">
-        <div className="text-gray-800 font-bold text-3xl flex items-center justify-center mt-4">
-          My Courses
-        </div>
-        <div className="flex items-center justify-between mt-10">
-          <div className="flex flex-col items-start p-10">
-            {leftCourses.map((course) => (
-              <div key={course.id} className="flex justify-start mb-4">
-                <div>
+      <div className="rounded-2xl bg-stone-100 w-3/4 my-10 min-h-screen flex justify-between">
+        <div className="flex flex-col items-start p-10 w-1/3">
+          {leftCourses.map((course) => (
+            <Link
+              key={course.id}
+              href={`/skillTree/${userId}?courseId=${course.id}`}
+              passHref
+            >
+              <div
+                key={course.id}
+                className="flex justify-start mb-4 items-center"
+              >
+                <div
+                  className={`rounded-xl border-8 ${
+                    course.isLearning ? "border-amber-400 " : "border-gray-300"
+                  } p-2`}
+                >
                   {course.iconUrl ? (
                     <img
                       src={course.iconUrl}
                       alt={course.name}
-                      className="w-8 h-8"
+                      className="w-16 h-16"
                     />
                   ) : (
-                    "📘"
+                    <img
+                      src="/images/course_default_icon.png"
+                      alt={course.name}
+                      className="w-16 h-16"
+                    />
                   )}
                 </div>
-                <div className="ml-2 text-gray-800">{course.name}</div>
+                <div className="ml-4 text-gray-800 font-bold">
+                  {course.name}
+                </div>
               </div>
-            ))}
-          </div>
+            </Link>
+          ))}
+        </div>
 
+        <div className="flex flex-col justify-between w-1/3">
+          <div className="text-gray-800 font-bold text-3xl flex items-center justify-center mt-4">
+            My Courses
+          </div>
           {/* User Info */}
-          <UserInfo />
+          <UserInfo userId={Number(userId)} />
+          {courses.length === 0 && (
+            <div className="flex justify-center items-center p-10">
+              No courses
+            </div>
+          )}
+          {courses.length != 0 && (
+            <div className="flex justify-center items-center p-12"></div>
+          )}
+        </div>
 
-          <div className="flex flex-col items-start p-10">
-            {rightCourses.map((course) => (
+        <div className="flex flex-col items-start p-10 w-1/3">
+          {rightCourses.map((course) => (
+            <Link
+              key={course.id}
+              href={`/skillTree/${userId}?courseId=${course.id}`}
+              passHref
+            >
               <div key={course.id} className="flex justify-start mb-4">
-                <div className="mr-2 text-gray-800">{course.name}</div>
-                <div>
+                <div className="mr-4 text-gray-800 font-bold">
+                  {course.name}
+                </div>
+                <div
+                  className={`rounded-xl border-8 ${
+                    course.isLearning ? "border-amber-400 " : "border-gray-300"
+                  } p-2`}
+                >
                   {course.iconUrl ? (
                     <img
                       src={course.iconUrl}
                       alt={course.name}
-                      className="w-8 h-8"
+                      className="w-16 h-16"
                     />
                   ) : (
-                    "📘"
+                    <img
+                      src="/images/course_default_icon.png"
+                      alt={course.name}
+                      className="w-16 h-16"
+                    />
                   )}
                 </div>
               </div>
-            ))}
-          </div>
+            </Link>
+          ))}
         </div>
-        {courses.length === 0 && (
-          <div className="flex justify-center items-center p-10">
-            No courses
-          </div>
-        )}
       </div>
     </div>
   );

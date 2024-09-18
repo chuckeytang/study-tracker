@@ -18,7 +18,18 @@ export default async function handler(
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(200).json(user);
+    // 查询用户的已绑定课程数量
+    const coursesSelected = await prisma.userCourse.count({
+      where: {
+        userId: Number(id),
+      },
+    });
+
+    // 返回用户信息和绑定的课程数量
+    res.status(200).json({
+      ...user,
+      coursesSelected,
+    });
   } catch (error) {
     res.status(500).json({ error: `Failed to fetch user: ${error}` });
   }
