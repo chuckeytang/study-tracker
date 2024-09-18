@@ -44,7 +44,6 @@ const dataProvider: DataProvider = {
       if (resource === "students" || resource === "teachers") {
         resource = "users";
       }
-      console.log("role:", role);
 
       const query = {
         _sort: field,
@@ -67,14 +66,28 @@ const dataProvider: DataProvider = {
     }
   },
 
-  getOne: async (resource, params) =>
-    httpClient(`${apiUrl}/${resource}/getOne?id=${params.id}`).then(
-      ({ json }) => ({
+  getOne: async (resource, params) => {
+    try {
+      if (resource === "students" || resource === "teachers") {
+        resource = "users";
+      }
+
+      const url = `${apiUrl}/${resource}/getOne?id=${params.id}`;
+      const { json } = await httpClient(url);
+
+      return {
         data: json,
-      })
-    ),
+      };
+    } catch (error) {
+      console.error("Error fetching data from getOne:", error);
+      throw error; // 抛出错误以便更好地处理
+    }
+  },
 
   getMany: async (resource, params) => {
+    if (resource === "students" || resource === "teachers") {
+      resource = "users";
+    }
     const query = {
       id: params.ids,
     };
@@ -94,6 +107,9 @@ const dataProvider: DataProvider = {
       [params.target]: params.id,
       ...params.filter,
     };
+    if (resource === "students" || resource === "teachers") {
+      resource = "users";
+    }
     const url = `${apiUrl}/${resource}?${stringify(query)}`;
     const { json } = await httpClient(url);
     return {
@@ -103,6 +119,9 @@ const dataProvider: DataProvider = {
   },
 
   update: async (resource, params) => {
+    if (resource === "students" || resource === "teachers") {
+      resource = "users";
+    }
     // 检查是否有文件需要上传
     if (Object.values(params.data).some(isFile)) {
       const formData = convertDataToFormData(params.data);
@@ -121,6 +140,9 @@ const dataProvider: DataProvider = {
   },
 
   updateMany: async (resource, params) => {
+    if (resource === "students" || resource === "teachers") {
+      resource = "users";
+    }
     // 检查是否有任何对象包含文件需要上传
     if (params.data.some((item: any) => Object.values(item).some(isFile))) {
       const formDataArray: FormData[] = params.data.map(convertDataToFormData);
@@ -162,6 +184,9 @@ const dataProvider: DataProvider = {
     resource: string,
     params: CreateParams
   ) => {
+    if (resource === "students" || resource === "teachers") {
+      resource = "users";
+    }
     // 总是使用 FormData 即使没有文件
     const formData = new FormData();
     // 遍历 params.data，处理文件和其他字段
@@ -192,6 +217,9 @@ const dataProvider: DataProvider = {
     resource: string,
     params: { data: RecordType[] }
   ) => {
+    if (resource === "students" || resource === "teachers") {
+      resource = "users";
+    }
     // 检查是否有任何对象包含文件需要上传
     if (params.data.some((item) => Object.values(item).some(isFile))) {
       const formDataArray: FormData[] = params.data.map(convertDataToFormData);
@@ -233,13 +261,34 @@ const dataProvider: DataProvider = {
     } as CreateResult<RecordType>;
   },
 
-  delete: async (resource, params) =>
-    httpClient(`${apiUrl}/${resource}/delete`, {
-      method: "DELETE",
-      body: JSON.stringify(params),
-    }).then(({ json }) => ({ data: json })),
+  delete: async (resource, params) => {
+    try {
+      if (resource === "students" || resource === "teachers") {
+        resource = "users";
+      }
+
+      // 发起 DELETE 请求，删除指定的资源
+      const url = `${apiUrl}/${resource}/delete`;
+      const response = await httpClient(url, {
+        method: "DELETE",
+        body: JSON.stringify({ id: params.id }), // 确保只传递 ID 进行删除
+      });
+
+      const { json } = response;
+
+      return {
+        data: json,
+      };
+    } catch (error) {
+      console.error("Error deleting data from delete:", error);
+      throw error; // 抛出错误以便更好地处理
+    }
+  },
 
   deleteMany: async (resource, params) => {
+    if (resource === "students" || resource === "teachers") {
+      resource = "users";
+    }
     const query = {
       id: params.ids,
     };

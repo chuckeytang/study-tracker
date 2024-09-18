@@ -10,12 +10,14 @@ datasource db {
 model User {
   id              Int              @id @default(autoincrement())
   name            String
+  avartarPicUrl   String?          // 用户头像，可选
   email           String           @unique
   role            Role             // 使用枚举类型来定义用户角色
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   courses         Course[]         // 教授或参与的课程
   progress        CourseProgress[] // 学生的学习进度
+  selectedCourses StudentCourse[]   // 学生选择的课程
 }
 
 enum Role {
@@ -33,7 +35,8 @@ model Course {
   teacher         User             @relation(fields: [teacherId], references: [id])
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
-  nodes       Node[]       // 课程下的所有 nodes
+  nodes           Node[]       // 课程下的所有 nodes
+  enrolledStudents StudentCourse[] // 选择了该课程的学生
 }
 
 
@@ -76,4 +79,13 @@ model CourseProgress {
   updatedAt       DateTime @updatedAt
 
   @@unique([userId, nodeId])  // 添加复合唯一约束
+}
+
+model StudentCourse {
+  id         Int      @id @default(autoincrement())
+  userId     Int      // 学生 ID
+  user       User     @relation(fields: [userId], references: [id])
+  courseId   Int      // 课程 ID
+  course     Course   @relation(fields: [courseId], references: [id])
+  createdAt  DateTime @default(now()) // 学生选择课程的时间
 }

@@ -1,8 +1,8 @@
 import { Admin, Resource } from "react-admin";
 import { CourseList, CourseCreate, CourseEdit } from "./CourseAdmin";
 import dataProvider from "@/pages/dataProvider";
-import { StudentList } from "./StudentAdmin";
-import { TeacherList } from "./TeacherAdmin";
+import { StudentCreate, StudentEdit, StudentList } from "./StudentAdmin";
+import { TeacherCreate, TeacherEdit, TeacherList } from "./TeacherAdmin";
 import { BrowserRouter, Route } from "react-router-dom";
 
 const AdminPanel = () => (
@@ -17,12 +17,16 @@ const AdminPanel = () => (
       />
       <Resource
         name="students"
-        list={StudentList} // 显示学生列表，假设已定义 StudentList
+        list={StudentList}
+        create={StudentCreate}
+        edit={StudentEdit}
         options={{ label: "Students" }} // 左侧菜单名称为 'Students'
       />
       <Resource
         name="teachers"
-        list={TeacherList} // 显示教师列表，假设已定义 TeacherList
+        list={TeacherList}
+        create={TeacherCreate}
+        edit={TeacherEdit}
         options={{ label: "Teachers" }} // 左侧菜单名称为 'Teachers'
       />
     </Admin>

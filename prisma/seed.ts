@@ -80,6 +80,14 @@ async function main() {
     },
   });
 
+  // 创建学生与课程的关联
+  const studentCourse = await prisma.studentCourse.create({
+    data: {
+      userId: student1.id, // 学生 ID
+      courseId: swimmingCourse.id, // 课程 ID
+    },
+  });
+
   // 创建 BigCheck: 水中适应
   const bigCheck1 = await prisma.node.create({
     data: {

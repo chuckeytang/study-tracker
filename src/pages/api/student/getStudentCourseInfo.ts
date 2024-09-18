@@ -1,4 +1,4 @@
-// 选中课程可加技能点、课程每个node解锁情况和等级
+// 获取某个学生选中课程可加技能点、课程每个node解锁情况和等级
 import { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
 

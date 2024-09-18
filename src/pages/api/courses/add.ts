@@ -1,32 +1,10 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
-import multer from "multer";
+import { upload } from "@/lib/middleware/multer";
 import { createRouter } from "next-connect"; // 使用 createRouter 替代 nextConnect
-import path from "path";
 import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
 import { AppError } from "@/types/AppError";
-
-// 设置文件保存路径
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: "./public/uploads",
-    filename: (req, file, cb) => {
-      cb(null, Date.now() + path.extname(file.originalname));
-    },
-  }),
-});
-
-// 通用函数：运行中间件
-const runMiddleware = (req: NextApiRequest, res: NextApiResponse, fn: any) => {
-  return new Promise((resolve, reject) => {
-    fn(req, res, (result: any) => {
-      if (result instanceof Error) {
-        return reject(result);
-      }
-      return resolve(result);
-    });
-  });
-};
+import { runMiddleware } from "@/lib/middleware/runMiddleware";
 
 const prisma = new PrismaClient();
 

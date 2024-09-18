@@ -1,4 +1,4 @@
-// 课程树结构
+// 获取某个课程的课程树结构
 import { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
 
