@@ -458,6 +458,15 @@ async function main() {
     ],
   });
 
+  // 创建bigcheck解锁依赖关系
+  await prisma.unlockDependency.createMany({
+    data: [
+      { fromNodeId: bigCheck1.id, toNodeId: bigCheck2.id },
+      { fromNodeId: bigCheck2.id, toNodeId: bigCheck3.id },
+      { fromNodeId: bigCheck3.id, toNodeId: bigCheck4.id },
+    ],
+  });
+
   console.log(
     "Swimming course and nodes created successfully with dependencies."
   );

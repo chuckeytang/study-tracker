@@ -10,27 +10,8 @@ import Cluster from "@/components/Node/Cluster"; // 导入Cluster组件
 import BigCheck from "@/components/Node/BigCheck";
 import MajorNode from "@/components/Node/MajorNode";
 import MinorNode from "@/components/Node/MinorNode";
-
-const bigCheckNode = ({ data, updateSkillTree }: any) => (
-  <BigCheck
-    name={data.name}
-    description={data.description}
-    courseId={data.courseId}
-    unlocked={data.unlocked}
-    level={data.level}
-    maxLevel={data.maxLevel}
-    updateSkillTree={updateSkillTree}
-  />
-);
-const majorNode = ({ data }: any) => <MajorNode name={data.name} />;
-const minorNode = ({ data }: any) => <MinorNode name={data.name} />;
-
-// 定义节点类型
-const nodeTypes = {
-  BIGCHECK: bigCheckNode,
-  MAJOR_NODE: majorNode,
-  MINOR_NODE: minorNode,
-};
+import BigCheckEdge from "@/components/Node/BigCheckEdge";
+import MajorEdge from "@/components/Node/MajorEdge";
 
 // 课程下拉菜单选项
 const options = [
@@ -54,12 +35,25 @@ const SkillTree = (props) => {
         `/api/courses/getBigChecks?courseId=${courseId}`
       );
       const data = await response.json();
-      const bigChecks = data.data; // 假设API返回的是bigcheck节点的数组
+      const bigChecks = data.data;
 
       const clusters: { nodes: Node[]; edges: Edge[] }[] = [];
 
+      // 设置bigCheckNode的位置参数
+      const bigCheckSpacingX = 800; // bigCheckNode之间的X轴间距
+      const bigCheckBaseY = 0; // bigCheckNode的基础Y轴位置
+      const bigCheckYOffset = 100; // bigCheckNode之间的Y轴偏移量
+
       // 第二步：为每个bigcheck节点创建一个cluster
-      for (const bigCheckNode of bigChecks) {
+      for (let i = 0; i < bigChecks.length; i++) {
+        const bigCheckNode = bigChecks[i];
+
+        // 设置bigCheckNode的位置
+        const x = i * bigCheckSpacingX;
+        const y = bigCheckBaseY + (i % 2) * bigCheckYOffset; // Y轴位置交替变化
+
+        bigCheckNode.position = { x, y };
+
         // 将bigCheckNode传递给Cluster组件，获取该cluster的节点和边
         const clusterResult = await Cluster(bigCheckNode);
         clusters.push(clusterResult);
@@ -80,6 +74,7 @@ const SkillTree = (props) => {
               id: `e${depNode.nodeId}-${bigCheckNode.nodeId}`,
               source: String(depNode.nodeId),
               target: String(bigCheckNode.nodeId),
+              type: "bigcheckEdge",
               animated: true,
             });
           });
@@ -93,21 +88,33 @@ const SkillTree = (props) => {
     }
   };
 
-  const nodeTypes = useMemo(
-    () => ({
-      BIGCHECK: (params: any) => bigCheckNode({ ...params, updateSkillTree }),
-      MAJOR_NODE: majorNode,
-      MINOR_NODE: minorNode,
-    }),
-    [updateSkillTree]
-  );
-
   useEffect(() => {
     if (!router.isReady) return;
 
     console.log("router.query:", router.query);
     updateSkillTree(); // 页面加载时更新一次课程树
   }, []);
+
+  // 定义节点类型
+  const nodeTypes = useMemo(
+    () => ({
+      BIGCHECK: (params: any) => (
+        <BigCheck {...params} updateSkillTree={updateSkillTree} />
+      ),
+      MAJOR_NODE: (params: any) => <MajorNode {...params} data={params.data} />,
+      MINOR_NODE: (params: any) => <MinorNode {...params} data={params.data} />,
+    }),
+    [updateSkillTree]
+  );
+
+  const edgeTypes = useMemo(
+    () => ({
+      bigcheckEdge: BigCheckEdge,
+      majorEdge: MajorEdge,
+      progressEdge: BigCheckEdge,
+    }),
+    []
+  );
 
   return (
     <div className="flex items-center justify-center bg-[url('/images/bg.jpg')] h-screen w-screen bg-cover">
@@ -137,6 +144,7 @@ const SkillTree = (props) => {
             nodes={nodes}
             edges={edges}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             fitView
             style={{ background: "#000000" }}
           />
