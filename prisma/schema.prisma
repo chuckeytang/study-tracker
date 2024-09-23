@@ -45,15 +45,34 @@ model Node {
   course           Course           @relation(fields: [courseId], references: [id])
   maxLevel         Int              // 最大等级
 
-  unlockDepNodes     Node[] @relation("NodeLink")          // 解锁依赖的多个节点
-  unlockDepNodeCount Int?            // 解锁依赖的节点中需要解锁的最小节点数，若为-1或者null则unlockDepNodes所有节点都需解锁才能解锁该节点
-  unlockConnectingNodes  Node[] @relation("NodeLink")
-  lockDepNodes      Node[] @relation("NodeHideLink")          // 锁住依赖的多个节点
-  lockDepNodeCount  Int?            // 锁住依赖的节点中需要解锁的最小节点数，若为-1则unlockDepNodes所有节点都需解锁才能实现该节点锁住
-  lockConnectingNodes  Node[] @relation("NodeHideLink")
+  // 解锁和锁住依赖节点的数量字段放在 Node 表中
+  unlockDepNodeCount Int?            // 解锁依赖的节点中需要解锁的最小节点数，若为-1或者null则所有依赖节点都需解锁
+  lockDepNodeCount   Int?            // 锁住依赖的节点中需要解锁的最小节点数，若为-1则所有依赖节点都需解锁才能实现该节点锁住
+
+  unlockDependenciesFrom UnlockDependency[] @relation("UnlockFrom")
+  unlockDependenciesTo   UnlockDependency[] @relation("UnlockTo")
+
+  lockDependenciesFrom   LockDependency[]   @relation("LockFrom")
+  lockDependenciesTo     LockDependency[]   @relation("LockTo")
 
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
+}
+
+model UnlockDependency {
+  id               Int              @id @default(autoincrement())
+  fromNodeId       Int
+  fromNode         Node             @relation("UnlockFrom", fields: [fromNodeId], references: [id])
+  toNodeId         Int
+  toNode           Node             @relation("UnlockTo", fields: [toNodeId], references: [id])
+}
+
+model LockDependency {
+  id               Int              @id @default(autoincrement())
+  fromNodeId       Int
+  fromNode         Node             @relation("LockFrom", fields: [fromNodeId], references: [id])
+  toNodeId         Int
+  toNode           Node             @relation("LockTo", fields: [toNodeId], references: [id])
 }
 
 enum NodeType {

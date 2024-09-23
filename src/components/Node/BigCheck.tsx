@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import NodeForm from "@/components/Form/NodeForm";
+import { Handle, Position } from "reactflow";
 
 interface BigCheckProps {
   id?: number;
@@ -119,6 +120,10 @@ const BigCheck: React.FC<BigCheckProps> = ({
           />
         )}
       </div>
+
+      {/* 添加句柄 */}
+      <Handle type="source" position={Position.Right} />
+      <Handle type="target" position={Position.Left} />
 
       {menuVisible && (
         <div
