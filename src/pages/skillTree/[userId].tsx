@@ -12,6 +12,12 @@ import MajorNode from "@/components/Node/MajorNode";
 import MinorNode from "@/components/Node/MinorNode";
 import BigCheckEdge from "@/components/Node/BigCheckEdge";
 import MajorEdge from "@/components/Node/MajorEdge";
+import {
+  bigCheckRadius,
+  majornodeRadius,
+  minornodeRadius,
+} from "@/types/Values";
+import { calculateHandlePosition } from "@/tools/utils";
 
 // 课程下拉菜单选项
 const options = [
@@ -25,7 +31,7 @@ const SkillTree = (props) => {
   const [edges, setEdges] = useState<Edge[]>([]);
 
   const router = useRouter();
-  const { userId, courseId } = router.query;
+  const { courseId } = router.query;
 
   // 更新课程树的函数
   const updateSkillTree = async () => {
@@ -63,20 +69,62 @@ const SkillTree = (props) => {
       const allNodes = clusters.flatMap((cluster) => cluster.nodes);
       const allEdges = clusters.flatMap((cluster) => cluster.edges);
 
-      // 第四步：手动建立Cluster之间的连接（bigcheck节点之间）
+      // 连接 BigCheckNode 之间
       bigChecks.forEach((bigCheckNode: any) => {
-        if (
-          bigCheckNode.unlockDepNodes &&
-          bigCheckNode.unlockDepNodes.length > 0
-        ) {
-          bigCheckNode.unlockDepNodes.forEach((depNode: any) => {
-            allEdges.push({
-              id: `e${depNode.nodeId}-${bigCheckNode.nodeId}`,
-              source: String(depNode.nodeId),
-              target: String(bigCheckNode.nodeId),
-              type: "bigcheckEdge",
-              animated: true,
-            });
+        if (bigCheckNode.unlockDependencies) {
+          bigCheckNode.unlockDependencies.forEach((depNode: any) => {
+            // 根据 depNode 的 nodeId 在 bigChecks 中找到相应的节点，并获取其 position
+            const dependentNode = bigChecks.find(
+              (n: any) => n.nodeId === depNode.nodeId
+            );
+
+            if (dependentNode) {
+              const handleFromPos = calculateHandlePosition(
+                bigCheckNode.position,
+                dependentNode.position, // 使用找到的依赖节点的position
+                bigCheckRadius
+              );
+              const handleToPos = calculateHandlePosition(
+                dependentNode.position,
+                bigCheckNode.position,
+                bigCheckRadius
+              );
+
+              // 更新 BigCheckNode 的句柄信息
+              const sourceNode = allNodes.find(
+                (n) => n.id === String(bigCheckNode.nodeId)
+              );
+              const targetNode = allNodes.find(
+                (n) => n.id === String(dependentNode.nodeId)
+              );
+
+              if (sourceNode && targetNode) {
+                // 生成唯一的 Handle id
+                const sourceHandleId = `handle-${sourceNode.data.nodeId}-source-${handleFromPos.x}-${handleFromPos.y}`;
+                const targetHandleId = `handle-${targetNode.data.nodeId}-target-${handleToPos.x}-${handleToPos.y}`;
+
+                sourceNode.data.handles.push({
+                  type: "source",
+                  position: handleFromPos,
+                  id: sourceHandleId,
+                });
+                targetNode.data.handles.push({
+                  type: "target",
+                  position: handleToPos,
+                  id: targetHandleId,
+                });
+
+                allEdges.push({
+                  id: `e${sourceNode.data.nodeId}-${targetNode.data.nodeId}`,
+                  source: String(sourceNode.data.nodeId),
+                  target: String(targetNode.data.nodeId),
+                  sourceHandle: sourceHandleId, // 指定 source 句柄 id
+                  targetHandle: targetHandleId, // 指定 target 句柄 id
+                  type: "majorEdge",
+                  animated: true,
+                });
+              }
+            }
           });
         }
       });
@@ -91,7 +139,6 @@ const SkillTree = (props) => {
   useEffect(() => {
     if (!router.isReady) return;
 
-    console.log("router.query:", router.query);
     updateSkillTree(); // 页面加载时更新一次课程树
   }, []);
 
@@ -99,10 +146,19 @@ const SkillTree = (props) => {
   const nodeTypes = useMemo(
     () => ({
       BIGCHECK: (params: any) => (
-        <BigCheck {...params} updateSkillTree={updateSkillTree} />
+        <BigCheck
+          {...params}
+          updateSkillTree={updateSkillTree}
+          data={params.data}
+          radius={bigCheckRadius}
+        />
       ),
-      MAJOR_NODE: (params: any) => <MajorNode {...params} data={params.data} />,
-      MINOR_NODE: (params: any) => <MinorNode {...params} data={params.data} />,
+      MAJOR_NODE: (params: any) => (
+        <MajorNode {...params} data={params.data} radius={majornodeRadius} />
+      ),
+      MINOR_NODE: (params: any) => (
+        <MinorNode {...params} data={params.data} radius={minornodeRadius} />
+      ),
     }),
     [updateSkillTree]
   );
@@ -111,7 +167,7 @@ const SkillTree = (props) => {
     () => ({
       bigcheckEdge: BigCheckEdge,
       majorEdge: MajorEdge,
-      progressEdge: BigCheckEdge,
+      minorEdge: MajorEdge,
     }),
     []
   );

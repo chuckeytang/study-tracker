@@ -1,3 +1,9 @@
+import { calculateHandlePosition } from "@/tools/utils";
+import {
+  bigCheckRadius,
+  majornodeRadius,
+  minornodeRadius,
+} from "@/types/Values";
 import { Node, Edge, Position } from "reactflow";
 
 // 定义Cluster函数，接受一个bigCheckNode，返回该Cluster的nodes和edges
@@ -8,19 +14,8 @@ const Cluster = async (
   const edges: Edge[] = [];
   const visitedNodes = new Set<number>(); // 用于防止循环依赖造成的无限递归
 
-  // 计算角度对应的句柄位置
-  function getHandlePosition(angle: number): Position {
-    const normalizedAngle = ((angle % 360) + 360) % 360;
-    if (normalizedAngle >= 45 && normalizedAngle < 135) {
-      return Position.Bottom;
-    } else if (normalizedAngle >= 135 && normalizedAngle < 225) {
-      return Position.Left;
-    } else if (normalizedAngle >= 225 && normalizedAngle < 315) {
-      return Position.Top;
-    } else {
-      return Position.Right;
-    }
-  }
+  // 用于查找已存在的节点，便于更新句柄
+  const nodeMap: { [key: string]: Node } = {};
 
   // 递归获取依赖节点的函数
   const fetchDepNodes = async (
@@ -59,21 +54,74 @@ const Cluster = async (
       position = currentNode.position || { x: 0, y: 0 };
     }
 
-    // 添加当前节点到nodes数组
-    nodes.push({
+    // 初始化句柄数组
+    let handles: {
+      type: string;
+      position: { x: number; y: number };
+      id: string;
+    }[] = [];
+
+    // 如果有父节点，计算与父节点的句柄位置
+    if (parentNode && parentPos) {
+      let parentRadius = 0;
+      let selfRadius = 0;
+      if (parentNode.nodeType == "BIGCHECK") {
+        parentRadius = bigCheckRadius;
+        selfRadius = majornodeRadius;
+      } else if (parentNode.nodeType == "MAJOR_NODE") {
+        parentRadius = majornodeRadius;
+        selfRadius = minornodeRadius;
+      } else if (parentNode.nodeType == "MINOR_NODE") {
+        parentRadius = minornodeRadius;
+        selfRadius = minornodeRadius;
+      }
+      // 计算当前节点到父节点的句柄位置
+      const handleFromPos = calculateHandlePosition(
+        position,
+        parentPos,
+        selfRadius
+      );
+      const handleToPos = calculateHandlePosition(
+        parentPos,
+        position,
+        parentRadius
+      );
+
+      // 生成唯一的 Handle id
+      const sourceHandleId = `handle-${currentNode.nodeId}-source-${handleFromPos.x}-${handleFromPos.y}`;
+      const targetHandleId = `handle-${parentNode.nodeId}-target-${handleToPos.x}-${handleToPos.y}`;
+
+      // 添加当前节点的 source 句柄
+      handles.push({
+        type: "source",
+        position: handleFromPos,
+        id: sourceHandleId,
+      });
+
+      // 为父节点添加 target 句柄
+      if (nodeMap[parentNode.nodeId]) {
+        nodeMap[parentNode.nodeId].data.handles.push({
+          type: "target",
+          position: handleToPos,
+          id: targetHandleId,
+        });
+      }
+    }
+
+    // 添加当前节点到 nodes 数组，并存储在 nodeMap 中
+    const newNode = {
       id: String(currentNode.nodeId),
       type: currentNode.nodeType,
       position: position,
       data: {
         ...currentNode,
+        position,
+        handles,
       },
-      style: {
-        position: "absolute",
-        top: `${position.y}px`,
-        left: `${position.x}px`,
-        transform: `rotate(${incomingAngle}deg)`, // 旋转角度控制
-      },
-    });
+    };
+
+    nodes.push(newNode);
+    nodeMap[currentNode.nodeId] = newNode;
 
     // 获取当前节点的依赖节点
     try {

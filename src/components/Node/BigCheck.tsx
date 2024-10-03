@@ -1,36 +1,50 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import NodeForm from "@/components/Form/NodeForm";
-import { Handle, Position } from "reactflow";
+import { Handle, HandleType, Position } from "reactflow";
+import { bigCheckRadius } from "@/types/Values";
 
 interface BigCheckProps {
   id?: number;
-  name: string;
-  description: string;
+  data: any;
   courseId: number;
   level: number;
   maxLevel: number;
   unlocked: boolean;
   selected?: boolean;
   picUrl?: string;
+  radius: number;
   updateSkillTree: () => void;
 }
 
 const BigCheck: React.FC<BigCheckProps> = ({
   id,
-  name,
+  data,
   picUrl,
-  description,
   level,
   unlocked,
   maxLevel,
   selected,
+  radius = bigCheckRadius,
   updateSkillTree,
 }) => {
+  const { nodeName, nodeDescription, nodeType, handles } = data;
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [formVisible, setFormVisible] = useState(false);
   const [formType, setFormType] = useState<"create" | "edit" | null>(null);
   const [formData, setFormData] = useState<any>({}); // 存储节点表单数据
+
+  let borderColor = "border-gray-400"; // 默认锁定状态灰色
+  if (unlocked) {
+    borderColor = "border-amber-900"; // 解锁状态
+    if (level === maxLevel) {
+      borderColor = "border-green-500"; // 满级状态绿色
+    }
+  }
+
+  if (selected) {
+    borderColor = "border-blue-500"; // 选中状态蓝色
+  }
 
   // 右键菜单的触发事件
   const handleContextMenu = (event: React.MouseEvent) => {
@@ -93,37 +107,30 @@ const BigCheck: React.FC<BigCheckProps> = ({
     closeMenu();
   };
 
-  let borderColor = "border-gray-400"; // 默认锁定状态灰色
-  if (unlocked) {
-    borderColor = "border-amber-900"; // 解锁状态
-    if (level === maxLevel) {
-      borderColor = "border-green-500"; // 满级状态绿色
-    }
-  }
-
-  if (selected) {
-    borderColor = "border-blue-500"; // 选中状态蓝色
-  }
   return (
     <div
       onContextMenu={handleContextMenu}
-      className={`flex items-center justify-center w-[100px] h-[100px] bg-transparent border-8 ${borderColor} rounded-full text-gray-800 font-bold`}
+      className={`flex items-center justify-center bg-transparent  rounded-full bg-gray-500 font-bold`}
+      style={{
+        width: `${radius * 2}px`,
+        height: `${radius * 2}px`,
+      }}
     >
-      <div className="w-[70px] h-[70px] rounded-full overflow-hidden">
-        {picUrl ? (
-          <img src={picUrl} alt={name} className="w-[70px] h-[70px]" />
-        ) : (
-          <img
-            src="/images/bigcheck_default_icon.jpg"
-            alt={name}
-            className="w-[70px] h-[70px]"
+      {/* 动态添加句柄 */}
+      {handles &&
+        handles.map((handle: any, index: any) => (
+          <Handle
+            key={index}
+            type={handle.type}
+            position={Position.Left} // 必需属性，用于计算定位
+            style={{
+              top: `${handle.position.y}px`,
+              left: `${handle.position.x}px`,
+              position: "relative",
+            }}
+            id={`bigcheck-handle-${index}`}
           />
-        )}
-      </div>
-
-      {/* 添加句柄 */}
-      <Handle type="source" position={Position.Right} />
-      <Handle type="target" position={Position.Left} />
+        ))}
 
       {menuVisible && (
         <div
