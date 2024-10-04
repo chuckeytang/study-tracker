@@ -23,7 +23,11 @@ const MinorNode: React.FC<MinorNodeProps> = ({ data, radius }) => {
       {handles &&
         handles.map(
           (
-            handle: { type: HandleType; position: { x: number; y: number } },
+            handle: {
+              type: HandleType;
+              position: { x: number; y: number };
+              id: string;
+            },
             index: number
           ) => (
             <Handle
@@ -35,7 +39,7 @@ const MinorNode: React.FC<MinorNodeProps> = ({ data, radius }) => {
                 left: `${handle.position.x}px`,
                 position: "relative",
               }}
-              id={`custom-handle-${index}`}
+              id={handle.id}
             />
           )
         )}

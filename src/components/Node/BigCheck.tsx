@@ -110,7 +110,7 @@ const BigCheck: React.FC<BigCheckProps> = ({
   return (
     <div
       onContextMenu={handleContextMenu}
-      className={`flex items-center justify-center bg-transparent  rounded-full bg-gray-500 font-bold`}
+      className={`flex items-center justify-center rounded-full bg-gray-500 font-bold`}
       style={{
         width: `${radius * 2}px`,
         height: `${radius * 2}px`,
@@ -118,19 +118,28 @@ const BigCheck: React.FC<BigCheckProps> = ({
     >
       {/* 动态添加句柄 */}
       {handles &&
-        handles.map((handle: any, index: any) => (
-          <Handle
-            key={index}
-            type={handle.type}
-            position={Position.Left} // 必需属性，用于计算定位
-            style={{
-              top: `${handle.position.y}px`,
-              left: `${handle.position.x}px`,
-              position: "relative",
-            }}
-            id={`bigcheck-handle-${index}`}
-          />
-        ))}
+        handles.map(
+          (
+            handle: {
+              type: HandleType;
+              position: { x: number; y: number };
+              id: string;
+            },
+            index: any
+          ) => (
+            <Handle
+              key={index}
+              type={handle.type}
+              position={Position.Left} // 必需属性，用于计算定位
+              style={{
+                top: `${handle.position.y}px`,
+                left: `${handle.position.x}px`,
+                position: "relative",
+              }}
+              id={handle.id}
+            />
+          )
+        )}
 
       {menuVisible && (
         <div

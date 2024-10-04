@@ -25,6 +25,14 @@ const Cluster = async (
     incomingAngle: number,
     level: number
   ) => {
+    console.log(
+      "递归：currentNode-",
+      currentNode.nodeId,
+      " parentNode-",
+      parentNode != null ? parentNode.nodeId : 0,
+      " level-",
+      level
+    );
     if (visitedNodes.has(currentNode.nodeId)) {
       return; // 已访问过，避免重复处理
     }
@@ -106,6 +114,26 @@ const Cluster = async (
           id: targetHandleId,
         });
       }
+
+      // 动态设置 edgeType，依据父节点的类型
+      let edgeType = "minorEdge"; // 默认情况下为 minorEdge
+      if (parentNode.nodeType === "BIGCHECK") {
+        edgeType = "majorEdge";
+      }
+
+      if (currentNode.nodeId === 18 && parentNode.nodeId === 16) {
+        let a = 0;
+      }
+      // 添加边，连接当前节点与父节点
+      edges.push({
+        id: `e${currentNode.nodeId}-${parentNode.nodeId}`,
+        source: String(currentNode.nodeId),
+        target: String(parentNode.nodeId),
+        sourceHandle: sourceHandleId, // 指定 source 句柄 id
+        targetHandle: targetHandleId, // 指定 target 句柄 id
+        type: edgeType, // 动态设置的 edgeType
+        animated: true,
+      });
     }
 
     // 添加当前节点到 nodes 数组，并存储在 nodeMap 中
@@ -153,31 +181,22 @@ const Cluster = async (
           startAngle = 0;
         }
 
-        for (let i = 0; i < depNodes.length; i++) {
-          const depNode = depNodes[i];
-          const angle = (startAngle + i * angleBetweenEdges) % 360;
-
-          // 确定边的类型
-          let edgeType = "minorEdge";
-          if (
-            currentNode.nodeType === "BIGCHECK" &&
-            depNode.nodeType === "MAJOR_NODE"
-          ) {
-            edgeType = "majorEdge";
-          }
-
-          // 添加边，从当前节点指向依赖节点
-          edges.push({
-            id: `e${currentNode.nodeId}-${depNode.nodeId}`,
-            source: String(currentNode.nodeId),
-            target: String(depNode.nodeId),
-            type: edgeType,
-            animated: true,
-          });
-
-          // 递归处理依赖节点
-          await fetchDepNodes(depNode, currentNode, position, angle, level + 1);
-        }
+        // 等待所有依赖节点异步处理完成
+        await Promise.all(
+          depNodes.map(async (depNode: any, i: any) => {
+            const angle = (startAngle + i * angleBetweenEdges) % 360;
+            // 递归处理每个依赖节点，确保依赖节点处理完成后才进行下一次递归
+            if (depNode.nodeType != "BIGCHECK") {
+              await fetchDepNodes(
+                depNode,
+                currentNode,
+                position,
+                angle,
+                level + 1
+              );
+            }
+          })
+        );
       }
     } catch (error) {
       console.error("Error fetching dependent nodes:", error);
