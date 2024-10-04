@@ -33,11 +33,15 @@ export default async function handler(
           OR: [
             {
               nodeType: NodeType.MAJOR_NODE,
-              unlockDepNodes: { some: { nodeType: NodeType.BIGCHECK } },
+              unlockDependenciesTo: {
+                some: { fromNode: { nodeType: NodeType.BIGCHECK } }, // MajorNode 依赖于 BigCheck
+              },
             },
             {
               nodeType: NodeType.MINOR_NODE,
-              unlockDepNodes: { some: { nodeType: NodeType.MAJOR_NODE } },
+              unlockDependenciesTo: {
+                some: { fromNode: { nodeType: NodeType.MAJOR_NODE } }, // MinorNode 依赖于 MajorNode
+              },
             },
           ],
         },
@@ -60,20 +64,20 @@ export default async function handler(
           OR: [
             {
               nodeType: NodeType.MAJOR_NODE,
-              unlockDepNodes: {
-                some: {
-                  nodeType: NodeType.BIGCHECK, // MajorNode必须已经配置了BigCheck依赖
-                },
+              unlockDependenciesTo: {
+                some: { fromNode: { nodeType: NodeType.BIGCHECK } }, // MajorNode必须已经配置了 BigCheck 依赖
               },
             },
             {
               nodeType: NodeType.MINOR_NODE,
-              unlockDepNodes: {
+              unlockDependenciesTo: {
                 some: {
-                  OR: [
-                    { nodeType: NodeType.MAJOR_NODE }, // MinorNode依赖于MajorNode
-                    { nodeType: NodeType.MINOR_NODE }, // MinorNode依赖于其他MinorNode
-                  ],
+                  fromNode: {
+                    OR: [
+                      { nodeType: NodeType.MAJOR_NODE }, // MinorNode 依赖于 MajorNode
+                      { nodeType: NodeType.MINOR_NODE }, // MinorNode 依赖于其他 MinorNode
+                    ],
+                  },
                 },
               },
             },

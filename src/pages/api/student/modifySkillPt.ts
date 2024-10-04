@@ -20,8 +20,16 @@ export default async function handler(
     const node = await prisma.node.findUnique({
       where: { id: Number(nodeId) },
       include: {
-        unlockDepNodes: true,
-        lockDepNodes: true,
+        unlockDependenciesFrom: {
+          include: {
+            toNode: true, // 查询解锁依赖的目标节点
+          },
+        },
+        lockDependenciesFrom: {
+          include: {
+            toNode: true, // 查询锁住依赖的目标节点
+          },
+        },
       },
     });
 
@@ -50,12 +58,11 @@ export default async function handler(
       return res.status(400).json({ error: "Node is not unlocked" });
     }
 
-    const lockDependencyCount = node.lockDepNodes.filter(
-      (depNode) => depNode.id === nodeId
-    ).length;
+    // 通过 lockDependenciesFrom 判断节点是否被锁住
+    const lockDependencyCount = node.lockDependenciesFrom.length;
     const isLocked =
       node.lockDepNodeCount === -1
-        ? lockDependencyCount === node.lockDepNodes.length
+        ? lockDependencyCount === node.lockDependenciesFrom.length
         : lockDependencyCount >= (node.lockDepNodeCount || 0);
 
     if (isLocked) {
@@ -89,11 +96,9 @@ export default async function handler(
     } else if (addOrMinus === "minus") {
       // 减少技能点，不能低于 0
       if (currentLevel <= 0) {
-        return res
-          .status(400)
-          .json({
-            error: "Cannot reduce skill points. Level is already at 0.",
-          });
+        return res.status(400).json({
+          error: "Cannot reduce skill points. Level is already at 0.",
+        });
       }
       // 更新技能点
       await prisma.courseProgress.update({

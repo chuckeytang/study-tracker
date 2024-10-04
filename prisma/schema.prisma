@@ -44,6 +44,7 @@ model Node {
   courseId         Int
   course           Course           @relation(fields: [courseId], references: [id])
   maxLevel         Int              // 最大等级
+  iconUrl          String?
 
   // 解锁和锁住依赖节点的数量字段放在 Node 表中
   unlockDepNodeCount Int?            // 解锁依赖的节点中需要解锁的最小节点数，若为-1或者null则所有依赖节点都需解锁

@@ -1,4 +1,3 @@
-// 获取某个课程的课程树结构
 import { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
 
@@ -24,12 +23,20 @@ export default async function handler(
       return res.status(404).json({ error: "Course not found" });
     }
 
-    // 获取课程的所有节点信息
+    // 获取课程的所有节点信息，并通过 UnlockDependency 和 LockDependency 查询解锁和锁住的依赖关系
     const nodes = await prisma.node.findMany({
       where: { courseId: Number(courseId) },
       include: {
-        unlockDepNodes: true,
-        lockDepNodes: true,
+        unlockDependenciesFrom: {
+          include: {
+            toNode: true, // 获取依赖的目标节点信息
+          },
+        },
+        lockDependenciesFrom: {
+          include: {
+            toNode: true, // 获取依赖的目标节点信息
+          },
+        },
       },
     });
 
@@ -40,16 +47,17 @@ export default async function handler(
       nodeType: node.nodeType,
       courseId: node.courseId,
       maxLevel: node.maxLevel,
-      unlockDepNodes: node.unlockDepNodes.map((unlockNode) => ({
-        id: unlockNode.id,
-        name: unlockNode.name,
-        nodeType: unlockNode.nodeType,
+      iconUrl: node.iconUrl,
+      unlockDepNodes: node.unlockDependenciesFrom.map((dep) => ({
+        id: dep.toNode.id,
+        name: dep.toNode.name,
+        nodeType: dep.toNode.nodeType,
       })),
       unlockDepNodeCount: node.unlockDepNodeCount,
-      lockDepNodes: node.lockDepNodes.map((lockNode) => ({
-        id: lockNode.id,
-        name: lockNode.name,
-        nodeType: lockNode.nodeType,
+      lockDepNodes: node.lockDependenciesFrom.map((dep) => ({
+        id: dep.toNode.id,
+        name: dep.toNode.name,
+        nodeType: dep.toNode.nodeType,
       })),
       lockDepNodeCount: node.lockDepNodeCount,
     }));
@@ -60,7 +68,6 @@ export default async function handler(
         id: course.id,
         name: course.name,
         description: course.description,
-        teacherId: course.teacherId,
         createdAt: course.createdAt,
         updatedAt: course.updatedAt,
       },

@@ -17,6 +17,7 @@ export default async function handler(
     nodeType,
     courseId,
     maxLevel,
+    iconUrl,
     unlockDepNodes,
     unlockDepNodeCount,
     lockDepNodes,
@@ -43,41 +44,29 @@ export default async function handler(
         nodeType: nodeType as NodeType,
         courseId: Number(courseId),
         maxLevel: Number(maxLevel),
+        iconUrl: iconUrl || "", // 默认空字符串
         unlockDepNodeCount: computedUnlockDepNodeCount,
         lockDepNodeCount: computedLockDepNodeCount,
-        unlockConnectingNodes: {
-          connect: unlockDepNodes
-            ? unlockDepNodes.map((id: number) => ({ id }))
-            : [],
-        },
-        lockConnectingNodes: {
-          connect: lockDepNodes
-            ? lockDepNodes.map((id: number) => ({ id }))
-            : [],
-        },
       },
     });
 
-    // 更新解锁依赖节点和锁住依赖节点
+    // 更新解锁依赖节点关系
     if (unlockDepNodes && unlockDepNodes.length > 0) {
-      await prisma.node.update({
-        where: { id: createdNode.id },
-        data: {
-          unlockDepNodes: {
-            connect: unlockDepNodes.map((id: number) => ({ id })),
-          },
-        },
+      await prisma.unlockDependency.createMany({
+        data: unlockDepNodes.map((depNodeId: number) => ({
+          fromNodeId: createdNode.id,
+          toNodeId: depNodeId,
+        })),
       });
     }
 
+    // 更新锁住依赖节点关系
     if (lockDepNodes && lockDepNodes.length > 0) {
-      await prisma.node.update({
-        where: { id: createdNode.id },
-        data: {
-          lockDepNodes: {
-            connect: lockDepNodes.map((id: number) => ({ id })),
-          },
-        },
+      await prisma.lockDependency.createMany({
+        data: lockDepNodes.map((depNodeId: number) => ({
+          fromNodeId: createdNode.id,
+          toNodeId: depNodeId,
+        })),
       });
     }
 

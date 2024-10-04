@@ -17,7 +17,7 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     // 手动运行 multer 中间件以处理文件上传
     await runMiddleware(req, res, upload.single("icon"));
 
-    const { id, name, description, teacherId } = req.body;
+    const { id, name, description } = req.body; // 移除 teacherId
     const file = req.file;
 
     let iconUrl;
@@ -33,7 +33,6 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       data: {
         name,
         description,
-        teacherId: Number(teacherId),
         ...(iconUrl && { iconUrl }), // 如果有上传文件，更新iconUrl
       },
     });
@@ -48,15 +47,12 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
 export default router.handler({
   onError: (err: unknown, req, res) => {
     if (err instanceof AppError) {
-      // 自定义错误，带有状态码
       console.error(err.stack);
       res.status(err.statusCode).end(err.message);
     } else if (err instanceof Error) {
-      // 标准的Error对象，使用500
       console.error(err.stack);
       res.status(500).end("An unexpected error occurred");
     } else {
-      // 处理其他类型的未知错误
       res.status(500).end("An unexpected error occurred");
     }
   },

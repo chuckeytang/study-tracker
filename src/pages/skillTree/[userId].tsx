@@ -5,6 +5,7 @@ import WidgetButton from "@/components/Widget/WidgetButton";
 import WidgetSelect from "@/components/Widget/WidgetSelect";
 import { useRouter } from "next/router";
 import Cluster from "@/components/Node/Cluster"; // 导入Cluster组件
+import NodeForm from "@/components/Form/NodeForm";
 
 // 定义节点类型
 import BigCheck from "@/components/Node/BigCheck";
@@ -26,9 +27,16 @@ const options = [
   { label: "Cycling", icon: null },
 ];
 
-const SkillTree = (props) => {
+const SkillTree = (props: any) => {
+  props;
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [selectedNode, setSelectedNode] = useState<any>(null); // 当前选中的节点
+  const [formVisible, setFormVisible] = useState(false);
+  const [formType, setFormType] = useState<"create" | "edit" | null>(null);
+  const [formData, setFormData] = useState<any>({}); // 用于存储表单数据
 
   const router = useRouter();
   const { courseId } = router.query;
@@ -151,6 +159,7 @@ const SkillTree = (props) => {
           updateSkillTree={updateSkillTree}
           data={params.data}
           radius={bigCheckRadius}
+          onContextMenu={handleNodeContextMenu}
         />
       ),
       MAJOR_NODE: (params: any) => (
@@ -171,6 +180,40 @@ const SkillTree = (props) => {
     }),
     []
   );
+
+  // 右键点击处理，显示菜单
+  const handleNodeContextMenu = (event: React.MouseEvent, nodeData: any) => {
+    event.preventDefault();
+    setMenuPosition({ x: event.pageX, y: event.pageY });
+    setSelectedNode(nodeData); // 选中当前节点的数据
+    setMenuVisible(true); // 显示菜单
+  };
+
+  // 处理创建新节点
+  const handleCreateNode = () => {
+    setFormType("create");
+    setFormData({}); // 清空表单数据
+    setFormVisible(true);
+    setMenuVisible(false); // 隐藏菜单
+  };
+
+  // 处理编辑节点
+  const handleEditNode = () => {
+    setFormType("edit");
+    setFormData(selectedNode); // 填充当前节点数据
+    setFormVisible(true);
+    setMenuVisible(false); // 隐藏菜单
+  };
+
+  // 提交表单后的处理
+  const handleFormSubmit = (nodeData: any) => {
+    if (formType === "create") {
+      console.log("Creating new node with data:", nodeData);
+    } else if (formType === "edit") {
+      console.log("Editing node with data:", nodeData);
+    }
+    setFormVisible(false); // 关闭表单
+  };
 
   return (
     <div className="flex items-center justify-center bg-[url('/images/bg.jpg')] h-screen w-screen bg-cover">
@@ -205,6 +248,47 @@ const SkillTree = (props) => {
             style={{ background: "#000000" }}
           />
         </ReactFlowProvider>
+
+        {/* 菜单 */}
+        {menuVisible && (
+          <div
+            className="absolute bg-white shadow-lg p-2 rounded-lg z-50"
+            style={{ top: menuPosition.y, left: menuPosition.x }}
+          >
+            <ul>
+              <li className="p-2 hover:bg-gray-200" onClick={handleCreateNode}>
+                Create New Dependent Node
+              </li>
+              <li className="p-2 hover:bg-gray-200" onClick={handleEditNode}>
+                Edit Node
+              </li>
+              <li
+                className="p-2 hover:bg-gray-200"
+                onClick={() => console.log("Delete Node")}
+              >
+                Delete Node
+              </li>
+            </ul>
+          </div>
+        )}
+
+        {/* 表单 */}
+        {formVisible && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="relative">
+              <NodeForm
+                onSubmit={handleFormSubmit}
+                defaultValue={formType === "edit" ? formData : {}}
+              />
+              <button
+                onClick={() => setFormVisible(false)}
+                className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

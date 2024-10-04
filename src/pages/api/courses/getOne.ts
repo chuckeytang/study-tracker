@@ -16,7 +16,6 @@ export default async function handler(
         id: Number(id),
       },
       include: {
-        teacher: true, // 可以根据需要加入相关联数据的查询，例如教师信息
         nodes: true, // 如果需要，可以包含与节点的关系
       },
     });
