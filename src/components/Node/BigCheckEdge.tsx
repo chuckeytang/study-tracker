@@ -1,4 +1,5 @@
 // ProgressEdge.tsx
+import { handlerRadius } from "@/types/Values";
 import React from "react";
 import { EdgeProps, getStraightPath } from "reactflow";
 
@@ -11,11 +12,16 @@ const BigCheckEdge = ({
   data,
   markerEnd,
 }: EdgeProps) => {
+  const adjustedSourceX = sourceX + handlerRadius;
+  const adjustedSourceY = sourceY + handlerRadius;
+  const adjustedTargetX = targetX + handlerRadius;
+  const adjustedTargetY = targetY + handlerRadius;
+
   const [edgePath] = getStraightPath({
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
+    sourceX: adjustedSourceX,
+    sourceY: adjustedSourceY,
+    targetX: adjustedTargetX,
+    targetY: adjustedTargetY,
   });
 
   const progress = data?.progress || 0;

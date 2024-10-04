@@ -1,8 +1,9 @@
 // MajorEdge.tsx
+import { handlerRadius } from "@/types/Values";
 import React from "react";
 import { EdgeProps, getStraightPath } from "reactflow";
 
-const BigCheckEdge = ({
+const MajorEdge = ({
   id,
   sourceX,
   sourceY,
@@ -11,11 +12,16 @@ const BigCheckEdge = ({
   style = {},
   markerEnd,
 }: EdgeProps) => {
+  const adjustedSourceX = sourceX + handlerRadius;
+  const adjustedSourceY = sourceY;
+  const adjustedTargetX = targetX + handlerRadius;
+  const adjustedTargetY = targetY;
+
   const [edgePath] = getStraightPath({
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
+    sourceX: adjustedSourceX,
+    sourceY: adjustedSourceY,
+    targetX: adjustedTargetX,
+    targetY: adjustedTargetY,
   });
 
   return (
@@ -29,4 +35,4 @@ const BigCheckEdge = ({
   );
 };
 
-export default BigCheckEdge;
+export default MajorEdge;

@@ -1,3 +1,4 @@
+import { handlerRadius } from "@/types/Values";
 import React from "react";
 import { Handle, HandleType, Position } from "reactflow";
 
@@ -14,6 +15,7 @@ const MajorNode: React.FC<MajorNodeProps> = ({ data, radius }) => {
       style={{
         width: `${radius * 2}px`,
         height: `${radius * 2}px`,
+        transform: "translate(-50%, -50%)", // 调整节点使其中心与 position 对齐
       }}
     >
       {name}
@@ -34,9 +36,13 @@ const MajorNode: React.FC<MajorNodeProps> = ({ data, radius }) => {
               type={handle.type} // source 或 target
               position={Position.Left} // 必需的属性，虽然由 style 控制位置
               style={{
-                top: `${handle.position.y}px`,
-                left: `${handle.position.x}px`,
-                position: "relative",
+                top: `${handle.position.y + radius}px`,
+                left: `${handle.position.x + radius}px`,
+                position: "absolute",
+                transform: "translate(-50%, -50%)", // 确保句柄中心点对齐
+                width: `${handlerRadius * 2}px`, // 统一的句柄宽度
+                height: `${handlerRadius * 2}px`, // 统一的句柄高度
+                borderRadius: "50%", // 确保句柄是圆形
               }}
               id={handle.id}
             />

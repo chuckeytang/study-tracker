@@ -121,9 +121,6 @@ const Cluster = async (
         edgeType = "majorEdge";
       }
 
-      if (currentNode.nodeId === 18 && parentNode.nodeId === 16) {
-        let a = 0;
-      }
       // 添加边，连接当前节点与父节点
       edges.push({
         id: `e${currentNode.nodeId}-${parentNode.nodeId}`,

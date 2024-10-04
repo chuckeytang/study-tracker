@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import NodeForm from "@/components/Form/NodeForm";
 import { Handle, HandleType, Position } from "reactflow";
-import { bigCheckRadius } from "@/types/Values";
+import { bigCheckRadius, handlerRadius } from "@/types/Values";
 
 interface BigCheckProps {
   id?: number;
@@ -114,6 +114,7 @@ const BigCheck: React.FC<BigCheckProps> = ({
       style={{
         width: `${radius * 2}px`,
         height: `${radius * 2}px`,
+        transform: "translate(-50%, -50%)", // 调整节点使其中心与 position 对齐
       }}
     >
       {/* 动态添加句柄 */}
@@ -132,9 +133,13 @@ const BigCheck: React.FC<BigCheckProps> = ({
               type={handle.type}
               position={Position.Left} // 必需属性，用于计算定位
               style={{
-                top: `${handle.position.y}px`,
-                left: `${handle.position.x}px`,
-                position: "relative",
+                top: `${handle.position.y + radius}px`,
+                left: `${handle.position.x + radius}px`,
+                position: "absolute",
+                transform: "translate(-50%, -50%)", // 确保句柄中心点对齐
+                width: `${handlerRadius * 2}px`, // 统一的句柄宽度
+                height: `${handlerRadius * 2}px`, // 统一的句柄高度
+                borderRadius: "50%", // 确保句柄是圆形
               }}
               id={handle.id}
             />
