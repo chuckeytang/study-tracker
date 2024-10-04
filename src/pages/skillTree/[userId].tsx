@@ -27,7 +27,7 @@ const options = [
   { label: "Cycling", icon: null },
 ];
 
-const SkillTree = (props: any) => {
+const SkillTree = (props) => {
   props;
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -257,16 +257,16 @@ const SkillTree = (props: any) => {
           >
             <ul>
               <li className="p-2 hover:bg-gray-200" onClick={handleCreateNode}>
-                Create New Dependent Node
+                Create New Sub Course
               </li>
               <li className="p-2 hover:bg-gray-200" onClick={handleEditNode}>
-                Edit Node
+                Edit This Course
               </li>
               <li
                 className="p-2 hover:bg-gray-200"
                 onClick={() => console.log("Delete Node")}
               >
-                Delete Node
+                Delete This Course
               </li>
             </ul>
           </div>
@@ -275,10 +275,11 @@ const SkillTree = (props: any) => {
         {/* 表单 */}
         {formVisible && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="relative">
+            <div className="relative w-1/2">
               <NodeForm
                 onSubmit={handleFormSubmit}
                 defaultValue={formType === "edit" ? formData : {}}
+                nodeId={selectedNode?.nodeId}
               />
               <button
                 onClick={() => setFormVisible(false)}
