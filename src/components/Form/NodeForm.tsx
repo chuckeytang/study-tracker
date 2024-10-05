@@ -5,19 +5,19 @@ const NodeForm: React.FC<{
   defaultValue?: any;
   nodeId: number;
 }> = ({ onSubmit, defaultValue = {}, nodeId }) => {
-  const [name, setName] = useState(defaultValue.name || "");
+  const [name, setName] = useState(defaultValue.nodeName || "");
   const [description, setDescription] = useState(
-    defaultValue.description || ""
+    defaultValue.nodeDescription || ""
   );
   const [nodeType, setNodeType] = useState(defaultValue.nodeType || "BIGCHECK");
   const [maxLevel, setMaxLevel] = useState(defaultValue.maxLevel || 1);
-  const [iconUrl, setIconUrl] = useState(defaultValue.iconUrl || "");
   const [unlockDepNodeCount, setUnlockDepNodeCount] = useState(
     defaultValue.unlockDepNodeCount || null
   );
   const [lockDepNodeCount, setLockDepNodeCount] = useState(
     defaultValue.lockDepNodeCount || null
   );
+  const [iconFile, setIconFile] = useState<File | null>(null);
 
   const [unlockDepNodes, setUnlockDepNodes] = useState([]); // 解锁依赖节点列表
   const [selectedUnlockNodes, setSelectedUnlockNodes] = useState<string[]>([]); // 解锁依赖节点选择
@@ -52,11 +52,12 @@ const NodeForm: React.FC<{
   // 提交表单
   const handleSubmit = () => {
     const nodeData = {
+      nodeId,
       name,
       description,
       nodeType,
       maxLevel,
-      iconUrl,
+      iconFile,
       unlockDepNodeCount,
       lockDepNodeCount,
       selectedUnlockNodes,
@@ -64,85 +65,109 @@ const NodeForm: React.FC<{
     };
     onSubmit(nodeData);
   };
-
   return (
     <div className="p-4 bg-white shadow-lg rounded-lg flex flex-col">
-      <h2 className="text-lg font-bold mb-2">Node Form</h2>
+      <h2 className="text-lg font-bold mb-4">Node Form</h2>
+
       {/* 基本信息输入 */}
-      <input
-        type="text"
-        placeholder="Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="mb-2 p-2 border border-gray-300 rounded"
-      />
-      <input
-        type="text"
-        placeholder="Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        className="mb-2 p-2 border border-gray-300 rounded"
-      />
-      <input
-        type="number"
-        placeholder="Max Level"
-        value={maxLevel}
-        onChange={(e) => setMaxLevel(Number(e.target.value))}
-        className="mb-2 p-2 border border-gray-300 rounded"
-      />
-      <input
-        type="text"
-        placeholder="Icon URL"
-        value={iconUrl}
-        onChange={(e) => setIconUrl(e.target.value)}
-        className="mb-2 p-2 border border-gray-300 rounded"
-      />
+      <div className="flex items-center mb-2">
+        <label className="w-1/3 font-semibold">Name:</label>
+        <input
+          type="text"
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="p-2 border border-gray-300 rounded w-2/3"
+        />
+      </div>
+
+      <div className="flex items-center mb-2">
+        <label className="w-1/3 font-semibold">Description:</label>
+        <input
+          type="text"
+          placeholder="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="p-2 border border-gray-300 rounded w-2/3"
+        />
+      </div>
+
+      <div className="flex items-center mb-2">
+        <label className="w-1/3 font-semibold">Max Level:</label>
+        <input
+          type="number"
+          placeholder="Max Level"
+          value={maxLevel}
+          onChange={(e) => setMaxLevel(Number(e.target.value))}
+          className="p-2 border border-gray-300 rounded w-2/3"
+        />
+      </div>
+
+      <div className="flex items-center mb-2">
+        <label className="w-1/3 font-semibold">Icon:</label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            if (e.target.files) {
+              setIconFile(e.target.files[0]); // 设置选择的图片文件
+            }
+          }}
+          className="p-2 border border-gray-300 rounded w-2/3"
+        />
+      </div>
 
       {/* 解锁依赖节点选择 */}
-      <h3 className="text-md font-semibold mb-2">Select Dependent Courses</h3>
-      <select
-        multiple
-        className="mb-2 p-2 border border-gray-300 rounded w-full"
-        value={selectedUnlockNodes}
-        onChange={(e) =>
-          setSelectedUnlockNodes(
-            Array.from(e.target.selectedOptions, (option) => option.value)
-          )
-        }
-      >
-        {unlockDepNodes.map((node: any) => (
-          <option key={node.id} value={node.id}>
-            {node.name}
-          </option>
-        ))}
-      </select>
+      <div className="flex items-center mb-2">
+        <label className="w-1/3 font-semibold">Unlock Dependencies:</label>
+        <select
+          multiple
+          className="p-2 border border-gray-300 rounded w-2/3"
+          value={selectedUnlockNodes}
+          onChange={(e) =>
+            setSelectedUnlockNodes(
+              Array.from(e.target.selectedOptions, (option) => option.value)
+            )
+          }
+        >
+          {unlockDepNodes.map((node: any) => (
+            <option key={node.id} value={node.id}>
+              {node.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {/* 锁定依赖节点选择 */}
-      <h3 className="text-md font-semibold mb-2">Select Lock Dependencies</h3>
-      <select
-        multiple
-        className="mb-2 p-2 border border-gray-300 rounded w-full"
-        value={selectedLockNodes}
-        onChange={(e) =>
-          setSelectedLockNodes(
-            Array.from(e.target.selectedOptions, (option) => option.value)
-          )
-        }
-      >
-        {lockDepNodes.map((node: any) => (
-          <option key={node.id} value={node.id}>
-            {node.name}
-          </option>
-        ))}
-      </select>
+      <div className="flex items-center mb-2">
+        <label className="w-1/3 font-semibold">Lock Dependencies:</label>
+        <select
+          multiple
+          className="p-2 border border-gray-300 rounded w-2/3"
+          value={selectedLockNodes}
+          onChange={(e) =>
+            setSelectedLockNodes(
+              Array.from(e.target.selectedOptions, (option) => option.value)
+            )
+          }
+        >
+          {lockDepNodes.map((node: any) => (
+            <option key={node.id} value={node.id}>
+              {node.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {/* 提交按钮 */}
-      <button
-        onClick={handleSubmit}
-        className="bg-blue-500 text-white p-2 rounded mt-4"
-      >
-        Submit
-      </button>
+      <div className="flex justify-end mt-4">
+        <button
+          onClick={handleSubmit}
+          className="bg-blue-500 text-white p-2 rounded"
+        >
+          Submit
+        </button>
+      </div>
     </div>
   );
 };

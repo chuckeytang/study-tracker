@@ -25,14 +25,6 @@ const Cluster = async (
     incomingAngle: number,
     level: number
   ) => {
-    console.log(
-      "递归：currentNode-",
-      currentNode.nodeId,
-      " parentNode-",
-      parentNode != null ? parentNode.nodeId : 0,
-      " level-",
-      level
-    );
     if (visitedNodes.has(currentNode.nodeId)) {
       return; // 已访问过，避免重复处理
     }

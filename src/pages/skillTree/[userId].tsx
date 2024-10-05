@@ -206,13 +206,54 @@ const SkillTree = (props) => {
   };
 
   // 提交表单后的处理
-  const handleFormSubmit = (nodeData: any) => {
-    if (formType === "create") {
-      console.log("Creating new node with data:", nodeData);
-    } else if (formType === "edit") {
-      console.log("Editing node with data:", nodeData);
+  const handleFormSubmit = async (nodeData: any) => {
+    const formData = new FormData();
+
+    // 添加基础字段
+    formData.append("id", nodeData.nodeId);
+    formData.append("name", nodeData.name);
+    formData.append("description", nodeData.description);
+    formData.append("nodeType", nodeData.nodeType);
+    if (typeof courseId === "string") {
+      formData.append("courseId", courseId);
+    } else {
+      console.error("courseId is undefined or not a string");
     }
-    setFormVisible(false); // 关闭表单
+    formData.append("maxLevel", nodeData.maxLevel.toString());
+    formData.append("unlockDepNodeCount", nodeData.unlockDepNodeCount || 0);
+    formData.append("lockDepNodeCount", nodeData.lockDepNodeCount || 0);
+
+    // 添加解锁和锁定依赖的节点数组
+    formData.append(
+      "unlockDepNodes",
+      JSON.stringify(nodeData.selectedUnlockNodes)
+    );
+    formData.append("lockDepNodes", JSON.stringify(nodeData.selectedLockNodes));
+
+    // 添加图标文件（如果有）
+    if (nodeData.iconFile) {
+      formData.append("icon", nodeData.iconFile);
+    }
+
+    try {
+      // 调用后端接口进行更新
+      const response = await fetch("/api/teacher/updateNode", {
+        method: "PUT",
+        body: formData, // 使用 FormData 格式提交
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update node: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log("Node updated successfully:", result);
+
+      // 关闭表单并刷新视图（或执行其他后续操作）
+      setFormVisible(false);
+    } catch (error) {
+      console.error("Error updating node:", error);
+    }
   };
 
   return (
