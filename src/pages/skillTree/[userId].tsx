@@ -450,7 +450,7 @@ const SkillTree = (props) => {
               <NodeForm
                 onSubmit={handleFormSubmit}
                 formType={formType}
-                defaultValue={formType === "edit" ? formData : {}}
+                defaultValue={formData}
                 nodeId={formType === "edit" ? selectedNode?.nodeId : null} // 编辑时传 nodeId
                 parentNodeId={
                   formType === "create" && selectedNode

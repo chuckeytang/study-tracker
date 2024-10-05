@@ -7,17 +7,55 @@ const prisma = new PrismaClient();
 // 创建 API 路由
 const router = createRouter<NextApiRequest, NextApiResponse>();
 
-// DELETE 请求处理逻辑，删除节点依赖关系
+// 递归删除节点及其子节点依赖关系
+async function deleteNodeRecursively(nodeId: number) {
+  // 1. 获取所有依赖当前节点的子节点（通过 fromNodeId）
+  const childNodes = await prisma.node.findMany({
+    where: {
+      OR: [
+        { unlockDependenciesTo: { some: { fromNodeId: nodeId } } },
+        { lockDependenciesTo: { some: { fromNodeId: nodeId } } },
+      ],
+    },
+    select: { id: true, nodeType: true }, // 只选择 id 字段
+  });
+
+  // 2. 递归删除所有子节点，排除BIGCHECK节点
+  for (const childNode of childNodes) {
+    if (childNode.nodeType === "BIGCHECK") {
+      continue;
+    }
+    await deleteNodeRecursively(childNode.id);
+  }
+
+  // 3. 删除与此节点相关的所有 UnlockDependency 和 LockDependency 记录
+  await prisma.unlockDependency.deleteMany({
+    where: {
+      OR: [{ fromNodeId: nodeId }, { toNodeId: nodeId }],
+    },
+  });
+
+  await prisma.lockDependency.deleteMany({
+    where: {
+      OR: [{ fromNodeId: nodeId }, { toNodeId: nodeId }],
+    },
+  });
+
+  // 4. 删除当前节点
+  await prisma.node.delete({
+    where: { id: nodeId },
+  });
+}
+
+// DELETE 请求处理逻辑
 router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
   const { userId, nodeId } = req.body;
 
   try {
-    // 1. 验证用户的角色是否为 TEACHER
+    // 1. 验证用户角色是否为 TEACHER
     const user = await prisma.user.findUnique({
       where: { id: Number(userId) },
-      select: {
-        role: true,
-      },
+      select: { role: true },
     });
 
     if (!user) {
@@ -30,14 +68,14 @@ router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
     //     .json({ error: "Only teachers can delete node dependencies." });
     // }
 
-    // 2. 验证该节点是否属于当前用户的课程
+    // 2. 验证节点是否属于该用户的课程
     const node = await prisma.node.findUnique({
       where: { id: Number(nodeId) },
       include: {
         course: {
           include: {
             enrolledUsers: {
-              where: { userId: Number(userId) }, // 验证该课程是否与用户相关联
+              where: { userId: Number(userId) },
             },
           },
         },
@@ -48,7 +86,6 @@ router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(404).json({ error: "Node not found" });
     }
 
-    // 检查该课程是否与用户相关联
     const isTeacherOfCourse = node.course.enrolledUsers.some(
       (user) => user.userId === Number(userId)
     );
@@ -60,33 +97,12 @@ router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
       });
     }
 
-    // 3. 删除 UnlockDependency 中的所有依赖关系
-    const deletedUnlockDependencies = await prisma.unlockDependency.deleteMany({
-      where: {
-        toNodeId: Number(nodeId),
-      },
-    });
-
-    // 4. 删除 LockDependency 中的所有依赖关系
-    const deletedLockDependencies = await prisma.lockDependency.deleteMany({
-      where: {
-        toNodeId: Number(nodeId),
-      },
-    });
-
-    // 如果没有删除到任何依赖关系，返回相应的消息
-    if (
-      deletedUnlockDependencies.count === 0 &&
-      deletedLockDependencies.count === 0
-    ) {
-      return res
-        .status(404)
-        .json({ error: "No dependencies found for this node." });
-    }
+    // 3. 递归删除节点及其所有子节点
+    await deleteNodeRecursively(Number(nodeId));
 
     res.status(200).json({
       success: true,
-      message: "Node dependencies deleted successfully",
+      message: "Node and its dependencies deleted successfully",
     });
   } catch (error) {
     console.error("Error deleting node dependencies:", error);
