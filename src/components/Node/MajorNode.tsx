@@ -5,12 +5,18 @@ import { Handle, HandleType, Position } from "reactflow";
 interface MajorNodeProps {
   data: any;
   radius: number;
+  onContextMenu: (event: React.MouseEvent, nodeData: any) => void;
 }
 
-const MajorNode: React.FC<MajorNodeProps> = ({ data, radius }) => {
+const MajorNode: React.FC<MajorNodeProps> = ({
+  data,
+  radius,
+  onContextMenu,
+}) => {
   const { name, handles } = data;
   return (
     <div
+      onContextMenu={(event) => onContextMenu(event, data)}
       className={`flex items-center justify-center bg-red-500 rounded-full text-white font-semibold`}
       style={{
         width: `${radius * 2}px`,

@@ -67,30 +67,50 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
 
     // 更新解锁依赖节点关系
     if (unlockDepNodes && unlockDepNodes.length > 0) {
-      // 先删除旧的依赖关系，再创建新的
-      await prisma.unlockDependency.deleteMany({
-        where: { fromNodeId: updatedNode.id },
-      });
-      await prisma.unlockDependency.createMany({
-        data: unlockDepNodes.map((depNodeId: number) => ({
-          fromNodeId: updatedNode.id,
-          toNodeId: depNodeId,
-        })),
-      });
+      for (const depNodeId of unlockDepNodes) {
+        try {
+          // 尝试创建依赖关系，如果已经存在则跳过
+          await prisma.unlockDependency.create({
+            data: {
+              fromNodeId: updatedNode.id,
+              toNodeId: Number(depNodeId),
+            },
+          });
+        } catch (error: any) {
+          // 如果是违反唯一约束的错误，意味着依赖关系已经存在，跳过该错误
+          if (error.code === "P2002") {
+            console.log(
+              `Unlock dependency from node ${updatedNode.id} to ${depNodeId} already exists, skipping.`
+            );
+          } else {
+            throw error; // 处理其他类型的错误
+          }
+        }
+      }
     }
 
     // 更新锁住依赖节点关系
     if (lockDepNodes && lockDepNodes.length > 0) {
-      // 先删除旧的依赖关系，再创建新的
-      await prisma.lockDependency.deleteMany({
-        where: { fromNodeId: updatedNode.id },
-      });
-      await prisma.lockDependency.createMany({
-        data: lockDepNodes.map((depNodeId: number) => ({
-          fromNodeId: updatedNode.id,
-          toNodeId: depNodeId,
-        })),
-      });
+      for (const depNodeId of lockDepNodes) {
+        try {
+          // 尝试创建依赖关系，如果已经存在则跳过
+          await prisma.lockDependency.create({
+            data: {
+              fromNodeId: updatedNode.id,
+              toNodeId: Number(depNodeId),
+            },
+          });
+        } catch (error: any) {
+          // 如果是违反唯一约束的错误，意味着依赖关系已经存在，跳过该错误
+          if (error.code === "P2002") {
+            console.log(
+              `Lock dependency from node ${updatedNode.id} to ${depNodeId} already exists, skipping.`
+            );
+          } else {
+            throw error; // 处理其他类型的错误
+          }
+        }
+      }
     }
 
     res.status(200).json({ data: updatedNode });

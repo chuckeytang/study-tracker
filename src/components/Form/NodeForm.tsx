@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 
 const NodeForm: React.FC<{
-  onSubmit: (data: any) => void;
+  onSubmit: (formType: "create" | "edit" | null, data: any) => void;
+  formType: "create" | "edit" | null;
   defaultValue?: any;
   nodeId: number;
-}> = ({ onSubmit, defaultValue = {}, nodeId }) => {
+}> = ({ formType, onSubmit, defaultValue = {}, nodeId }) => {
   const [name, setName] = useState(defaultValue.nodeName || "");
   const [description, setDescription] = useState(
     defaultValue.nodeDescription || ""
@@ -63,7 +64,7 @@ const NodeForm: React.FC<{
       selectedUnlockNodes,
       selectedLockNodes,
     };
-    onSubmit(nodeData);
+    onSubmit(formType, nodeData);
   };
   return (
     <div className="p-4 bg-white shadow-lg rounded-lg flex flex-col">

@@ -26,62 +26,55 @@ export default async function handler(
 
     let availableNodes: any = [];
 
-    // 规则1: BigCheck类型节点
+    // 规则 1: BigCheck 类型节点
     if (currentNode.nodeType === NodeType.BIGCHECK) {
       availableNodes = await prisma.node.findMany({
         where: {
-          OR: [
-            {
-              nodeType: NodeType.MAJOR_NODE,
-              unlockDependenciesTo: {
-                some: { fromNode: { nodeType: NodeType.BIGCHECK } }, // MajorNode 依赖于 BigCheck
-              },
+          nodeType: NodeType.MAJOR_NODE,
+          // 排除已经依赖于其他 BigCheck 的 MajorNode 节点
+          unlockDependenciesTo: {
+            none: {
+              fromNode: { nodeType: NodeType.BIGCHECK },
             },
-            {
-              nodeType: NodeType.MINOR_NODE,
-              unlockDependenciesTo: {
-                some: { fromNode: { nodeType: NodeType.MAJOR_NODE } }, // MinorNode 依赖于 MajorNode
-              },
-            },
-          ],
+          },
         },
       });
     }
 
-    // 规则2: MajorNode类型节点
+    // 规则 2: MajorNode 类型节点
     else if (currentNode.nodeType === NodeType.MAJOR_NODE) {
       availableNodes = await prisma.node.findMany({
         where: {
-          nodeType: NodeType.BIGCHECK,
+          nodeType: NodeType.MINOR_NODE,
+          // 排除已经依赖于其他 MajorNode 或 MinorNode 的 MinorNode 节点
+          unlockDependenciesTo: {
+            none: {
+              fromNode: {
+                nodeType: {
+                  in: [NodeType.MAJOR_NODE, NodeType.MINOR_NODE],
+                },
+              },
+            },
+          },
         },
       });
     }
 
-    // 规则3: MinorNode类型节点
+    // 规则 3: MinorNode 类型节点
     else if (currentNode.nodeType === NodeType.MINOR_NODE) {
       availableNodes = await prisma.node.findMany({
         where: {
-          OR: [
-            {
-              nodeType: NodeType.MAJOR_NODE,
-              unlockDependenciesTo: {
-                some: { fromNode: { nodeType: NodeType.BIGCHECK } }, // MajorNode必须已经配置了 BigCheck 依赖
-              },
-            },
-            {
-              nodeType: NodeType.MINOR_NODE,
-              unlockDependenciesTo: {
-                some: {
-                  fromNode: {
-                    OR: [
-                      { nodeType: NodeType.MAJOR_NODE }, // MinorNode 依赖于 MajorNode
-                      { nodeType: NodeType.MINOR_NODE }, // MinorNode 依赖于其他 MinorNode
-                    ],
-                  },
+          nodeType: NodeType.MINOR_NODE,
+          // 排除已经依赖于其他 MajorNode 或 MinorNode 的 MinorNode 节点
+          unlockDependenciesTo: {
+            none: {
+              fromNode: {
+                nodeType: {
+                  in: [NodeType.MAJOR_NODE, NodeType.MINOR_NODE],
                 },
               },
             },
-          ],
+          },
         },
       });
     }

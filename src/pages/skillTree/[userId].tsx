@@ -14,7 +14,10 @@ import MinorNode from "@/components/Node/MinorNode";
 import BigCheckEdge from "@/components/Node/BigCheckEdge";
 import MajorEdge from "@/components/Node/MajorEdge";
 import {
+  bigCheckBaseY,
   bigCheckRadius,
+  bigCheckSpacingX,
+  bigCheckYOffset,
   majornodeRadius,
   minornodeRadius,
 } from "@/types/Values";
@@ -28,7 +31,6 @@ const options = [
 ];
 
 const SkillTree = (props) => {
-  props;
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
@@ -39,7 +41,7 @@ const SkillTree = (props) => {
   const [formData, setFormData] = useState<any>({}); // 用于存储表单数据
 
   const router = useRouter();
-  const { courseId } = router.query;
+  const { userId, courseId } = router.query;
 
   // 更新课程树的函数
   const updateSkillTree = async () => {
@@ -52,11 +54,6 @@ const SkillTree = (props) => {
       const bigChecks = data.data;
 
       const clusters: { nodes: Node[]; edges: Edge[] }[] = [];
-
-      // 设置bigCheckNode的位置参数
-      const bigCheckSpacingX = 800; // bigCheckNode之间的X轴间距
-      const bigCheckBaseY = 0; // bigCheckNode的基础Y轴位置
-      const bigCheckYOffset = 100; // bigCheckNode之间的Y轴偏移量
 
       // 第二步：为每个bigcheck节点创建一个cluster
       for (let i = 0; i < bigChecks.length; i++) {
@@ -163,10 +160,20 @@ const SkillTree = (props) => {
         />
       ),
       MAJOR_NODE: (params: any) => (
-        <MajorNode {...params} data={params.data} radius={majornodeRadius} />
+        <MajorNode
+          {...params}
+          data={params.data}
+          radius={majornodeRadius}
+          onContextMenu={handleNodeContextMenu}
+        />
       ),
       MINOR_NODE: (params: any) => (
-        <MinorNode {...params} data={params.data} radius={minornodeRadius} />
+        <MinorNode
+          {...params}
+          data={params.data}
+          radius={minornodeRadius}
+          onContextMenu={handleNodeContextMenu}
+        />
       ),
     }),
     [updateSkillTree]
@@ -180,6 +187,23 @@ const SkillTree = (props) => {
     }),
     []
   );
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // 如果点击的是菜单以外的地方，就隐藏菜单
+      if (menuVisible) {
+        setMenuVisible(false);
+      }
+    };
+
+    // 监听整个页面的点击事件
+    document.addEventListener("click", handleClickOutside);
+
+    // 清理事件监听器
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [menuVisible]);
 
   // 右键点击处理，显示菜单
   const handleNodeContextMenu = (event: React.MouseEvent, nodeData: any) => {
@@ -205,8 +229,46 @@ const SkillTree = (props) => {
     setMenuVisible(false); // 隐藏菜单
   };
 
+  //删除node
+  const handleDeleteNode = async (nodeId: number, userId: number) => {
+    if (!window.confirm("Are you sure you want to delete this node?")) {
+      return; // 用户取消了删除操作
+    }
+
+    try {
+      // 调用后端删除节点的 API
+      const response = await fetch("/api/teacher/deleteNode", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: userId,
+          nodeId: nodeId,
+        }),
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || "Failed to delete node");
+      }
+
+      const result = await response.json();
+      console.log("Node deleted successfully:", result);
+
+      // 可以在这里更新前端的视图或做其他处理
+      alert("Node deleted successfully.");
+      // 例如，刷新页面或重载节点列表
+    } catch (error) {
+      console.error("Error deleting node:", error);
+    }
+  };
+
   // 提交表单后的处理
-  const handleFormSubmit = async (nodeData: any) => {
+  const handleFormSubmit = async (
+    formType: "create" | "edit" | null,
+    nodeData: any
+  ) => {
     const formData = new FormData();
 
     // 添加基础字段
@@ -236,9 +298,21 @@ const SkillTree = (props) => {
     }
 
     try {
-      // 调用后端接口进行更新
-      const response = await fetch("/api/teacher/updateNode", {
-        method: "PUT",
+      let url = "";
+      let method = "POST"; // 默认创建新节点
+
+      if (formType === "edit") {
+        url = `/api/teacher/updateNode?nodeId=${nodeData.nodeId}`;
+        method = "PUT"; // 更新操作
+      } else if (formType === "create") {
+        url = "/api/teacher/createNode";
+      } else {
+        throw new Error("Invalid form type");
+      }
+
+      // 调用后端接口进行创建或更新
+      const response = await fetch(url, {
+        method: method,
         body: formData, // 使用 FormData 格式提交
       });
 
@@ -258,7 +332,7 @@ const SkillTree = (props) => {
 
   return (
     <div className="flex items-center justify-center bg-[url('/images/bg.jpg')] h-screen w-screen bg-cover">
-      <div className="rounded-2xl bg-stone-200 w-full m-10 h-full flex flex-col justify-between">
+      <div className="rounded-2xl bg-stone-50 w-full m-10 h-full flex flex-col justify-between">
         {/* 左上角返回主页按钮 */}
         <div className="flex justify-start p-4">
           <WidgetButton
@@ -286,7 +360,8 @@ const SkillTree = (props) => {
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitView
-            style={{ background: "#000000" }}
+            className="bg-stone-50"
+            style={{}}
           />
         </ReactFlowProvider>
 
@@ -305,7 +380,9 @@ const SkillTree = (props) => {
               </li>
               <li
                 className="p-2 hover:bg-gray-200"
-                onClick={() => console.log("Delete Node")}
+                onClick={() =>
+                  handleDeleteNode(selectedNode?.nodeId, Number(userId))
+                }
               >
                 Delete This Course
               </li>
@@ -319,6 +396,7 @@ const SkillTree = (props) => {
             <div className="relative w-1/2">
               <NodeForm
                 onSubmit={handleFormSubmit}
+                formType={formType}
                 defaultValue={formType === "edit" ? formData : {}}
                 nodeId={selectedNode?.nodeId}
               />

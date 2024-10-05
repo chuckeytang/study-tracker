@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // 创建 API 路由
 const router = createRouter<NextApiRequest, NextApiResponse>();
 
-// DELETE 请求处理逻辑，删除节点
+// DELETE 请求处理逻辑，删除节点依赖关系
 router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
   const { userId, nodeId } = req.body;
 
@@ -25,7 +25,9 @@ router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     if (user.role !== "TEACHER") {
-      return res.status(403).json({ error: "Only teachers can delete nodes." });
+      return res
+        .status(403)
+        .json({ error: "Only teachers can delete node dependencies." });
     }
 
     // 2. 验证该节点是否属于当前用户的课程
@@ -52,33 +54,55 @@ router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
     );
 
     if (!isTeacherOfCourse) {
-      return res
-        .status(403)
-        .json({ error: "You do not have permission to delete this node." });
-    }
-
-    // 3. 检查该节点是否被任何学生使用
-    const progressRecords = await prisma.courseProgress.findMany({
-      where: { nodeId: Number(nodeId) },
-    });
-
-    if (progressRecords.length > 0) {
-      return res.status(400).json({
+      return res.status(403).json({
         error:
-          "This node cannot be deleted as it is being used in students' progress.",
+          "You do not have permission to delete dependencies for this node.",
       });
     }
 
-    // 4. 如果可以删除节点，删除该节点
-    await prisma.node.delete({
-      where: { id: Number(nodeId) },
+    // 3. 查找与该节点有关的所有 UnlockDependency 和 LockDependency 关系
+    const unlockDependencies = await prisma.unlockDependency.findMany({
+      where: {
+        toNodeId: Number(nodeId), // 该节点是解锁的目标节点
+      },
     });
 
-    res
-      .status(200)
-      .json({ success: true, message: "Node deleted successfully" });
+    const lockDependencies = await prisma.lockDependency.findMany({
+      where: {
+        toNodeId: Number(nodeId), // 该节点是锁住的目标节点
+      },
+    });
+
+    // 4. 删除 UnlockDependency 中的所有依赖关系
+    const deletedUnlockDependencies = await prisma.unlockDependency.deleteMany({
+      where: {
+        fromNodeId: Number(nodeId),
+      },
+    });
+
+    // 5. 删除 LockDependency 中的所有依赖关系
+    const deletedLockDependencies = await prisma.lockDependency.deleteMany({
+      where: {
+        fromNodeId: Number(nodeId),
+      },
+    });
+
+    // 如果没有删除到任何依赖关系，返回相应的消息
+    if (
+      deletedUnlockDependencies.count === 0 &&
+      deletedLockDependencies.count === 0
+    ) {
+      return res
+        .status(404)
+        .json({ error: "No dependencies found for this node." });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Node dependencies deleted successfully",
+    });
   } catch (error) {
-    console.error("Error deleting node:", error);
+    console.error("Error deleting node dependencies:", error);
     res.status(500).json({ error: "An unexpected error occurred" });
   }
 });

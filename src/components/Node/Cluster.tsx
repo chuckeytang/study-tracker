@@ -1,6 +1,9 @@
 import { calculateHandlePosition } from "@/tools/utils";
 import {
   bigCheckRadius,
+  clusterBaseDistance,
+  clusterDistanceDecrease,
+  clusterMinDistance,
   majornodeRadius,
   minornodeRadius,
 } from "@/types/Values";
@@ -31,9 +34,9 @@ const Cluster = async (
     visitedNodes.add(currentNode.nodeId);
 
     // 设置距离参数
-    const baseDistance = 200; // 基础距离
-    const minDistance = 100; // 最小距离
-    const distanceDecrease = 50; // 每层递减的距离
+    const baseDistance = clusterBaseDistance; // 基础距离
+    const minDistance = clusterMinDistance; // 最小距离
+    const distanceDecrease = clusterDistanceDecrease; // 每层递减的距离
 
     const distance = Math.max(
       baseDistance - (level - 1) * distanceDecrease,

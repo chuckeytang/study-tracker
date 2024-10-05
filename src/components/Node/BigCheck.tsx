@@ -52,7 +52,7 @@ const BigCheck: React.FC<BigCheckProps> = ({
         boxSizing: "border-box",
       }}
     >
-      <div className="rounded-full bg-white w-10/12 h-5/6 overflow-hidden">
+      <div className="rounded-full bg-white w-11/12 h-11/12 overflow-hidden">
         <img
           src={"/images/bigcheck_default_icon.jpg"}
           alt="big check"
