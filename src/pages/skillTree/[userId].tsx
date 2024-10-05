@@ -22,6 +22,7 @@ import {
   minornodeRadius,
 } from "@/types/Values";
 import { calculateHandlePosition } from "@/tools/utils";
+import BigCheckForm from "@/components/Form/BigCheckConnectForm";
 
 // 课程下拉菜单选项
 const options = [
@@ -39,6 +40,7 @@ const SkillTree = (props) => {
   const [formVisible, setFormVisible] = useState(false);
   const [formType, setFormType] = useState<"create" | "edit" | null>(null);
   const [formData, setFormData] = useState<any>({}); // 用于存储表单数据
+  const [bigCheckFormVisible, setBigCheckFormVisible] = useState(false);
 
   const router = useRouter();
   const { userId, courseId } = router.query;
@@ -208,9 +210,23 @@ const SkillTree = (props) => {
   // 右键点击处理，显示菜单
   const handleNodeContextMenu = (event: React.MouseEvent, nodeData: any) => {
     event.preventDefault();
+    event.stopPropagation();
     setMenuPosition({ x: event.pageX, y: event.pageY });
     setSelectedNode(nodeData); // 选中当前节点的数据
     setMenuVisible(true); // 显示菜单
+  };
+
+  // 右键点击空白区域处理
+  const handleBlankContextMenu = (event: React.MouseEvent) => {
+    event.preventDefault();
+    setMenuPosition({ x: event.pageX, y: event.pageY });
+    setSelectedNode(null); // 取消选中节点，表示点击了空白区域
+    setMenuVisible(true); // 显示空白区域的菜单
+  };
+
+  // 处理"Connect to other BigCheck"点击，弹出 BigCheckForm
+  const handleConnectToBigCheck = () => {
+    setBigCheckFormVisible(true); // 显示 BigCheckForm
   };
 
   // 处理创建新节点
@@ -331,7 +347,10 @@ const SkillTree = (props) => {
   };
 
   return (
-    <div className="flex items-center justify-center bg-[url('/images/bg.jpg')] h-screen w-screen bg-cover">
+    <div
+      className="flex items-center justify-center bg-[url('/images/bg.jpg')] h-screen w-screen bg-cover"
+      onContextMenu={handleBlankContextMenu}
+    >
       <div className="rounded-2xl bg-stone-50 w-full m-10 h-full flex flex-col justify-between">
         {/* 左上角返回主页按钮 */}
         <div className="flex justify-start p-4">
@@ -371,22 +390,42 @@ const SkillTree = (props) => {
             className="absolute bg-white shadow-lg p-2 rounded-lg z-50"
             style={{ top: menuPosition.y, left: menuPosition.x }}
           >
-            <ul>
-              <li className="p-2 hover:bg-gray-200" onClick={handleCreateNode}>
-                Create New Sub Course
-              </li>
-              <li className="p-2 hover:bg-gray-200" onClick={handleEditNode}>
-                Edit This Course
-              </li>
+            {selectedNode ? (
+              <>
+                {selectedNode.nodeType === "BIGCHECK" && (
+                  <li className="p-2" onClick={handleConnectToBigCheck}>
+                    Connect to other BigCheck
+                  </li>
+                )}
+                <li
+                  className="p-2 hover:bg-orange-400 text-gray-800"
+                  onClick={handleCreateNode}
+                >
+                  Create New Sub Course
+                </li>
+                <li
+                  className="p-2 hover:bg-orange-400 text-gray-800"
+                  onClick={handleEditNode}
+                >
+                  Edit This Course
+                </li>
+                <li
+                  className="p-2 hover:bg-orange-400 text-gray-800"
+                  onClick={() =>
+                    handleDeleteNode(selectedNode?.nodeId, Number(userId))
+                  }
+                >
+                  Delete This Course
+                </li>
+              </>
+            ) : (
               <li
-                className="p-2 hover:bg-gray-200"
-                onClick={() =>
-                  handleDeleteNode(selectedNode?.nodeId, Number(userId))
-                }
+                className="p-2 hover:bg-orange-400 text-gray-800"
+                onClick={handleCreateNode}
               >
-                Delete This Course
+                Create BigCheck
               </li>
-            </ul>
+            )}
           </div>
         )}
 
@@ -408,6 +447,20 @@ const SkillTree = (props) => {
               </button>
             </div>
           </div>
+        )}
+
+        {/* BigCheckForm 弹出层 */}
+        {bigCheckFormVisible && selectedNode?.nodeType === "BIGCHECK" && (
+          <BigCheckForm
+            nodeId={selectedNode.id}
+            onClose={() => setBigCheckFormVisible(false)} // 关闭表单
+            onSubmit={(selectedBigCheckId: any) => {
+              // 提交处理逻辑
+              console.log("Selected BigCheck ID:", selectedBigCheckId);
+              setBigCheckFormVisible(false);
+              // TODO: 调用API连接两个BigCheck节点
+            }}
+          />
         )}
       </div>
     </div>

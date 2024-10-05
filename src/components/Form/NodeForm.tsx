@@ -67,7 +67,7 @@ const NodeForm: React.FC<{
     onSubmit(formType, nodeData);
   };
   return (
-    <div className="p-4 bg-white shadow-lg rounded-lg flex flex-col">
+    <div className="p-4 bg-white shadow-lg rounded-lg flex flex-col text-gray-800">
       <h2 className="text-lg font-bold mb-4">Node Form</h2>
 
       {/* 基本信息输入 */}
