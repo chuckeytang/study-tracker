@@ -231,8 +231,20 @@ const SkillTree = (props) => {
 
   // 处理创建新节点
   const handleCreateNode = () => {
+    let nodeType = "BIGCHECK"; // 默认情况是创建 BIGCHECK
+
+    if (selectedNode) {
+      if (selectedNode.nodeType === "BIGCHECK") {
+        nodeType = "MAJOR_NODE"; // 如果是 BIGCHECK，创建 MAJOR_NODE
+      } else if (
+        selectedNode.nodeType === "MAJOR_NODE" ||
+        selectedNode.nodeType === "MINOR_NODE"
+      ) {
+        nodeType = "MINOR_NODE"; // 如果是 MAJOR_NODE 或 MINOR_NODE，创建 MINOR_NODE
+      }
+    }
     setFormType("create");
-    setFormData({}); // 清空表单数据
+    setFormData({ nodeType }); // 清空表单数据
     setFormVisible(true);
     setMenuVisible(false); // 隐藏菜单
   };
@@ -274,6 +286,7 @@ const SkillTree = (props) => {
 
       // 可以在这里更新前端的视图或做其他处理
       alert("Node deleted successfully.");
+      await updateSkillTree(); // 在删除后刷新课程树
       // 例如，刷新页面或重载节点列表
     } catch (error) {
       console.error("Error deleting node:", error);
@@ -338,6 +351,7 @@ const SkillTree = (props) => {
 
       const result = await response.json();
       console.log("Node updated successfully:", result);
+      await updateSkillTree(); // 在删除后刷新课程树
 
       // 关闭表单并刷新视图（或执行其他后续操作）
       setFormVisible(false);
@@ -429,7 +443,7 @@ const SkillTree = (props) => {
           </div>
         )}
 
-        {/* 表单 */}
+        {/* NodeForm 弹出层 */}
         {formVisible && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div className="relative w-1/2">
@@ -437,7 +451,12 @@ const SkillTree = (props) => {
                 onSubmit={handleFormSubmit}
                 formType={formType}
                 defaultValue={formType === "edit" ? formData : {}}
-                nodeId={selectedNode?.nodeId}
+                nodeId={formType === "edit" ? selectedNode?.nodeId : null} // 编辑时传 nodeId
+                parentNodeId={
+                  formType === "create" && selectedNode
+                    ? selectedNode.nodeId
+                    : null
+                } // 创建时传 parentNodeId
               />
               <button
                 onClick={() => setFormVisible(false)}

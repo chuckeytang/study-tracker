@@ -27,11 +27,11 @@ const BigCheck: React.FC<BigCheckProps> = ({
   radius = bigCheckRadius,
   onContextMenu,
 }) => {
-  const { handles } = data;
+  const { nodeName, handles, nodeId, nodeDescription } = data;
 
-  let bgColor = "bg-gray-400"; // 默认锁定状态灰色
+  let bgColor = "bg-gray-600"; // 默认锁定状态灰色
   if (unlocked) {
-    bgColor = "bg-amber-900"; // 解锁状态
+    bgColor = "bg-yellow-400"; // 解锁状态
     if (level === maxLevel) {
       bgColor = "bg-green-500"; // 满级状态绿色
     }
@@ -87,6 +87,10 @@ const BigCheck: React.FC<BigCheckProps> = ({
             />
           )
         )}
+      <div className="fixed bottom-0 right-0 text-[16px] bg-emerald-800 rounded-md text-center text-white items-end p-[2px]">
+        <div>{nodeName}</div>
+        <div>maxlevel:{maxLevel}</div>
+      </div>
     </div>
   );
 };

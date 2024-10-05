@@ -13,18 +13,24 @@ const MajorNode: React.FC<MajorNodeProps> = ({
   radius,
   onContextMenu,
 }) => {
-  const { name, handles } = data;
+  const { nodeName, handles, maxLevel, nodeId, nodeDescription } = data;
   return (
     <div
       onContextMenu={(event) => onContextMenu(event, data)}
-      className={`flex items-center justify-center bg-red-500 rounded-full text-white font-semibold`}
+      className={`flex items-center justify-center bg-violet-700 rounded-full text-white font-semibold`}
       style={{
         width: `${radius * 2}px`,
         height: `${radius * 2}px`,
         transform: "translate(-50%, -50%)", // 调整节点使其中心与 position 对齐
       }}
     >
-      {name}
+      <div
+        className="bg-stone-50 rounded-full"
+        style={{
+          width: `${radius * 1.8}px`,
+          height: `${radius * 1.8}px`,
+        }}
+      ></div>
 
       {/* 添加句柄 */}
       {handles &&
@@ -54,6 +60,10 @@ const MajorNode: React.FC<MajorNodeProps> = ({
             />
           )
         )}
+      <div className="fixed bottom-0 right-0 text-[12px] bg-violet-900 rounded-md text-center text-white items-end p-[2px]">
+        <div>{nodeName}</div>
+        <div>maxlevel:{maxLevel}</div>
+      </div>
     </div>
   );
 };

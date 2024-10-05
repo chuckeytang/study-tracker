@@ -7,83 +7,90 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { nodeId } = req.query;
-
-  if (!nodeId) {
-    return res.status(400).json({ error: "nodeId is required" });
-  }
+  const { nodeId, parentNodeId } = req.query;
 
   try {
-    // 获取当前节点的信息
-    const currentNode = await prisma.node.findUnique({
-      where: { id: Number(nodeId) },
-      select: { id: true, nodeType: true },
-    });
-
-    if (!currentNode) {
-      return res.status(404).json({ error: "Node not found" });
+    // 如果nodeId和parentNodeId都为空，表明是创建BigCheck类型节点，返回空数组
+    if (!nodeId && !parentNodeId) {
+      return res.status(200).json({ data: [] });
     }
 
     let availableNodes: any = [];
 
-    // 规则1: BigCheck节点没有会被锁住的节点
-    if (currentNode.nodeType === NodeType.BIGCHECK) {
-      availableNodes = [];
-    }
-
-    // 规则2: MajorNode解锁后，依赖同一个BigCheck的兄弟MajorNode会被锁住
-    else if (currentNode.nodeType === NodeType.MAJOR_NODE) {
-      // 找到依赖于同一 BigCheck 的兄弟 MajorNode
-      const connectedBigCheck = await prisma.unlockDependency.findFirst({
-        where: {
-          fromNodeId: Number(nodeId),
-          fromNode: { nodeType: NodeType.BIGCHECK },
-        },
-        select: { toNodeId: true },
+    // 查找当前节点的信息
+    if (nodeId) {
+      const currentNode = await prisma.node.findUnique({
+        where: { id: Number(nodeId) },
+        select: { id: true, nodeType: true },
       });
 
-      if (!connectedBigCheck) {
+      if (!currentNode) {
+        return res.status(404).json({ error: "Node not found" });
+      }
+
+      // 规则1: BigCheck节点没有会被锁住的节点
+      if (currentNode.nodeType === NodeType.BIGCHECK) {
         availableNodes = [];
-      } else {
-        availableNodes = await prisma.node.findMany({
+      }
+
+      // 规则2: MajorNode解锁后，依赖同一个BigCheck的兄弟MajorNode会被锁住
+      else if (currentNode.nodeType === NodeType.MAJOR_NODE) {
+        const connectedBigCheck = await prisma.unlockDependency.findFirst({
           where: {
-            nodeType: NodeType.MAJOR_NODE,
-            id: { not: Number(nodeId) }, // 排除自身
-            unlockDependenciesTo: {
-              some: {
-                fromNodeId: connectedBigCheck.toNodeId, // 依赖同一个 BigCheck
+            fromNodeId: Number(nodeId),
+            fromNode: { nodeType: NodeType.BIGCHECK },
+          },
+          select: { toNodeId: true },
+        });
+
+        if (connectedBigCheck) {
+          availableNodes = await prisma.node.findMany({
+            where: {
+              nodeType: NodeType.MAJOR_NODE,
+              id: { not: Number(nodeId) },
+              unlockDependenciesTo: {
+                some: {
+                  fromNodeId: connectedBigCheck.toNodeId,
+                },
               },
             },
+          });
+        }
+      }
+
+      // 规则3: MinorNode解锁后，依赖同一父节点（MajorNode 或其他 MinorNode）的兄弟 MinorNode 会被锁住
+      else if (currentNode.nodeType === NodeType.MINOR_NODE) {
+        const parentNode = await prisma.unlockDependency.findFirst({
+          where: {
+            fromNodeId: Number(nodeId),
           },
+          select: { toNodeId: true },
         });
+
+        if (parentNode) {
+          availableNodes = await prisma.node.findMany({
+            where: {
+              nodeType: NodeType.MINOR_NODE,
+              id: { not: Number(nodeId) },
+              unlockDependenciesTo: {
+                some: {
+                  fromNodeId: parentNode.toNodeId,
+                },
+              },
+            },
+          });
+        }
       }
     }
-
-    // 规则3: MinorNode解锁后，依赖同一父节点（MajorNode 或其他 MinorNode）的兄弟 MinorNode 会被锁住
-    else if (currentNode.nodeType === NodeType.MINOR_NODE) {
-      // 找到与该 MinorNode 共享相同父节点的兄弟 MinorNode
-      const parentNode = await prisma.unlockDependency.findFirst({
+    // 当 nodeId 未提供，但 parentNodeId 提供时，查找未创建的节点的锁住兄弟节点
+    else if (parentNodeId) {
+      availableNodes = await prisma.node.findMany({
         where: {
-          fromNodeId: Number(nodeId),
-        },
-        select: { toNodeId: true },
-      });
-
-      if (!parentNode) {
-        availableNodes = [];
-      } else {
-        availableNodes = await prisma.node.findMany({
-          where: {
-            nodeType: NodeType.MINOR_NODE,
-            id: { not: Number(nodeId) }, // 排除自身
-            unlockDependenciesTo: {
-              some: {
-                fromNodeId: parentNode.toNodeId, // 依赖相同父节点
-              },
-            },
+          unlockDependenciesTo: {
+            some: { fromNodeId: Number(parentNodeId) },
           },
-        });
-      }
+        },
+      });
     }
 
     res.status(200).json({ data: availableNodes });
