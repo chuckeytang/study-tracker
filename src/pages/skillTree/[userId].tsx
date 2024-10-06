@@ -407,9 +407,20 @@ const SkillTree = (props) => {
             {selectedNode ? (
               <>
                 {selectedNode.nodeType === "BIGCHECK" && (
-                  <li className="p-2" onClick={handleConnectToBigCheck}>
-                    Connect to other BigCheck
-                  </li>
+                  <>
+                    <li
+                      className="p-2 hover:bg-orange-400 text-gray-800"
+                      onClick={handleConnectToBigCheck}
+                    >
+                      Connect to other BigCheck
+                    </li>
+                    <li
+                      className="p-2 hover:bg-orange-400 text-gray-800"
+                      onClick={handleConnectToBigCheck}
+                    >
+                      Disconnect to others
+                    </li>
+                  </>
                 )}
                 <li
                   className="p-2 hover:bg-orange-400 text-gray-800"

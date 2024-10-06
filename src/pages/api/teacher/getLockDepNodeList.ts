@@ -89,6 +89,7 @@ export default async function handler(
           unlockDependenciesTo: {
             some: { fromNodeId: Number(parentNodeId) },
           },
+          nodeType: { not: NodeType.BIGCHECK },
         },
       });
     }

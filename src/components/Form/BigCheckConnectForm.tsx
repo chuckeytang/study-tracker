@@ -32,7 +32,7 @@ const BigCheckForm: React.FC<{
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg relative">
+      <div className="bg-white p-6 rounded-lg shadow-lg relative text-gray-800">
         <h2 className="text-lg font-bold mb-4">Connect to Other BigCheck</h2>
 
         <div className="mb-4">

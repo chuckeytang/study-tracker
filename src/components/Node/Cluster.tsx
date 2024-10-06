@@ -7,6 +7,7 @@ import {
   majornodeRadius,
   minornodeRadius,
 } from "@/types/Values";
+import { randomInt } from "crypto";
 import { Node, Edge, Position } from "reactflow";
 
 // 定义Cluster函数，接受一个bigCheckNode，返回该Cluster的nodes和edges
@@ -167,7 +168,9 @@ const Cluster = async (
         if (parentPos) {
           // 非根节点
           startAngle =
-            incomingAngle + 180 - ((numChildren - 1) * angleBetweenEdges) / 2;
+            incomingAngle +
+            (Math.random() * angleBetweenEdges) / 3 -
+            ((numChildren - 1) * angleBetweenEdges) / 2;
         } else {
           // 根节点
           startAngle = 0;

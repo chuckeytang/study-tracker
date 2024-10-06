@@ -23,11 +23,17 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       nodeType,
       courseId,
       maxLevel,
-      unlockDepNodes,
       unlockDepNodeCount,
-      lockDepNodes,
       lockDepNodeCount,
     } = req.body;
+
+    // 解析 unlockDepNodes 和 lockDepNodes 字段
+    const unlockDepNodes = req.body.unlockDepNodes
+      ? JSON.parse(req.body.unlockDepNodes)
+      : [];
+    const lockDepNodes = req.body.lockDepNodes
+      ? JSON.parse(req.body.lockDepNodes)
+      : [];
 
     const file = req.file;
     const iconUrl = file ? `/uploads/${file.filename}` : null; // 生成 iconUrl
@@ -39,9 +45,9 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
 
     // 默认解锁和锁住依赖的节点数处理
     const computedUnlockDepNodeCount =
-      unlockDepNodeCount !== undefined ? unlockDepNodeCount : -1;
+      unlockDepNodeCount !== undefined ? Number(unlockDepNodeCount) : 0;
     const computedLockDepNodeCount =
-      lockDepNodeCount !== undefined ? lockDepNodeCount : -1;
+      lockDepNodeCount !== undefined ? Number(lockDepNodeCount) : 0;
 
     // 创建节点
     const createdNode = await prisma.node.create({
@@ -61,8 +67,8 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     if (unlockDepNodes && unlockDepNodes.length > 0) {
       await prisma.unlockDependency.createMany({
         data: unlockDepNodes.map((depNodeId: number) => ({
-          fromNodeId: createdNode.id,
-          toNodeId: depNodeId,
+          fromNodeId: Number(depNodeId),
+          toNodeId: createdNode.id,
         })),
       });
     }
@@ -71,8 +77,8 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     if (lockDepNodes && lockDepNodes.length > 0) {
       await prisma.lockDependency.createMany({
         data: lockDepNodes.map((depNodeId: number) => ({
-          fromNodeId: createdNode.id,
-          toNodeId: depNodeId,
+          fromNodeId: Number(depNodeId),
+          toNodeId: createdNode.id,
         })),
       });
     }
