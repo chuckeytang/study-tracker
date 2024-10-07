@@ -143,47 +143,49 @@ const NodeForm: React.FC<{
         />
       </div>
 
-      {/* 解锁依赖节点选择 */}
-      <div className="flex items-center mb-2">
-        <label className="w-1/3 font-semibold">Unlock Dependencies:</label>
-        <select
-          multiple
-          className="p-2 border border-gray-300 rounded w-2/3"
-          value={selectedUnlockNodes}
-          onChange={(e) =>
-            setSelectedUnlockNodes(
-              Array.from(e.target.selectedOptions, (option) => option.value)
-            )
-          }
-        >
-          {unlockDepNodes.map((node: any) => (
-            <option key={node.id} value={node.id}>
-              {node.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {formType === "create" && (
+        <div>
+          <div className="flex items-center mb-2">
+            <label className="w-1/3 font-semibold">Unlock Dependencies:</label>
+            <select
+              multiple
+              className="p-2 border border-gray-300 rounded w-2/3"
+              value={selectedUnlockNodes}
+              onChange={(e) =>
+                setSelectedUnlockNodes(
+                  Array.from(e.target.selectedOptions, (option) => option.value)
+                )
+              }
+            >
+              {unlockDepNodes.map((node: any) => (
+                <option key={node.id} value={node.id}>
+                  {node.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-      {/* 锁定依赖节点选择 */}
-      <div className="flex items-center mb-2">
-        <label className="w-1/3 font-semibold">Lock Dependencies:</label>
-        <select
-          multiple
-          className="p-2 border border-gray-300 rounded w-2/3"
-          value={selectedLockNodes}
-          onChange={(e) =>
-            setSelectedLockNodes(
-              Array.from(e.target.selectedOptions, (option) => option.value)
-            )
-          }
-        >
-          {lockDepNodes.map((node: any) => (
-            <option key={node.id} value={node.id}>
-              {node.name}
-            </option>
-          ))}
-        </select>
-      </div>
+          <div className="flex items-center mb-2">
+            <label className="w-1/3 font-semibold">Lock Dependencies:</label>
+            <select
+              multiple
+              className="p-2 border border-gray-300 rounded w-2/3"
+              value={selectedLockNodes}
+              onChange={(e) =>
+                setSelectedLockNodes(
+                  Array.from(e.target.selectedOptions, (option) => option.value)
+                )
+              }
+            >
+              {lockDepNodes.map((node: any) => (
+                <option key={node.id} value={node.id}>
+                  {node.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
 
       {/* 提交按钮 */}
       <div className="flex justify-end mt-4">

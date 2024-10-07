@@ -33,6 +33,7 @@ export default async function handler(
         nodeDescription: node.description,
         nodeType: node.nodeType, // 可以是 MAJOR_NODE 或 MINOR_NODE
         maxLevel: node.maxLevel,
+        picUrl: node.iconUrl,
       })),
     });
   } catch (error) {

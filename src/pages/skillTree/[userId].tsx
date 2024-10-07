@@ -229,6 +229,32 @@ const SkillTree = (props) => {
     setBigCheckFormVisible(true); // 显示 BigCheckForm
   };
 
+  const handleBigCheckDisconnect = async () => {
+    try {
+      // 调用后端 API 断开 BigCheck 的依赖关系
+      const response = await fetch("/api/teacher/disconnectBigCheck", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          bigCheckNodeId: selectedNode.nodeId, // 传递当前 BigCheck 节点的 ID
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("BigCheck node disconnected successfully:", data);
+        updateSkillTree(); // 断开成功后刷新技能树
+      } else {
+        console.error("Failed to disconnect BigCheck node:", data.error);
+      }
+    } catch (error) {
+      console.error("Error disconnecting BigCheck node:", error);
+    }
+  };
+
   // 处理创建新节点
   const handleCreateNode = () => {
     let nodeType = "BIGCHECK"; // 默认情况是创建 BIGCHECK
@@ -290,6 +316,33 @@ const SkillTree = (props) => {
       // 例如，刷新页面或重载节点列表
     } catch (error) {
       console.error("Error deleting node:", error);
+    }
+  };
+
+  const handleBigcheckFormSubmit = async (selectedBigCheckId: any) => {
+    try {
+      const response = await fetch("/api/teacher/setUnlockBigcheckNode", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fromNodeId: selectedBigCheckId, // 被依赖的BigCheck节点ID
+          toNodeId: selectedNode.nodeId, // 本BigCheck节点ID
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("BigCheck nodes connected successfully:", data);
+        setBigCheckFormVisible(false);
+        updateSkillTree(); // 成功后刷新技能树
+      } else {
+        console.error("Failed to connect BigCheck nodes:", data.error);
+      }
+    } catch (error) {
+      console.error("Error connecting BigCheck nodes:", error);
     }
   };
 
@@ -416,7 +469,7 @@ const SkillTree = (props) => {
                     </li>
                     <li
                       className="p-2 hover:bg-orange-400 text-gray-800"
-                      onClick={handleConnectToBigCheck}
+                      onClick={handleBigCheckDisconnect}
                     >
                       Disconnect to others
                     </li>
@@ -482,14 +535,9 @@ const SkillTree = (props) => {
         {/* BigCheckForm 弹出层 */}
         {bigCheckFormVisible && selectedNode?.nodeType === "BIGCHECK" && (
           <BigCheckForm
-            nodeId={selectedNode.id}
+            nodeId={selectedNode.nodeId}
             onClose={() => setBigCheckFormVisible(false)} // 关闭表单
-            onSubmit={(selectedBigCheckId: any) => {
-              // 提交处理逻辑
-              console.log("Selected BigCheck ID:", selectedBigCheckId);
-              setBigCheckFormVisible(false);
-              // TODO: 调用API连接两个BigCheck节点
-            }}
+            onSubmit={handleBigcheckFormSubmit}
           />
         )}
       </div>

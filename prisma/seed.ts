@@ -3,19 +3,19 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  // 清空表数据
+  // Clear tables
   await prisma.courseProgress.deleteMany();
   await prisma.course.deleteMany();
   await prisma.user.deleteMany();
 
   console.log("Tables cleared!");
 
-  // 插入两个老师
+  // Insert two teachers
   const teacher1 = await prisma.user.create({
     data: {
       name: "John Doe",
       email: "john.doe@example.com",
-      role: "TEACHER", // 使用枚举类型 TEACHER
+      role: "TEACHER", // Enum type TEACHER
     },
   });
 
@@ -23,16 +23,16 @@ async function main() {
     data: {
       name: "Jane Smith",
       email: "jane.smith@example.com",
-      role: "TEACHER", // 使用枚举类型 TEACHER
+      role: "TEACHER", // Enum type TEACHER
     },
   });
 
-  // 插入五个学生
+  // Insert five students
   const student1 = await prisma.user.create({
     data: {
       name: "Alice Johnson",
       email: "alice.johnson@example.com",
-      role: "STUDENT", // 使用枚举类型 STUDENT
+      role: "STUDENT", // Enum type STUDENT
     },
   });
 
@@ -40,7 +40,7 @@ async function main() {
     data: {
       name: "Bob Brown",
       email: "bob.brown@example.com",
-      role: "STUDENT", // 使用枚举类型 STUDENT
+      role: "STUDENT", // Enum type STUDENT
     },
   });
 
@@ -48,7 +48,7 @@ async function main() {
     data: {
       name: "Charlie Clark",
       email: "charlie.clark@example.com",
-      role: "STUDENT", // 使用枚举类型 STUDENT
+      role: "STUDENT", // Enum type STUDENT
     },
   });
 
@@ -56,7 +56,7 @@ async function main() {
     data: {
       name: "Diana Davis",
       email: "diana.davis@example.com",
-      role: "STUDENT", // 使用枚举类型 STUDENT
+      role: "STUDENT", // Enum type STUDENT
     },
   });
 
@@ -64,63 +64,61 @@ async function main() {
     data: {
       name: "Edward Evans",
       email: "edward.evans@example.com",
-      role: "STUDENT", // 使用枚举类型 STUDENT
+      role: "STUDENT", // Enum type STUDENT
     },
   });
 
   console.log("2 teachers and 5 students created successfully!");
 
-  // 创建游泳课程
+  // Create swimming course
   const swimmingCourse = await prisma.course.create({
     data: {
       name: "Swimming Courses",
-      description: "学习从适应水环境到掌握各种泳姿的技能",
+      description:
+        "Learn from water adaptation to mastering various swimming styles",
       iconUrl: "/images/course_default_icon.png",
     },
   });
 
-  // 创建学生与课程的关联
+  // Associate students with course
   const userCourse = await prisma.userCourse.create({
     data: {
-      userId: student1.id, // 学生 ID
-
+      userId: student1.id, // Student ID
       courseId: swimmingCourse.id,
     },
   });
 
-  // 创建 BigCheck: 水中适应
+  // Create BigCheck: Water Adaptation
   const bigCheck1 = await prisma.node.create({
     data: {
-      name: "水中适应",
-      description: "帮助学生适应水环境，学习基本的水中动作和安全技巧",
+      name: "Water Adaptation",
+      description:
+        "Helps students adapt to the water environment and learn basic water movements and safety skills",
       nodeType: "BIGCHECK",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
-      maxLevel: -1, // BigCheck 没有等级
+      maxLevel: -1, // BigCheck has no levels
     },
   });
 
-  // 创建基础呼吸节点
+  // Create MajorNode: Basic Breathing
   const majorNode1 = await prisma.node.create({
     data: {
-      name: "基础呼吸",
-      description: "学习如何在水中控制呼吸",
+      name: "Basic Breathing",
+      description: "Learn how to control breathing in the water",
       nodeType: "MAJOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 3,
     },
   });
 
-  // 创建子节点：屏气 和 水下呼吸
+  // Create child nodes: Holding Breath and Underwater Breathing
   const minorNode1_1 = await prisma.node.create({
     data: {
-      name: "屏气",
-      description: "学习如何在水中屏住呼吸",
+      name: "Holding Breath",
+      description: "Learn how to hold your breath in water",
       nodeType: "MINOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 1,
@@ -129,17 +127,16 @@ async function main() {
 
   const minorNode1_2 = await prisma.node.create({
     data: {
-      name: "水下呼吸",
-      description: "学习如何在水下控制呼吸",
+      name: "Underwater Breathing",
+      description: "Learn how to control breathing underwater",
       nodeType: "MINOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
     },
   });
 
-  // 创建解锁依赖关系
+  // Create unlock dependencies
   await prisma.unlockDependency.createMany({
     data: [
       { fromNodeId: bigCheck1.id, toNodeId: majorNode1.id },
@@ -148,26 +145,24 @@ async function main() {
     ],
   });
 
-  // 创建浮力控制节点
+  // Create MajorNode: Buoyancy Control
   const majorNode2 = await prisma.node.create({
     data: {
-      name: "浮力控制",
-      description: "学习如何在水中保持浮力",
+      name: "Buoyancy Control",
+      description: "Learn how to maintain buoyancy in the water",
       nodeType: "MAJOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 3,
     },
   });
 
-  // 创建子节点：水中漂浮 和 背漂
+  // Create child nodes: Floating and Back Float
   const minorNode2_1 = await prisma.node.create({
     data: {
-      name: "水中漂浮",
-      description: "学习在水中保持漂浮",
+      name: "Floating",
+      description: "Learn to maintain a float in the water",
       nodeType: "MINOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
@@ -176,17 +171,16 @@ async function main() {
 
   const minorNode2_2 = await prisma.node.create({
     data: {
-      name: "背漂",
-      description: "学习背部漂浮",
+      name: "Back Float",
+      description: "Learn back floating techniques",
       nodeType: "MINOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 1,
     },
   });
 
-  // 创建解锁依赖关系
+  // Create unlock dependencies
   await prisma.unlockDependency.createMany({
     data: [
       { fromNodeId: bigCheck1.id, toNodeId: majorNode2.id },
@@ -195,40 +189,37 @@ async function main() {
     ],
   });
 
-  // 创建其他 BigCheck 以及相应的 MajorNode 和 MinorNode，重复以上的模式
-
-  // 创建 BigCheck: 基础泳姿
+  // Create BigCheck: Basic Swimming Strokes
   const bigCheck2 = await prisma.node.create({
     data: {
-      name: "基础泳姿",
-      description: "学习基本的泳姿，如自由泳、蛙泳和仰泳",
+      name: "Basic Swimming Strokes",
+      description:
+        "Learn basic swimming strokes like freestyle, breaststroke, and backstroke",
       nodeType: "BIGCHECK",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
-      maxLevel: -1, // BigCheck 没有等级
+      maxLevel: -1, // BigCheck has no levels
     },
   });
 
-  // 创建 MajorNode 和相应的 MinorNode 以及 UnlockDependency
+  // Create MajorNode: Freestyle
   const majorNode3 = await prisma.node.create({
     data: {
-      name: "自由泳",
-      description: "学习自由泳的基础技巧",
+      name: "Freestyle",
+      description: "Learn the basics of freestyle swimming",
       nodeType: "MAJOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 3,
     },
   });
 
+  // Create child nodes: Freestyle Arm Movements and Freestyle Leg Movements
   const minorNode3_1 = await prisma.node.create({
     data: {
-      name: "自由泳手部动作",
-      description: "学习自由泳的手部动作",
+      name: "Freestyle Arm Movements",
+      description: "Learn freestyle arm movements",
       nodeType: "MINOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
@@ -237,10 +228,9 @@ async function main() {
 
   const minorNode3_2 = await prisma.node.create({
     data: {
-      name: "自由泳腿部动作",
-      description: "学习自由泳的腿部动作",
+      name: "Freestyle Leg Movements",
+      description: "Learn freestyle leg movements",
       nodeType: "MINOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
@@ -254,13 +244,13 @@ async function main() {
       { fromNodeId: majorNode3.id, toNodeId: minorNode3_2.id },
     ],
   });
-  // 创建 BigCheck: 基础泳姿（续）
+
+  // Continue creating nodes for breaststroke, advanced swimming skills, etc.
   const majorNode4 = await prisma.node.create({
     data: {
-      name: "蛙泳",
-      description: "学习蛙泳的基础技巧",
+      name: "Breaststroke",
+      description: "Learn the basics of breaststroke",
       nodeType: "MAJOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 3,
@@ -269,10 +259,9 @@ async function main() {
 
   const minorNode4_1 = await prisma.node.create({
     data: {
-      name: "蛙泳手部动作",
-      description: "学习蛙泳的手部动作",
+      name: "Breaststroke Arm Movements",
+      description: "Learn breaststroke arm movements",
       nodeType: "MINOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
@@ -281,10 +270,9 @@ async function main() {
 
   const minorNode4_2 = await prisma.node.create({
     data: {
-      name: "蛙泳腿部动作",
-      description: "学习蛙泳的腿部动作",
+      name: "Breaststroke Leg Movements",
+      description: "Learn breaststroke leg movements",
       nodeType: "MINOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
@@ -298,40 +286,37 @@ async function main() {
       { fromNodeId: majorNode4.id, toNodeId: minorNode4_2.id },
     ],
   });
-
-  // 创建 BigCheck: 进阶游泳技巧
+  // Create BigCheck: Advanced Swimming Skills
   const bigCheck3 = await prisma.node.create({
     data: {
-      name: "进阶游泳技巧",
-      description: "掌握转身技巧、划水效率和换气等复杂的技巧",
+      name: "Advanced Swimming Skills",
+      description:
+        "Master advanced techniques like turns, efficient strokes, and breathing.",
       nodeType: "BIGCHECK",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
-      maxLevel: -1, // BigCheck 没有等级
+      maxLevel: -1, // BigCheck has no levels
     },
   });
 
-  // 创建 MajorNode: 转身技巧
+  // Create MajorNode: Turn Techniques
   const majorNode5 = await prisma.node.create({
     data: {
-      name: "转身技巧",
-      description: "学习在池壁转身的技巧",
+      name: "Turn Techniques",
+      description: "Learn how to perform turns at the pool wall.",
       nodeType: "MAJOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 3,
     },
   });
 
-  // 创建子节点：自由泳转身 和 蛙泳转身
+  // Create child nodes: Freestyle Turn and Breaststroke Turn
   const minorNode5_1 = await prisma.node.create({
     data: {
-      name: "自由泳转身",
-      description: "学习自由泳转身的技巧",
+      name: "Freestyle Turn",
+      description: "Learn how to turn during freestyle swimming.",
       nodeType: "MINOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
@@ -340,17 +325,16 @@ async function main() {
 
   const minorNode5_2 = await prisma.node.create({
     data: {
-      name: "蛙泳转身",
-      description: "学习蛙泳转身的技巧",
+      name: "Breaststroke Turn",
+      description: "Learn how to turn during breaststroke swimming.",
       nodeType: "MINOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
     },
   });
 
-  // 创建解锁依赖关系
+  // Create unlock dependencies for MajorNode: Turn Techniques
   await prisma.unlockDependency.createMany({
     data: [
       { fromNodeId: bigCheck3.id, toNodeId: majorNode5.id },
@@ -359,26 +343,24 @@ async function main() {
     ],
   });
 
-  // 创建 MajorNode: 划水效率
+  // Create MajorNode: Stroke Efficiency
   const majorNode6 = await prisma.node.create({
     data: {
-      name: "划水效率",
-      description: "提高划水效率，增强游泳速度",
+      name: "Stroke Efficiency",
+      description: "Improve stroke efficiency and increase swimming speed.",
       nodeType: "MAJOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 3,
     },
   });
 
-  // 创建子节点：自由泳划水 和 蛙泳划水
+  // Create child nodes: Freestyle Stroke Efficiency and Breaststroke Stroke Efficiency
   const minorNode6_1 = await prisma.node.create({
     data: {
-      name: "自由泳划水",
-      description: "学习提高自由泳的划水效率",
+      name: "Freestyle Stroke Efficiency",
+      description: "Improve freestyle stroke efficiency.",
       nodeType: "MINOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
@@ -387,17 +369,16 @@ async function main() {
 
   const minorNode6_2 = await prisma.node.create({
     data: {
-      name: "蛙泳划水",
-      description: "学习提高蛙泳的划水效率",
+      name: "Breaststroke Stroke Efficiency",
+      description: "Improve breaststroke stroke efficiency.",
       nodeType: "MINOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
     },
   });
 
-  // 创建解锁依赖关系
+  // Create unlock dependencies for MajorNode: Stroke Efficiency
   await prisma.unlockDependency.createMany({
     data: [
       { fromNodeId: bigCheck3.id, toNodeId: majorNode6.id },
@@ -406,41 +387,46 @@ async function main() {
     ],
   });
 
-  // 创建其他课程的依赖关系：如耐力与速度等...
+  // Create unlock dependencies for MajorNode: Stroke Efficiency
+  await prisma.unlockDependency.createMany({
+    data: [
+      { fromNodeId: bigCheck3.id, toNodeId: majorNode6.id },
+      { fromNodeId: majorNode6.id, toNodeId: minorNode6_1.id },
+      { fromNodeId: majorNode6.id, toNodeId: minorNode6_2.id },
+    ],
+  });
 
-  // 创建 BigCheck: 耐力与速度
+  // Create BigCheck: Endurance and Speed
   const bigCheck4 = await prisma.node.create({
     data: {
-      name: "耐力与速度",
-      description: "提高耐力和速度，以便完成长距离游泳或比赛。",
+      name: "Endurance and Speed",
+      description:
+        "Increase endurance and speed for long-distance swimming or competition.",
       nodeType: "BIGCHECK",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
-      maxLevel: -1, // BigCheck 没有等级
+      maxLevel: -1, // BigCheck has no levels
     },
   });
 
-  // 创建 MajorNode: 长距离游泳
+  // Create MajorNode: Long Distance Swimming
   const majorNode7 = await prisma.node.create({
     data: {
-      name: "长距离游泳",
-      description: "提升学生的耐力，完成更长距离的游泳。",
+      name: "Long Distance Swimming",
+      description: "Increase endurance to complete longer distance swims.",
       nodeType: "MAJOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 3,
     },
   });
 
-  // 创建子节点：500米自由泳 和 500米蛙泳
+  // Create child nodes: 500m Freestyle and 500m Breaststroke
   const minorNode7_1 = await prisma.node.create({
     data: {
-      name: "500米自由泳",
-      description: "完成500米自由泳",
+      name: "500m Freestyle",
+      description: "Complete 500m freestyle swimming.",
       nodeType: "MINOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
@@ -449,17 +435,16 @@ async function main() {
 
   const minorNode7_2 = await prisma.node.create({
     data: {
-      name: "500米蛙泳",
-      description: "完成500米蛙泳",
+      name: "500m Breaststroke",
+      description: "Complete 500m breaststroke swimming.",
       nodeType: "MINOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
     },
   });
 
-  // 创建解锁依赖关系
+  // Create unlock dependencies for MajorNode: Long Distance Swimming
   await prisma.unlockDependency.createMany({
     data: [
       { fromNodeId: bigCheck4.id, toNodeId: majorNode7.id },
@@ -467,27 +452,24 @@ async function main() {
       { fromNodeId: majorNode7.id, toNodeId: minorNode7_2.id },
     ],
   });
-
-  // 创建 MajorNode: 速度提升
+  // Create MajorNode: Speed Enhancement
   const majorNode8 = await prisma.node.create({
     data: {
-      name: "速度提升",
-      description: "提升学生的游泳速度。",
+      name: "Speed Enhancement",
+      description: "Increase swimming speed.",
       nodeType: "MAJOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 3,
     },
   });
 
-  // 创建子节点：100米自由泳 和 100米蛙泳
+  // Create child nodes: 100m Freestyle and 100m Breaststroke
   const minorNode8_1 = await prisma.node.create({
     data: {
-      name: "100米自由泳",
-      description: "完成100米自由泳",
+      name: "100m Freestyle",
+      description: "Complete 100m freestyle swimming.",
       nodeType: "MINOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
@@ -496,17 +478,16 @@ async function main() {
 
   const minorNode8_2 = await prisma.node.create({
     data: {
-      name: "100米蛙泳",
-      description: "完成100米蛙泳",
+      name: "100m Breaststroke",
+      description: "Complete 100m breaststroke swimming.",
       nodeType: "MINOR_NODE",
-
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
     },
   });
 
-  // 创建解锁依赖关系
+  // Create unlock dependencies for MajorNode: Speed Enhancement
   await prisma.unlockDependency.createMany({
     data: [
       { fromNodeId: bigCheck4.id, toNodeId: majorNode8.id },
@@ -515,7 +496,7 @@ async function main() {
     ],
   });
 
-  // 创建bigcheck解锁依赖关系
+  // Create unlock dependencies between BigChecks
   await prisma.unlockDependency.createMany({
     data: [
       { fromNodeId: bigCheck1.id, toNodeId: bigCheck2.id },

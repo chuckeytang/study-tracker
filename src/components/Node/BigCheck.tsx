@@ -10,7 +10,6 @@ interface BigCheckProps {
   maxLevel: number;
   unlocked: boolean;
   selected?: boolean;
-  picUrl?: string;
   radius: number;
   updateSkillTree: () => void;
   onContextMenu: (event: React.MouseEvent, nodeData: any) => void;
@@ -19,7 +18,6 @@ interface BigCheckProps {
 const BigCheck: React.FC<BigCheckProps> = ({
   id,
   data,
-  picUrl,
   level,
   unlocked,
   maxLevel,
@@ -29,16 +27,16 @@ const BigCheck: React.FC<BigCheckProps> = ({
 }) => {
   const { nodeName, handles, nodeId, nodeDescription } = data;
 
-  let bgColor = "bg-gray-600"; // 默认锁定状态灰色
+  let bgColor = "bg-gray-700"; // 默认锁定状态灰色
   if (unlocked) {
-    bgColor = "bg-yellow-400"; // 解锁状态
+    bgColor = "bg-yellow-700"; // 解锁状态
     if (level === maxLevel) {
-      bgColor = "bg-green-500"; // 满级状态绿色
+      bgColor = "bg-green-700"; // 满级状态绿色
     }
   }
 
   if (selected) {
-    bgColor = "bg-blue-500"; // 选中状态蓝色
+    bgColor = "bg-blue-700"; // 选中状态蓝色
   }
 
   return (
@@ -54,7 +52,7 @@ const BigCheck: React.FC<BigCheckProps> = ({
     >
       <div className="rounded-full bg-white w-11/12 h-11/12 overflow-hidden">
         <img
-          src={"/images/bigcheck_default_icon.jpg"}
+          src={data.picUrl}
           alt="big check"
           className="w-full h-full object-cover rounded-full"
         />
@@ -87,7 +85,7 @@ const BigCheck: React.FC<BigCheckProps> = ({
             />
           )
         )}
-      <div className="fixed bottom-0 right-0 text-[16px] bg-emerald-800 rounded-md text-center text-white items-end p-[2px]">
+      <div className="fixed bottom-0 right-0 text-[16px] bg-gray-900 border-4 border-green-900 rounded-md text-end text-white items-end p-[2px] w-2/3">
         <div>{nodeName}</div>
         <div>maxlevel:{maxLevel}</div>
       </div>

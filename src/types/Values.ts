@@ -1,6 +1,6 @@
-export const bigCheckRadius = 70;
-export const majornodeRadius = 50;
-export const minornodeRadius = 40;
+export const bigCheckRadius = 100;
+export const majornodeRadius = 80;
+export const minornodeRadius = 60;
 
 export const clusterBaseDistance = 650; // 基础距离
 export const clusterMinDistance = 100; // 最小距离

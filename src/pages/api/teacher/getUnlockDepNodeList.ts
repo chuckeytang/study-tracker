@@ -17,7 +17,6 @@ export default async function handler(
       availableNodes = await prisma.node.findMany({
         where: {
           nodeType: NodeType.BIGCHECK,
-          unlockDependenciesFrom: { none: {} }, // 没有依赖于其他节点
           unlockDependenciesTo: { none: {} }, // 没有其他节点依赖于它
         },
       });
