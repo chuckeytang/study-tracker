@@ -56,6 +56,8 @@ export default async function handler(
         maxLevel: node.maxLevel,
         nodeType: node.nodeType,
         picUrl: node.iconUrl,
+        lockDepNodeCount: node.lockDepNodeCount,
+        unlockDepNodeCount: node.unlockDepNodeCount,
         unlockDependencies: node.unlockDependenciesTo.map((dep) => ({
           nodeId: dep.fromNode.id,
           nodeName: dep.fromNode.name,

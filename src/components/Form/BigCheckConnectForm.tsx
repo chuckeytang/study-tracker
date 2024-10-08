@@ -1,15 +1,21 @@
-// components/Forms/BigCheckForm.tsx
+// components/Forms/BigCheckConnectForm.tsx
 import React, { useState, useEffect } from "react";
 
-const BigCheckForm: React.FC<{
+const BigCheckConnectForm: React.FC<{
   nodeId: number;
   onClose: () => void;
-  onSubmit: (selectedBigCheckId: number) => void;
+  onSubmit: (
+    selectedBigCheckId: number,
+    unlockDepNodeCount: number,
+    lockDepNodeCount: number
+  ) => void;
 }> = ({ nodeId, onClose, onSubmit }) => {
   const [availableBigChecks, setAvailableBigChecks] = useState<any[]>([]);
   const [selectedBigCheckId, setSelectedBigCheckId] = useState<number | null>(
     null
   );
+  const [unlockDepNodeCount, setUnlockDepNodeCount] = useState<number>(1);
+  const [lockDepNodeCount, setLockDepNodeCount] = useState<number>(1);
 
   // 获取可用的 BigCheck 节点列表
   useEffect(() => {
@@ -26,7 +32,7 @@ const BigCheckForm: React.FC<{
   // 表单提交
   const handleSubmit = () => {
     if (selectedBigCheckId) {
-      onSubmit(selectedBigCheckId); // 调用父组件的 onSubmit 函数
+      onSubmit(selectedBigCheckId, unlockDepNodeCount, lockDepNodeCount);
     }
   };
 
@@ -53,6 +59,32 @@ const BigCheckForm: React.FC<{
           </select>
         </div>
 
+        <div className="mb-4">
+          <label className="block font-semibold mb-2">
+            Unlock Dependency Node Count:
+          </label>
+          <input
+            type="number"
+            value={unlockDepNodeCount}
+            onChange={(e) => setUnlockDepNodeCount(Number(e.target.value))}
+            className="p-2 border border-gray-300 rounded w-full"
+            min={1}
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block font-semibold mb-2">
+            Lock Dependency Node Count:
+          </label>
+          <input
+            type="number"
+            value={lockDepNodeCount}
+            onChange={(e) => setLockDepNodeCount(Number(e.target.value))}
+            className="p-2 border border-gray-300 rounded w-full"
+            min={1}
+          />
+        </div>
+
         <div className="flex justify-end">
           <button
             onClick={handleSubmit}
@@ -73,4 +105,4 @@ const BigCheckForm: React.FC<{
   );
 };
 
-export default BigCheckForm;
+export default BigCheckConnectForm;

@@ -127,8 +127,8 @@ const SkillTree = (props) => {
                   target: String(targetNode.data.nodeId),
                   sourceHandle: sourceHandleId, // 指定 source 句柄 id
                   targetHandle: targetHandleId, // 指定 target 句柄 id
-                  type: "majorEdge",
-                  animated: true,
+                  type: "bigcheckEdge",
+                  animated: false,
                 });
               }
             }
@@ -319,7 +319,11 @@ const SkillTree = (props) => {
     }
   };
 
-  const handleBigcheckFormSubmit = async (selectedBigCheckId: any) => {
+  const handleBigcheckFormSubmit = async (
+    selectedBigCheckId: any,
+    unlockDepNodeCount: number,
+    lockDepNodeCount: number
+  ) => {
     try {
       const response = await fetch("/api/teacher/setUnlockBigcheckNode", {
         method: "POST",
@@ -329,6 +333,8 @@ const SkillTree = (props) => {
         body: JSON.stringify({
           fromNodeId: selectedBigCheckId, // 被依赖的BigCheck节点ID
           toNodeId: selectedNode.nodeId, // 本BigCheck节点ID
+          unlockDepNodeCount,
+          lockDepNodeCount,
         }),
       });
 
