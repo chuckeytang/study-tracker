@@ -129,6 +129,10 @@ const SkillTree = (props) => {
                   targetHandle: targetHandleId, // 指定 target 句柄 id
                   type: "bigcheckEdge",
                   animated: false,
+                  data: {
+                    unlockDepNodeCount: bigCheckNode.unlockDepNodeCount, // 传递 unlockDepNodeCount
+                    progress: 0,
+                  },
                 });
               }
             }

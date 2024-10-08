@@ -89,11 +89,15 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       }
     }
 
+    // 1. 先删除现有的锁住依赖关系
+    await prisma.lockDependency.deleteMany({
+      where: { fromNodeId: updatedNode.id },
+    });
     // 更新锁住依赖节点关系
     if (lockDepNodes && lockDepNodes.length > 0) {
+      // 2. 重新添加新的锁住依赖关系
       for (const depNodeId of lockDepNodes) {
         try {
-          // 尝试创建依赖关系，如果已经存在则跳过
           await prisma.lockDependency.create({
             data: {
               fromNodeId: updatedNode.id,
@@ -101,14 +105,12 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
             },
           });
         } catch (error: any) {
-          // 如果是违反唯一约束的错误，意味着依赖关系已经存在，跳过该错误
-          if (error.code === "P2002") {
-            console.log(
-              `Lock dependency from node ${updatedNode.id} to ${depNodeId} already exists, skipping.`
-            );
-          } else {
-            throw error; // 处理其他类型的错误
-          }
+          // 如果出现任何问题，这里处理错误
+          console.error(
+            `Error adding lock dependency from node ${updatedNode.id} to ${depNodeId}:`,
+            error
+          );
+          throw error; // 抛出错误供外层捕获
         }
       }
     }

@@ -88,7 +88,7 @@ export default async function handler(
 
     // 4. 更新解锁和锁住依赖节点的数量
     await prisma.node.update({
-      where: { id: Number(fromNodeId) },
+      where: { id: Number(toNodeId) },
       data: {
         unlockDepNodeCount: Number(unlockDepNodeCount || 1),
         lockDepNodeCount: Number(lockDepNodeCount || 1),

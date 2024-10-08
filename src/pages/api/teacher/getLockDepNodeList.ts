@@ -37,10 +37,10 @@ export default async function handler(
       else if (currentNode.nodeType === NodeType.MAJOR_NODE) {
         const connectedBigCheck = await prisma.unlockDependency.findFirst({
           where: {
-            fromNodeId: Number(nodeId),
+            toNodeId: Number(nodeId),
             fromNode: { nodeType: NodeType.BIGCHECK },
           },
-          select: { toNodeId: true },
+          select: { fromNodeId: true },
         });
 
         if (connectedBigCheck) {
@@ -50,7 +50,7 @@ export default async function handler(
               id: { not: Number(nodeId) },
               unlockDependenciesTo: {
                 some: {
-                  fromNodeId: connectedBigCheck.toNodeId,
+                  fromNodeId: connectedBigCheck.fromNodeId,
                 },
               },
             },
@@ -62,9 +62,9 @@ export default async function handler(
       else if (currentNode.nodeType === NodeType.MINOR_NODE) {
         const parentNode = await prisma.unlockDependency.findFirst({
           where: {
-            fromNodeId: Number(nodeId),
+            toNodeId: Number(nodeId),
           },
-          select: { toNodeId: true },
+          select: { fromNodeId: true },
         });
 
         if (parentNode) {
@@ -74,7 +74,7 @@ export default async function handler(
               id: { not: Number(nodeId) },
               unlockDependenciesTo: {
                 some: {
-                  fromNodeId: parentNode.toNodeId,
+                  fromNodeId: parentNode.fromNodeId,
                 },
               },
             },

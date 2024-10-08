@@ -47,6 +47,15 @@ router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
       },
     });
 
+    // 更新 BigCheck 节点的 unlockDepNodeCount 和 lockDepNodeCount 为 0
+    const updatedNode = await prisma.node.update({
+      where: { id: Number(bigCheckNodeId) },
+      data: {
+        unlockDepNodeCount: 0,
+        lockDepNodeCount: 0,
+      },
+    });
+
     // 如果没有删除到任何依赖关系，返回相应的消息
     if (
       deletedUnlockDependencies.count === 0 &&

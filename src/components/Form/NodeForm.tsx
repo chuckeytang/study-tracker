@@ -26,6 +26,9 @@ const NodeForm: React.FC<{
 
   const [lockDepNodes, setLockDepNodes] = useState([]); // 锁定依赖节点列表
   const [selectedLockNodes, setSelectedLockNodes] = useState<string[]>([]); // 锁定依赖节点选择
+  const [alreadyLockedNodeIds, setAlreadyLockedNodeIds] = useState<string[]>(
+    []
+  );
 
   // 获取解锁依赖节点列表
   useEffect(() => {
@@ -45,7 +48,7 @@ const NodeForm: React.FC<{
       });
   }, [nodeId, parentNodeId]);
 
-  // 获取锁定依赖节点列表
+  // 获取锁定依赖节点列表和已锁定的节点列表
   useEffect(() => {
     const lockDepUrl = nodeId
       ? `/api/teacher/getLockDepNodeList?nodeId=${nodeId}`
@@ -54,6 +57,7 @@ const NodeForm: React.FC<{
       : null;
 
     if (lockDepUrl) {
+      // 获取候选的可供锁定的节点
       fetch(lockDepUrl)
         .then((res) => res.json())
         .then((data) => {
@@ -63,7 +67,33 @@ const NodeForm: React.FC<{
           console.error("Error fetching lock dependency nodes:", error);
         });
     }
-  }, [nodeId, parentNodeId]);
+
+    // 获取已经锁定的节点（仅在编辑模式下）
+    if (formType === "edit" && nodeId && nodeType !== "BIGCHECK") {
+      fetch(`/api/teacher/getAlreadyLockDepNodeList?nodeId=${nodeId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          const lockedNodeIds = data.data.map((node: any) =>
+            node.nodeId.toString()
+          );
+          setAlreadyLockedNodeIds(lockedNodeIds);
+          setSelectedLockNodes(lockedNodeIds); // 预先选中已锁定的节点
+        })
+        .catch((error) => {
+          console.error("Error fetching already locked nodes:", error);
+        });
+    }
+  }, [formType, nodeId, parentNodeId, nodeType]);
+
+  // 合并候选节点和已锁定的节点，并自动选中已锁定的节点
+  const mergedLockDepNodes = [
+    ...lockDepNodes.filter(
+      (node: any) => !alreadyLockedNodeIds.includes(node.id.toString())
+    ), // 过滤掉已锁定的节点，避免重复
+    ...alreadyLockedNodeIds
+      .map((id) => lockDepNodes.find((node: any) => node.id.toString() === id))
+      .filter(Boolean), // 将已锁定节点添加到列表中
+  ];
 
   // 提交表单
   const handleSubmit = () => {
@@ -184,6 +214,29 @@ const NodeForm: React.FC<{
               ))}
             </select>
           </div>
+        </div>
+      )}
+
+      {/* 编辑模式下的锁定依赖选择 */}
+      {formType === "edit" && nodeType !== "BIGCHECK" && (
+        <div className="flex items-center mb-2">
+          <label className="w-1/3 font-semibold">Lock Dependencies:</label>
+          <select
+            multiple
+            className="p-2 border border-gray-300 rounded w-2/3"
+            value={selectedLockNodes}
+            onChange={(e) =>
+              setSelectedLockNodes(
+                Array.from(e.target.selectedOptions, (option) => option.value)
+              )
+            }
+          >
+            {mergedLockDepNodes.map((node: any) => (
+              <option key={node.id} value={node.id}>
+                {node.name}
+              </option>
+            ))}
+          </select>
         </div>
       )}
 
