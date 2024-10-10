@@ -11,6 +11,7 @@ interface BigCheckProps {
   unlocked: boolean;
   selected?: boolean;
   radius: number;
+  userRole: "teacher" | "student";
   updateSkillTree: () => void;
   onContextMenu: (event: React.MouseEvent, nodeData: any) => void;
 }
@@ -22,6 +23,7 @@ const BigCheck: React.FC<BigCheckProps> = ({
   unlocked,
   maxLevel,
   selected,
+  userRole = "teacher",
   radius = bigCheckRadius,
   onContextMenu,
 }) => {

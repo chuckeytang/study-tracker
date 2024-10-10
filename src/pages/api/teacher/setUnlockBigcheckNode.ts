@@ -11,8 +11,13 @@ export default async function handler(
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { fromNodeId, toNodeId, unlockDepNodeCount, lockDepNodeCount } =
-    req.body;
+  const {
+    fromNodeId,
+    toNodeId,
+    unlockDepNodeCount,
+    unlockDepClusterTotalSkillPt,
+    lockDepNodeCount,
+  } = req.body;
 
   // 验证是否提供了 BigCheck 节点的 ID
   if (!fromNodeId || !toNodeId) {
@@ -90,8 +95,9 @@ export default async function handler(
     await prisma.node.update({
       where: { id: Number(toNodeId) },
       data: {
-        unlockDepNodeCount: Number(unlockDepNodeCount || 1),
-        lockDepNodeCount: Number(lockDepNodeCount || 1),
+        unlockDepNodeCount: Number(unlockDepNodeCount || 0),
+        unlockDepClusterTotalSkillPt: Number(unlockDepClusterTotalSkillPt || 0),
+        lockDepNodeCount: Number(lockDepNodeCount || 0),
       },
     });
 

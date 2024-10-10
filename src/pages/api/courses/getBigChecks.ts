@@ -58,6 +58,7 @@ export default async function handler(
         picUrl: node.iconUrl,
         lockDepNodeCount: node.lockDepNodeCount,
         unlockDepNodeCount: node.unlockDepNodeCount,
+        unlockDepClusterTotalSkillPt: node.unlockDepClusterTotalSkillPt,
         unlockDependencies: node.unlockDependenciesTo.map((dep) => ({
           nodeId: dep.fromNode.id,
           nodeName: dep.fromNode.name,

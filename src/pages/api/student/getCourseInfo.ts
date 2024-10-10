@@ -54,6 +54,7 @@ export default async function handler(
         nodeType: dep.toNode.nodeType,
       })),
       unlockDepNodeCount: node.unlockDepNodeCount,
+      unlockDepClusterTotalSkillPt: node.unlockDepClusterTotalSkillPt,
       lockDepNodes: node.lockDependenciesFrom.map((dep) => ({
         id: dep.toNode.id,
         name: dep.toNode.name,

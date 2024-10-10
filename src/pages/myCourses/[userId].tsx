@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import UserInfo from "@/components/UserInfo";
 import Link from "next/link";
+import { Dialog } from "@headlessui/react";
 
 interface Course {
   id: number;
@@ -14,22 +15,51 @@ interface Course {
 const MyCourses: React.FC = (props) => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<"STUDENT" | "TEACHER" | null>(null);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false);
 
   const router = useRouter();
   const { userId } = router.query;
 
   useEffect(() => {
-    if (!userId) return; // 如果 userId 还没有加载出来，返回
+    if (!router.isReady || !userId) return;
 
-    // Fetch course list from API
+    // Fetch user role
+    const fetchUserRole = async () => {
+      try {
+        const response = await fetch(`/api/users/getOne?id=${userId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setUserRole(data.role); // 设置用户角色为 'TEACHER' 或 'STUDENT'
+        } else {
+          console.error("Failed to fetch user role:", data.error);
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
+
+    fetchUserRole();
+  }, [router.isReady, userId]);
+
+  useEffect(() => {
+    if (!userRole || !userId) return;
+
+    // 根据用户角色获取课程列表
     const fetchCourses = async () => {
       try {
-        const response = await fetch(
-          `/api/student/getCourseList?userId=${userId}`
-        );
+        const apiUrl =
+          userRole === "TEACHER"
+            ? `/api/teacher/getCourseList?userId=${userId}`
+            : `/api/student/getCourseList?userId=${userId}`;
+
+        const response = await fetch(apiUrl);
         const data = await response.json();
+
         if (response.ok) {
-          setCourses(data.courses); // Set the courses data from the API
+          setCourses(data.courses);
         } else {
           console.error("Error fetching courses:", data.error);
         }
@@ -41,7 +71,53 @@ const MyCourses: React.FC = (props) => {
     };
 
     fetchCourses();
-  }, [userId]);
+  }, [userRole, userId]);
+
+  const handleJoinCourse = async () => {
+    if (!selectedCourseId || !userId) return;
+
+    try {
+      const response = await fetch("/api/student/joinCourse", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          studentId: Number(userId),
+          courseId: selectedCourseId,
+        }),
+      });
+
+      if (response.ok) {
+        alert("Successfully joined the course!");
+        // 刷新页面或更新课程列表
+        const updatedCourses = courses.map((course) =>
+          course.id === selectedCourseId
+            ? { ...course, isLearning: true }
+            : course
+        );
+        setCourses(updatedCourses);
+        setIsJoinDialogOpen(false); // 关闭对话框
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to join course:", errorData.error);
+        alert("Failed to join course.");
+      }
+    } catch (error) {
+      console.error("Error joining course:", error);
+      alert("An error occurred while joining the course.");
+    }
+  };
+
+  const openJoinDialog = (courseId: number) => {
+    setSelectedCourseId(courseId);
+    setIsJoinDialogOpen(true);
+  };
+
+  const closeJoinDialog = () => {
+    setIsJoinDialogOpen(false);
+    setSelectedCourseId(null);
+  };
 
   // Split the courses into left and right
   const leftCourses = courses.slice(0, Math.ceil(courses.length / 2)); // First half of courses
@@ -60,39 +136,32 @@ const MyCourses: React.FC = (props) => {
       <div className="rounded-2xl bg-stone-100 w-3/4 my-10 min-h-screen flex justify-between">
         <div className="flex flex-col items-start p-10 w-1/3">
           {leftCourses.map((course) => (
-            <Link
+            <div
               key={course.id}
-              href={`/skillTree/${userId}?courseId=${course.id}`}
-              passHref
+              className="flex justify-start mb-4 items-center cursor-pointer"
+              onClick={() => {
+                // 如果是学生且已经学习了该课程，则跳转到 skillTree 页面
+                if (course.isLearning) {
+                  router.push(`/skillTree/${userId}?courseId=${course.id}`);
+                } else if (userRole === "STUDENT" && !course.isLearning) {
+                  // 如果是学生且未学习该课程，则弹出加入课程的对话框
+                  openJoinDialog(course.id);
+                }
+              }}
             >
               <div
-                key={course.id}
-                className="flex justify-start mb-4 items-center"
+                className={`rounded-xl border-8 ${
+                  course.isLearning ? "border-amber-400" : "border-gray-300"
+                } p-2`}
               >
-                <div
-                  className={`rounded-xl border-8 ${
-                    course.isLearning ? "border-amber-400 " : "border-gray-300"
-                  } p-2`}
-                >
-                  {course.iconUrl ? (
-                    <img
-                      src={course.iconUrl}
-                      alt={course.name}
-                      className="w-16 h-16"
-                    />
-                  ) : (
-                    <img
-                      src="/images/course_default_icon.png"
-                      alt={course.name}
-                      className="w-16 h-16"
-                    />
-                  )}
-                </div>
-                <div className="ml-4 text-gray-800 font-bold">
-                  {course.name}
-                </div>
+                <img
+                  src={course.iconUrl || "/images/course_default_icon.png"}
+                  alt={course.name}
+                  className="w-16 h-16"
+                />
               </div>
-            </Link>
+              <div className="ml-4 text-gray-800 font-bold">{course.name}</div>
+            </div>
           ))}
         </div>
 
@@ -114,39 +183,75 @@ const MyCourses: React.FC = (props) => {
 
         <div className="flex flex-col items-start p-10 w-1/3">
           {rightCourses.map((course) => (
-            <Link
+            <div
               key={course.id}
-              href={`/skillTree/${userId}?courseId=${course.id}`}
-              passHref
+              className="flex justify-start mb-4 items-center cursor-pointer"
+              onClick={() => {
+                // 如果是学生且已经学习了该课程，则跳转到 skillTree 页面
+                if (course.isLearning) {
+                  router.push(`/skillTree/${userId}?courseId=${course.id}`);
+                } else if (userRole === "STUDENT" && !course.isLearning) {
+                  // 如果是学生且未学习该课程，则弹出加入课程的对话框
+                  openJoinDialog(course.id);
+                }
+              }}
             >
-              <div key={course.id} className="flex justify-start mb-4">
-                <div className="mr-4 text-gray-800 font-bold">
-                  {course.name}
-                </div>
-                <div
-                  className={`rounded-xl border-8 ${
-                    course.isLearning ? "border-amber-400 " : "border-gray-300"
-                  } p-2`}
-                >
-                  {course.iconUrl ? (
-                    <img
-                      src={course.iconUrl}
-                      alt={course.name}
-                      className="w-16 h-16"
-                    />
-                  ) : (
-                    <img
-                      src="/images/course_default_icon.png"
-                      alt={course.name}
-                      className="w-16 h-16"
-                    />
-                  )}
-                </div>
+              <div className="mr-4 text-gray-800 font-bold">{course.name}</div>
+              <div
+                className={`rounded-xl border-8 ${
+                  course.isLearning ? "border-amber-400" : "border-gray-300"
+                } p-2`}
+              >
+                <img
+                  src={course.iconUrl || "/images/course_default_icon.png"}
+                  alt={course.name}
+                  className="w-16 h-16"
+                />
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </div>
+
+      {/* 加入课程对话框 */}
+      <Dialog
+        open={isJoinDialogOpen}
+        onClose={closeJoinDialog}
+        className="fixed inset-0 z-50 flex items-center justify-center"
+      >
+        {/* 黑色半透明遮罩 */}
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50"
+          aria-hidden="true"
+        />
+
+        {/* 对话框内容 */}
+        <div className="relative bg-white p-6 rounded-xl shadow-lg text-center w-1/2 h-1/3">
+          <Dialog.Panel>
+            <Dialog.Title>
+              <h2 className="text-2xl font-bold text-gray-800">Join Course</h2>
+            </Dialog.Title>
+
+            <div className="mt-6 text-gray-800 mb-10">
+              <p>Are you sure you want to join this course?</p>
+            </div>
+            <div className="mt-4 flex justify-around">
+              <button
+                onClick={handleJoinCourse}
+                className="bg-blue-500 text-white px-4 py-2 rounded-md"
+              >
+                Join
+              </button>
+              <button
+                onClick={closeJoinDialog}
+                className="bg-red-500 text-white px-4 py-2 rounded-md"
+              >
+                Cancel
+              </button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
     </div>
   );
 };

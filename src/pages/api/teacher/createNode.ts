@@ -24,6 +24,7 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       courseId,
       maxLevel,
       unlockDepNodeCount,
+      unlockDepClusterTotalSkillPt,
       lockDepNodeCount,
     } = req.body;
 
@@ -46,6 +47,10 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     // 默认解锁和锁住依赖的节点数处理
     const computedUnlockDepNodeCount =
       unlockDepNodeCount !== undefined ? Number(unlockDepNodeCount) : 0;
+    const computedUnlockDepClusterTotalSkillPt =
+      unlockDepClusterTotalSkillPt !== undefined
+        ? Number(unlockDepClusterTotalSkillPt)
+        : 0;
     const computedLockDepNodeCount =
       lockDepNodeCount !== undefined ? Number(lockDepNodeCount) : 0;
 
@@ -59,6 +64,7 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         maxLevel: Number(maxLevel),
         iconUrl: iconUrl || "", // 使用上传的文件路径或默认空字符串
         unlockDepNodeCount: computedUnlockDepNodeCount,
+        unlockDepClusterTotalSkillPt: computedUnlockDepClusterTotalSkillPt,
         lockDepNodeCount: computedLockDepNodeCount,
       },
     });

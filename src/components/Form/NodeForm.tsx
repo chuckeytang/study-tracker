@@ -13,9 +13,6 @@ const NodeForm: React.FC<{
   );
   const [nodeType] = useState(defaultValue.nodeType || "BIGCHECK");
   const [maxLevel, setMaxLevel] = useState(defaultValue.maxLevel || 1);
-  const [unlockDepNodeCount, setUnlockDepNodeCount] = useState(
-    defaultValue.unlockDepNodeCount || null
-  );
   const [lockDepNodeCount, setLockDepNodeCount] = useState(
     defaultValue.lockDepNodeCount || null
   );
@@ -104,7 +101,6 @@ const NodeForm: React.FC<{
       nodeType,
       maxLevel,
       iconFile,
-      unlockDepNodeCount,
       lockDepNodeCount,
       selectedUnlockNodes,
       selectedLockNodes,

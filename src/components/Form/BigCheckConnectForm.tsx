@@ -7,6 +7,7 @@ const BigCheckConnectForm: React.FC<{
   onSubmit: (
     selectedBigCheckId: number,
     unlockDepNodeCount: number,
+    unlockDepClusterTotalSkillPt: number,
     lockDepNodeCount: number
   ) => void;
 }> = ({ nodeId, onClose, onSubmit }) => {
@@ -14,8 +15,10 @@ const BigCheckConnectForm: React.FC<{
   const [selectedBigCheckId, setSelectedBigCheckId] = useState<number | null>(
     null
   );
-  const [unlockDepNodeCount, setUnlockDepNodeCount] = useState<number>(1);
-  const [lockDepNodeCount, setLockDepNodeCount] = useState<number>(1);
+  const [unlockDepNodeCount, setUnlockDepNodeCount] = useState<number>(0);
+  const [unlockDepClusterTotalSkillPt, setUnlockDepClusterTotalSkillPt] =
+    useState<number>(1);
+  const [lockDepNodeCount, setLockDepNodeCount] = useState<number>(0);
 
   // 获取可用的 BigCheck 节点列表
   useEffect(() => {
@@ -32,7 +35,12 @@ const BigCheckConnectForm: React.FC<{
   // 表单提交
   const handleSubmit = () => {
     if (selectedBigCheckId) {
-      onSubmit(selectedBigCheckId, unlockDepNodeCount, lockDepNodeCount);
+      onSubmit(
+        selectedBigCheckId,
+        unlockDepNodeCount,
+        unlockDepClusterTotalSkillPt,
+        lockDepNodeCount
+      );
     }
   };
 
@@ -61,6 +69,21 @@ const BigCheckConnectForm: React.FC<{
 
         <div className="mb-4">
           <label className="block font-semibold mb-2">
+            Unlock Totle Skill Points:
+          </label>
+          <input
+            type="number"
+            value={unlockDepClusterTotalSkillPt}
+            onChange={(e) =>
+              setUnlockDepClusterTotalSkillPt(Number(e.target.value))
+            }
+            className="p-2 border border-gray-300 rounded w-full"
+            min={1}
+          />
+        </div>
+
+        {/* <div className="mb-4">
+          <label className="block font-semibold mb-2">
             Unlock Dependency Node Count:
           </label>
           <input
@@ -83,7 +106,7 @@ const BigCheckConnectForm: React.FC<{
             className="p-2 border border-gray-300 rounded w-full"
             min={1}
           />
-        </div>
+        </div> */}
 
         <div className="flex justify-end">
           <button

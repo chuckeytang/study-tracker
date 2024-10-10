@@ -16,6 +16,8 @@ const BigCheckEdge = ({
   const [pathLength, setPathLength] = useState(0); // 路径的总长度
   const progress = data?.progress || 0; // 假设 progress 是 0-100 之间的数值
   const unlockDepNodeCount = data?.unlockDepNodeCount || 0; // 获取 unlockDepNodeCount
+  const userRole = data?.userRole || "teacher";
+  const unlockDepClusterTotalSkillPt = data?.unlockDepClusterTotalSkillPt || 1; // 获取 unlockDepClusterTotalSkillPt
 
   // 使用 useEffect 获取路径的总长度
   useEffect(() => {
@@ -60,17 +62,19 @@ const BigCheckEdge = ({
         strokeDasharray={dashArray}
         strokeDashoffset={dashOffset}
       />
-      {/* 显示 unlockDepNodeCount 的文本 */}
-      <text
-        x={labelX}
-        y={labelY}
-        fontSize="30px"
-        textAnchor="middle"
-        dy="-5"
-        className="text-slate-800"
-      >
-        {unlockDepNodeCount} Nodes to Unlock
-      </text>
+      {/* 显示 unlockDepClusterTotalSkillPt 的文本 */}
+      {userRole === "teacher" && (
+        <text
+          x={labelX}
+          y={labelY}
+          fontSize="30px"
+          textAnchor="middle"
+          dy="-5"
+          className="text-slate-800"
+        >
+          {unlockDepClusterTotalSkillPt} Skill Points to Unlock
+        </text>
+      )}
     </>
   );
 };

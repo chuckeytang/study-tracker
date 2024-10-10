@@ -69,7 +69,7 @@ export default async function handler(
 
     // 获取所有的 BIGCHECK 节点
     const allBigCheckNodes = await prisma.node.findMany({
-      where: { nodeType: NodeType.BIGCHECK },
+      where: { nodeType: NodeType.BIGCHECK, id: { not: Number(nodeId) } },
       select: { id: true, name: true, description: true, maxLevel: true },
     });
 

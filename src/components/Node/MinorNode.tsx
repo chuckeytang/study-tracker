@@ -5,15 +5,28 @@ import { Handle, HandleType, Position } from "reactflow";
 interface MinorNodeProps {
   data: any;
   radius: number;
+  userRole: "teacher" | "student";
   onContextMenu: (event: React.MouseEvent, nodeData: any) => void;
+  handleLevelChange?: (nodeId: string, delta: number) => void;
 }
 
 const MinorNode: React.FC<MinorNodeProps> = ({
   data,
   radius,
+  userRole = "teacher",
   onContextMenu,
+  handleLevelChange,
 }) => {
   const { nodeName, handles, maxLevel, nodeId, nodeDescription } = data;
+
+  const handleIncrement = () => {
+    handleLevelChange && handleLevelChange(data.nodeId, +1);
+  };
+
+  const handleDecrement = () => {
+    handleLevelChange && handleLevelChange(data.nodeId, -1);
+  };
+
   return (
     <div
       onContextMenu={(event) => onContextMenu(event, data)}
@@ -60,10 +73,18 @@ const MinorNode: React.FC<MinorNodeProps> = ({
           )
         )}
 
-      <div className="fixed bottom-0 right-0 text-[8px] bg-gray-900 rounded-md border-2 border-green-900 rtext-end text-white items-end p-[2px] w-2/3">
+      <div className="fixed bottom-6 right-0 text-[8px] bg-gray-900 rounded-md border-2 border-green-900 rtext-end text-white items-end p-[2px] w-2/3">
         <div>{nodeName}</div>
         <div>maxlevel:{maxLevel}</div>
       </div>
+
+      {userRole === "student" && (
+        <div className="fixed bottom-0 right-0">
+          <button onClick={handleDecrement}>-</button>
+          <span>{data.level}</span>
+          <button onClick={handleIncrement}>+</button>
+        </div>
+      )}
     </div>
   );
 };

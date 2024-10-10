@@ -13,6 +13,7 @@ model User {
   avartarPicUrl   String?          // 用户头像，可选
   email           String           @unique
   role            Role             // 使用枚举类型来定义用户角色
+  skillPt         Int?            // 学生的技能点
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   progress        CourseProgress[] // 学生的学习进度
@@ -49,6 +50,9 @@ model Node {
   // 解锁和锁住依赖节点的数量字段放在 Node 表中
   unlockDepNodeCount Int?            // 解锁依赖的节点中需要解锁的最小节点数，若为-1或者null则所有依赖节点都需解锁
   lockDepNodeCount   Int?            // 锁住依赖的节点中需要解锁的最小节点数，若为-1则所有依赖节点都需解锁才能实现该节点锁住
+
+  // 解锁依赖节点作为根节点，所代表的cluster整体中，增加的技能点数总合。即技能点数总合添加达到该值，本节点可解锁
+  unlockDepClusterTotalSkillPt  Int?
 
   unlockDependenciesFrom UnlockDependency[] @relation("UnlockFrom")
   unlockDependenciesTo   UnlockDependency[] @relation("UnlockTo")

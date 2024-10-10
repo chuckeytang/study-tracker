@@ -5,15 +5,28 @@ import { Handle, HandleType, Position } from "reactflow";
 interface MajorNodeProps {
   data: any;
   radius: number;
+  userRole: "teacher" | "student";
   onContextMenu: (event: React.MouseEvent, nodeData: any) => void;
+  handleLevelChange?: (nodeId: string, delta: number) => void;
 }
 
 const MajorNode: React.FC<MajorNodeProps> = ({
   data,
   radius,
+  userRole = "teacher",
   onContextMenu,
+  handleLevelChange,
 }) => {
   const { nodeName, handles, maxLevel, nodeId, nodeDescription } = data;
+
+  const handleIncrement = () => {
+    handleLevelChange && handleLevelChange(data.nodeId, +1);
+  };
+
+  const handleDecrement = () => {
+    handleLevelChange && handleLevelChange(data.nodeId, -1);
+  };
+
   return (
     <div
       onContextMenu={(event) => onContextMenu(event, data)}
@@ -60,10 +73,30 @@ const MajorNode: React.FC<MajorNodeProps> = ({
             />
           )
         )}
-      <div className="fixed bottom-0 right-0 text-[12px] bg-gray-900 rounded-md text-end border-3 border-green-900 rtext-white items-end p-[2px] w-2/3">
+      <div className="fixed bottom-2 -right-4 text-[12px] bg-gray-900 rounded-t-lg text-end border-3 border-green-900 rtext-white items-end p-1 pr-2 w-1/2">
         <div>{nodeName}</div>
-        <div>maxlevel:{maxLevel}</div>
+        {userRole === "teacher" && <div>maxlevel:{maxLevel}</div>}
       </div>
+
+      {userRole === "student" && (
+        <div className="fixed -bottom-6 -right-4 w-1/2 h-8 bg-gray-900 rounded-b-lg flex p-1 space-x-1 items-center justify-center">
+          <button
+            className="w-6 h-6 rounded-md bg-lime-500 font-extrabold"
+            onClick={handleDecrement}
+          >
+            -
+          </button>
+          <span>
+            {data.level}/{data.maxLevel}
+          </span>
+          <button
+            className="w-6 h-6 rounded-md bg-lime-500 font-extrabold"
+            onClick={handleIncrement}
+          >
+            +
+          </button>
+        </div>
+      )}
     </div>
   );
 };

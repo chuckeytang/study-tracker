@@ -52,6 +52,7 @@ router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
       where: { id: Number(bigCheckNodeId) },
       data: {
         unlockDepNodeCount: 0,
+        unlockDepClusterTotalSkillPt: 0,
         lockDepNodeCount: 0,
       },
     });

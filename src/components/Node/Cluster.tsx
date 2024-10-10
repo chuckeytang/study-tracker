@@ -12,7 +12,9 @@ import { Node, Edge, Position } from "reactflow";
 
 // 定义Cluster函数，接受一个bigCheckNode，返回该Cluster的nodes和edges
 const Cluster = async (
-  bigCheckNode: any
+  bigCheckNode: any,
+  studentProgress?: { [key: number]: { unlocked: boolean; level: number } },
+  userRole: string = "teacher"
 ): Promise<{ nodes: Node[]; edges: Edge[] }> => {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
@@ -30,11 +32,11 @@ const Cluster = async (
     level: number
   ) => {
     if (visitedNodes.has(currentNode.nodeId)) {
-      return; // 已访问过，避免重复处理
+      return; // Avoid processing already visited nodes
     }
     visitedNodes.add(currentNode.nodeId);
 
-    // 设置距离参数
+    // Set distance parameters
     const baseDistance = clusterBaseDistance; // 基础距离
     const minDistance = clusterMinDistance; // 最小距离
     const distanceDecrease = clusterDistanceDecrease; // 每层递减的距离
@@ -44,28 +46,28 @@ const Cluster = async (
       minDistance
     );
 
-    // 计算当前节点的位置
+    // Calculate the position of the current node
     let position: { x: number; y: number };
     if (parentPos) {
-      // 非根节点，根据父节点位置、入射角度和距离计算位置
+      // Non-root node
       const angleRad = (incomingAngle * Math.PI) / 180;
       position = {
         x: parentPos.x + distance * Math.cos(angleRad),
         y: parentPos.y + distance * Math.sin(angleRad),
       };
     } else {
-      // 根节点，使用默认位置
+      // Root node
       position = currentNode.position || { x: 0, y: 0 };
     }
 
-    // 初始化句柄数组
+    // Initialize handles array
     let handles: {
       type: string;
       position: { x: number; y: number };
       id: string;
     }[] = [];
 
-    // 如果有父节点，计算与父节点的句柄位置
+    // If there's a parent node, calculate handle positions
     if (parentNode && parentPos) {
       let parentRadius = 0;
       let selfRadius = 0;
@@ -91,18 +93,18 @@ const Cluster = async (
         parentRadius
       );
 
-      // 生成唯一的 Handle id
+      // Generate unique handle IDs
       const sourceHandleId = `handle-${currentNode.nodeId}-source-${handleFromPos.x}-${handleFromPos.y}`;
       const targetHandleId = `handle-${parentNode.nodeId}-target-${handleToPos.x}-${handleToPos.y}`;
 
-      // 添加当前节点的 source 句柄
+      // Add source handle to current node
       handles.push({
         type: "source",
         position: handleFromPos,
         id: sourceHandleId,
       });
 
-      // 为父节点添加 target 句柄
+      // Add target handle to parent node
       if (nodeMap[parentNode.nodeId]) {
         nodeMap[parentNode.nodeId].data.handles.push({
           type: "target",
@@ -111,25 +113,35 @@ const Cluster = async (
         });
       }
 
-      // 动态设置 edgeType，依据父节点的类型
+      // Dynamically set edge type based on parent node type
       let edgeType = "minorEdge"; // 默认情况下为 minorEdge
       if (parentNode.nodeType === "BIGCHECK") {
         edgeType = "majorEdge";
       }
 
-      // 添加边，连接当前节点与父节点
+      // Add edge connecting current node and parent node
       edges.push({
         id: `e${currentNode.nodeId}-${parentNode.nodeId}`,
         source: String(currentNode.nodeId),
         target: String(parentNode.nodeId),
-        sourceHandle: sourceHandleId, // 指定 source 句柄 id
-        targetHandle: targetHandleId, // 指定 target 句柄 id
-        type: edgeType, // 动态设置的 edgeType
+        sourceHandle: sourceHandleId,
+        targetHandle: targetHandleId,
+        type: edgeType,
         animated: true,
       });
     }
 
-    // 添加当前节点到 nodes 数组，并存储在 nodeMap 中
+    // Merge student progress data if userRole is 'student'
+    if (userRole === "student" && studentProgress) {
+      const progress = studentProgress[currentNode.nodeId] || {
+        unlocked: false,
+        level: 0,
+      };
+      currentNode.unlocked = progress.unlocked;
+      currentNode.level = progress.level;
+    }
+
+    // Add current node to nodes array and nodeMap
     const newNode = {
       id: String(currentNode.nodeId),
       type: currentNode.nodeType,
@@ -176,11 +188,11 @@ const Cluster = async (
           startAngle = 0;
         }
 
-        // 等待所有依赖节点异步处理完成
+        // Process all dependent nodes
         await Promise.all(
           depNodes.map(async (depNode: any, i: any) => {
             const angle = (startAngle + i * angleBetweenEdges) % 360;
-            // 递归处理每个依赖节点，确保依赖节点处理完成后才进行下一次递归
+            // Only process if the node is not a BIGCHECK node
             if (depNode.nodeType != "BIGCHECK") {
               await fetchDepNodes(
                 depNode,
