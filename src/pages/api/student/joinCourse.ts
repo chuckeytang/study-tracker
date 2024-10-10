@@ -38,21 +38,48 @@ export default async function handler(
     const nodes = await prisma.node.findMany({
       where: { courseId: Number(courseId) },
       include: {
-        unlockDependenciesTo: true, // 查询每个节点的前置依赖
+        unlockDependenciesTo: {
+          include: {
+            fromNode: true, // 联合查询获取依赖节点的完整信息
+          },
+        },
       },
     });
 
+    // 查找已经解锁的 BIGCHECK 节点（没有前置依赖的 bigcheck 节点）
+    const unlockedBigCheckIds = nodes
+      .filter(
+        (node) =>
+          node.nodeType === "BIGCHECK" && node.unlockDependenciesTo.length === 0
+      )
+      .map((node) => node.id);
+
     // 构建学习进度数据
     const courseProgressData = nodes.map((node) => {
+      // 判断是否为 bigcheck，bigcheck 节点的初始 level 为 1
+      const isBigCheck = node.nodeType === "BIGCHECK";
+      let initialLevel = isBigCheck ? 1 : 0;
+
       // 判断是否有前置依赖节点
       const hasDependencies = node.unlockDependenciesTo.length > 0;
+
+      // 检查当前节点依赖的是否只有 bigcheck 且已解锁
+      let unlocked = !hasDependencies; // 如果没有依赖，则默认为解锁
+      if (hasDependencies && !isBigCheck) {
+        const onlyDependsOnUnlockedBigCheck = node.unlockDependenciesTo.every(
+          (dependency) =>
+            dependency.fromNode.nodeType === "BIGCHECK" &&
+            unlockedBigCheckIds.includes(dependency.fromNodeId)
+        );
+        unlocked = onlyDependsOnUnlockedBigCheck; // 如果依赖的都是已解锁的 bigcheck，则解锁本节点
+      }
 
       return {
         userId: Number(studentId),
         courseId: Number(courseId),
         nodeId: node.id,
-        level: 0, // 初始等级为0
-        unlocked: !hasDependencies, // 如果没有前置依赖，则解锁；否则处于锁定状态
+        level: initialLevel, // bigcheck 节点初始为 1，其他节点初始为 0
+        unlocked, // 根据前置依赖判断是否解锁
       };
     });
 
