@@ -19,9 +19,6 @@ interface BigCheckProps {
 const BigCheck: React.FC<BigCheckProps> = ({
   id,
   data,
-  level,
-  unlocked,
-  maxLevel,
   selected,
   userRole = "teacher",
   radius = bigCheckRadius,
@@ -30,11 +27,12 @@ const BigCheck: React.FC<BigCheckProps> = ({
   const { nodeName, handles, nodeId, nodeDescription } = data;
 
   let bgColor = "bg-gray-700"; // 默认锁定状态灰色
-  if (unlocked) {
+  let imgFilter = "grayscale(100%)"; // 默认图片置灰
+
+  // 根据不同状态设置颜色和透明度
+  if (data.unlocked) {
     bgColor = "bg-yellow-700"; // 解锁状态
-    if (level === maxLevel) {
-      bgColor = "bg-green-700"; // 满级状态绿色
-    }
+    imgFilter = "none"; // 解锁后取消置灰
   }
 
   if (selected) {
@@ -50,6 +48,7 @@ const BigCheck: React.FC<BigCheckProps> = ({
         height: `${radius * 2}px`,
         transform: "translate(-50%, -50%)", // 调整节点使其中心与 position 对齐
         boxSizing: "border-box",
+        opacity: data.unlocked ? 1 : 0.5,
       }}
     >
       <div className="rounded-full bg-white w-11/12 h-11/12 overflow-hidden">
@@ -57,6 +56,9 @@ const BigCheck: React.FC<BigCheckProps> = ({
           src={data.picUrl}
           alt="big check"
           className="w-full h-full object-cover rounded-full"
+          style={{
+            filter: imgFilter, // 根据状态置灰图片
+          }}
         />
       </div>
       {/* 动态添加句柄 */}
@@ -87,9 +89,8 @@ const BigCheck: React.FC<BigCheckProps> = ({
             />
           )
         )}
-      <div className="fixed bottom-0 right-0 text-[16px] bg-gray-900 border-4 border-green-900 rounded-md text-end text-white items-end p-[2px] w-2/3">
+      <div className="fixed -bottom-6 -right-4 text-[18px] bg-gray-900 rounded-md text-end text-white items-end p-[4px] w-3/5">
         <div>{nodeName}</div>
-        <div>maxlevel:{maxLevel}</div>
       </div>
     </div>
   );

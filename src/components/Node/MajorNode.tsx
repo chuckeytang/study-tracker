@@ -5,6 +5,7 @@ import { Handle, HandleType, Position } from "reactflow";
 interface MajorNodeProps {
   data: any;
   radius: number;
+  selected?: boolean;
   userRole: "teacher" | "student";
   onContextMenu: (event: React.MouseEvent, nodeData: any) => void;
   handleLevelChange?: (nodeId: string, delta: number) => void;
@@ -13,11 +14,30 @@ interface MajorNodeProps {
 const MajorNode: React.FC<MajorNodeProps> = ({
   data,
   radius,
+  selected,
   userRole = "teacher",
   onContextMenu,
   handleLevelChange,
 }) => {
   const { nodeName, handles, maxLevel, nodeId, nodeDescription } = data;
+
+  let bgColor = "bg-gray-700"; // 默认锁定状态灰色
+  let imgFilter = "grayscale(100%)"; // 默认图片置灰
+  let opacity = 0.5;
+
+  // 根据不同状态设置颜色和透明度
+  if (data.unlocked) {
+    bgColor = "bg-yellow-700"; // 解锁状态
+    imgFilter = "none"; // 解锁后取消置灰
+    opacity = 1;
+    if (data.level === data.maxLevel) {
+      bgColor = "bg-green-700"; // 满级状态绿色
+    }
+  }
+
+  if (selected) {
+    bgColor = "bg-blue-700"; // 选中状态蓝色
+  }
 
   const handleIncrement = () => {
     handleLevelChange && handleLevelChange(data.nodeId, +1);
@@ -30,11 +50,12 @@ const MajorNode: React.FC<MajorNodeProps> = ({
   return (
     <div
       onContextMenu={(event) => onContextMenu(event, data)}
-      className={`flex items-center justify-center bg-gray-700 rounded-full text-white font-semibold`}
+      className={`flex items-center justify-center ${bgColor} rounded-full text-white font-semibold`}
       style={{
         width: `${radius * 2}px`,
         height: `${radius * 2}px`,
         transform: "translate(-50%, -50%)", // 调整节点使其中心与 position 对齐
+        opacity: opacity,
       }}
     >
       <div className="rounded-full bg-white w-11/12 h-11/12 overflow-hidden">
@@ -42,6 +63,9 @@ const MajorNode: React.FC<MajorNodeProps> = ({
           src={data.picUrl}
           alt="big check"
           className="w-full h-full object-cover rounded-full"
+          style={{
+            filter: imgFilter, // 根据状态设置图片灰度
+          }}
         />
       </div>
 

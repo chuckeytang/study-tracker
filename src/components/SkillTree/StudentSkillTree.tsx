@@ -252,6 +252,7 @@ const StudentSkillTree = () => {
       } else {
         // 如果成功，更新可用技能点数
         setAvailableSkillPoints((prev) => prev - delta);
+        updateSkillTree();
       }
     } catch (error) {
       console.error("Error changing node level:", error);

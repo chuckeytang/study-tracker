@@ -181,7 +181,7 @@ const Cluster = async (
           // 非根节点
           startAngle =
             incomingAngle +
-            (Math.random() * angleBetweenEdges) / 3 -
+            (0.5 * angleBetweenEdges) / 3 -
             ((numChildren - 1) * angleBetweenEdges) / 2;
         } else {
           // 根节点

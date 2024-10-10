@@ -56,7 +56,7 @@ export default async function handler(
 
     // 构建学习进度数据
     const courseProgressData = nodes.map((node) => {
-      // 判断是否为 bigcheck，bigcheck 节点的初始 level 为 1
+      // 判断是否为 bigcheck，bigcheck 节点的初始 level 为 0
       const isBigCheck = node.nodeType === "BIGCHECK";
       let initialLevel = isBigCheck ? 1 : 0;
 

@@ -95,6 +95,7 @@ model CourseProgress {
   nodeId          Int      // 所属节点
   level           Int      // 学习的等级
   unlocked        Boolean  // 是否解锁
+  clusterSkillPt  Int      // bigcheck所代表的cluster的全部已加skill pt
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
