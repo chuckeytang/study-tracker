@@ -16,6 +16,7 @@ async function main() {
       name: "John Doe",
       email: "john.doe@example.com",
       role: "TEACHER", // Enum type TEACHER
+      skillPt: 100,
     },
   });
 
@@ -24,6 +25,7 @@ async function main() {
       name: "Jane Smith",
       email: "jane.smith@example.com",
       role: "TEACHER", // Enum type TEACHER
+      skillPt: 100,
     },
   });
 
@@ -33,6 +35,7 @@ async function main() {
       name: "Alice Johnson",
       email: "alice.johnson@example.com",
       role: "STUDENT", // Enum type STUDENT
+      skillPt: 100,
     },
   });
 
@@ -41,6 +44,7 @@ async function main() {
       name: "Bob Brown",
       email: "bob.brown@example.com",
       role: "STUDENT", // Enum type STUDENT
+      skillPt: 100,
     },
   });
 
@@ -49,6 +53,7 @@ async function main() {
       name: "Charlie Clark",
       email: "charlie.clark@example.com",
       role: "STUDENT", // Enum type STUDENT
+      skillPt: 100,
     },
   });
 
@@ -57,6 +62,7 @@ async function main() {
       name: "Diana Davis",
       email: "diana.davis@example.com",
       role: "STUDENT", // Enum type STUDENT
+      skillPt: 100,
     },
   });
 
@@ -65,6 +71,7 @@ async function main() {
       name: "Edward Evans",
       email: "edward.evans@example.com",
       role: "STUDENT", // Enum type STUDENT
+      skillPt: 100,
     },
   });
 
@@ -98,6 +105,7 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: -1, // BigCheck has no levels
+      iconUrl: "/images/node_water_adaption.jpg",
     },
   });
 
@@ -110,6 +118,7 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 3,
+      iconUrl: "/images/node_basic_breathing.jpg",
     },
   });
 
@@ -122,6 +131,7 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 1,
+      iconUrl: "/images/node_holding_breath.jpg",
     },
   });
 
@@ -133,6 +143,7 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
+      iconUrl: "/images/node_underwater_breathing.jpg",
     },
   });
 
@@ -154,6 +165,7 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 3,
+      iconUrl: "/images/node_buoyancy_control.jpg",
     },
   });
 
@@ -166,6 +178,7 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
+      iconUrl: "/images/node_floating.jpg",
     },
   });
 
@@ -177,6 +190,7 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 1,
+      iconUrl: "/images/node_back_float.jpg",
     },
   });
 
@@ -199,6 +213,7 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: -1, // BigCheck has no levels
+      iconUrl: "/images/node_basic_swimming_strokes.jpg",
     },
   });
 
@@ -211,6 +226,7 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 3,
+      iconUrl: "/images/node_freestyle.jpg",
     },
   });
 
@@ -223,6 +239,7 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
+      iconUrl: "/images/node_freestyle_arm_movements.jpg",
     },
   });
 
@@ -234,6 +251,7 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
+      iconUrl: "/images/node_freestyle_leg_movements.jpg",
     },
   });
 
@@ -254,6 +272,7 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 3,
+      iconUrl: "/images/node_breaststroke.jpg",
     },
   });
 
@@ -265,6 +284,7 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
+      iconUrl: "/images/node_breaststroke_arm_movements.jpg",
     },
   });
 
@@ -276,6 +296,7 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
+      iconUrl: "/images/node_breaststroke_leg_movements.jpg",
     },
   });
 

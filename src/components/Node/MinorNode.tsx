@@ -94,21 +94,23 @@ const MinorNode: React.FC<MinorNodeProps> = ({
         )}
 
       {/* 节点信息显示 */}
-      <div className="fixed bottom-4 -right-4 text-[8px] bg-gray-900 rounded-t-lg text-end border-3 border-green-900 rtext-white items-end p-1 w-1/2">
+      <div className="fixed bottom-4 -right-4 text-[8px] bg-gray-900 rounded-t-lg text-end border-3 border-green-900 rtext-white items-end p-1 w-3/5">
         <div>{nodeName}</div>
         {userRole === "teacher" && <div>maxlevel:{maxLevel}</div>}
       </div>
 
       {/* 学生的等级调整面板 */}
       {userRole === "student" && (
-        <div className="fixed -bottom-4 -right-4 w-1/2 h-8 bg-gray-900 rounded-b-lg flex p-1 space-x-1 items-center justify-center">
+        <div className="fixed -bottom-4 -right-4 w-3/5 h-8 bg-gray-900 rounded-b-lg flex p-1 space-x-1 items-center justify-center">
           <button
             className="w-6 h-6 bg-lime-500  text-white rounded-md font-extrabold flex items-center justify-center"
             onClick={handleDecrement}
           >
             -
           </button>
-          <span className="text-white font-bold">{data.level}</span>
+          <span className="text-white font-bold">
+            {data.level}/{data.maxLevel}
+          </span>
           <button
             className="w-6 h-6 bg-green-500 text-white rounded-md font-extrabold flex items-center justify-center"
             onClick={handleIncrement}

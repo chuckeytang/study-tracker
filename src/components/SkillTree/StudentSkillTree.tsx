@@ -38,6 +38,15 @@ const StudentSkillTree = () => {
   // Fetch and update the skill tree along with student progress
   const updateSkillTree = async () => {
     try {
+      const userResponse = await fetch(`/api/users/getOne?id=${userId}`);
+      const userData = await userResponse.json();
+
+      if (userResponse.ok) {
+        setAvailableSkillPoints(userData.skillPt || 0);
+      } else {
+        console.error("Failed to fetch user info:", userData.error);
+      }
+
       // Fetch course data
       const response = await fetch(
         `/api/courses/getBigChecks?courseId=${courseId}`

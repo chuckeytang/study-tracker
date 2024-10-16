@@ -33,7 +33,53 @@ async function calculateTotalSkillPoints(
   return totalSkillPoints;
 }
 
-// 检查节点解锁状态的函数
+// 递归函数：遍历子节点并释放技能点
+async function lockAndReleaseSkillPoints(
+  nodeId: number,
+  progressMap: Map<number, any>,
+  nodesMap: Map<number, any>,
+  studentId: number
+) {
+  const node = nodesMap.get(nodeId);
+  if (!node) return 0;
+
+  let releasedSkillPoints = 0;
+
+  // 获取当前节点的进度
+  const progress = progressMap.get(nodeId);
+  if (progress && progress.level > 0) {
+    releasedSkillPoints += progress.level; // 释放的技能点等于当前节点的等级
+    // 将该节点的level设为0，并锁住
+    await prisma.courseProgress.update({
+      where: {
+        userId_nodeId: {
+          userId: Number(studentId),
+          nodeId: Number(nodeId),
+        },
+      },
+      data: {
+        level: 0,
+        unlocked: false,
+      },
+    });
+  }
+
+  // 递归锁住子节点
+  if (node.unlockDependenciesFrom) {
+    for (const dep of node.unlockDependenciesFrom) {
+      releasedSkillPoints += await lockAndReleaseSkillPoints(
+        dep.toNodeId,
+        progressMap,
+        nodesMap,
+        studentId
+      );
+    }
+  }
+
+  return releasedSkillPoints;
+}
+
+// 修改后的 checkUnlockStatus 函数，增加释放技能点逻辑
 async function checkUnlockStatus(courseId: number, studentId: number) {
   const nodes = await prisma.node.findMany({
     where: { courseId },
@@ -64,47 +110,70 @@ async function checkUnlockStatus(courseId: number, studentId: number) {
   const nodesMap = new Map(nodes.map((node) => [node.id, node]));
 
   // 遍历所有节点，检查解锁和锁住状态
-  return nodes.map(async (node) => {
-    let unlocked = false;
+  const unlockStatuses = await Promise.all(
+    nodes.map(async (node) => {
+      let unlocked = false;
 
-    // 解锁规则
-    if (node.nodeType === "BIGCHECK") {
-      if (node.unlockDependenciesTo.length === 0) {
-        unlocked = true; // 没有前置依赖，直接解锁
+      // 解锁规则
+      if (node.nodeType === "BIGCHECK") {
+        if (node.unlockDependenciesTo.length === 0) {
+          unlocked = true; // 没有前置依赖，直接解锁
+        } else {
+          const totalSkillPoints = await calculateTotalSkillPoints(
+            node.id,
+            progressMap,
+            nodesMap
+          );
+          if (totalSkillPoints >= (node.unlockDepClusterTotalSkillPt || 0)) {
+            unlocked = true; // 技能点达到要求，解锁
+          }
+        }
       } else {
-        // 计算依赖的 BIGCHECK 节点的子孙节点的技能点总和（不包括 BIGCHECK 节点本身的level）
-        const totalSkillPoints = await calculateTotalSkillPoints(
+        // MAJOR_NODE 或 MINOR_NODE 解锁依赖
+        unlocked = node.unlockDependenciesTo.every((dep) => {
+          const depProgress = progressMap.get(dep.fromNodeId);
+          return depProgress && depProgress.unlocked && depProgress.level > 0;
+        });
+      }
+
+      // 锁住规则（优先级高于解锁规则）
+      if (node.nodeType !== "BIGCHECK") {
+        node.lockDependenciesFrom.forEach((lockDep) => {
+          const depProgress = progressMap.get(lockDep.toNodeId);
+          if (depProgress && depProgress.unlocked && depProgress.level > 0) {
+            unlocked = false; // 如果锁住依赖节点解锁且其level > 0，本节点保持锁住
+          }
+        });
+      }
+
+      // 如果节点被锁住并且有子节点，锁住并释放技能点
+      const nodeProgress = progressMap.get(node.id);
+      if (!unlocked && nodeProgress && nodeProgress.level > 0) {
+        const releasedSkillPoints = await lockAndReleaseSkillPoints(
           node.id,
           progressMap,
-          nodesMap
+          nodesMap,
+          studentId
         );
-        if (totalSkillPoints >= (node.unlockDepClusterTotalSkillPt || 0)) {
-          unlocked = true; // 技能点达到要求，解锁
-        }
+        // 将技能点返还给用户
+        await prisma.user.update({
+          where: { id: Number(studentId) },
+          data: {
+            skillPt: {
+              increment: releasedSkillPoints,
+            },
+          },
+        });
       }
-    } else {
-      // MAJOR_NODE 或 MINOR_NODE 解锁依赖
-      unlocked = node.unlockDependenciesTo.every((dep) => {
-        const depProgress = progressMap.get(dep.fromNodeId);
-        return depProgress && depProgress.unlocked && depProgress.level > 0;
-      });
-    }
 
-    // 锁住规则（优先级高于解锁规则）
-    if (node.nodeType !== "BIGCHECK") {
-      node.lockDependenciesFrom.forEach((lockDep) => {
-        const depProgress = progressMap.get(lockDep.toNodeId);
-        if (depProgress && depProgress.unlocked && depProgress.level > 0) {
-          unlocked = false; // 如果锁住依赖节点解锁且其level > 0，本节点保持锁住
-        }
-      });
-    }
+      return {
+        nodeId: node.id,
+        unlocked,
+      };
+    })
+  );
 
-    return {
-      nodeId: node.id,
-      unlocked,
-    };
-  });
+  return unlockStatuses;
 }
 
 export default async function handler(
