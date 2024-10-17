@@ -21,10 +21,10 @@ async function calculateTotalSkillPoints(
     totalSkillPoints = 0;
   }
 
-  // 遍历节点的 unlockDependenciesTo 依赖，递归累加其技能点
-  for (const dep of node.unlockDependenciesTo) {
+  // 遍历节点的 unlockDependenciesFrom 依赖，递归累加其技能点
+  for (const dep of node.unlockDependenciesFrom) {
     totalSkillPoints += await calculateTotalSkillPoints(
-      dep.fromNodeId,
+      dep.toNodeId,
       progressMap,
       nodesMap
     );
@@ -84,9 +84,16 @@ async function checkUnlockStatus(courseId: number, studentId: number) {
   const nodes = await prisma.node.findMany({
     where: { courseId },
     include: {
+      // 本node所依赖的目标node
       unlockDependenciesTo: {
         include: {
           fromNode: true,
+        },
+      },
+      // 依赖本node的所有其他node
+      unlockDependenciesFrom: {
+        include: {
+          toNode: true,
         },
       },
       lockDependenciesFrom: {
@@ -113,17 +120,24 @@ async function checkUnlockStatus(courseId: number, studentId: number) {
   const unlockStatuses = await Promise.all(
     nodes.map(async (node) => {
       let unlocked = false;
+      let totalSkillPoints = 0;
 
       // 解锁规则
       if (node.nodeType === "BIGCHECK") {
         if (node.unlockDependenciesTo.length === 0) {
           unlocked = true; // 没有前置依赖，直接解锁
         } else {
-          const totalSkillPoints = await calculateTotalSkillPoints(
-            node.id,
-            progressMap,
-            nodesMap
-          );
+          // 使用 Promise.all 等待所有异步操作完成
+          totalSkillPoints = await Promise.all(
+            node.unlockDependenciesTo.map(async (dep) => {
+              return await calculateTotalSkillPoints(
+                dep.fromNodeId,
+                progressMap,
+                nodesMap
+              );
+            })
+          ).then((results) => results.reduce((sum, points) => sum + points, 0)); // 计算总技能点
+
           if (totalSkillPoints >= (node.unlockDepClusterTotalSkillPt || 0)) {
             unlocked = true; // 技能点达到要求，解锁
           }
@@ -169,6 +183,7 @@ async function checkUnlockStatus(courseId: number, studentId: number) {
       return {
         nodeId: node.id,
         unlocked,
+        totalSkillPoints,
       };
     })
   );
@@ -290,6 +305,7 @@ export default async function handler(
           },
           data: {
             unlocked: status.unlocked,
+            clusterSkillPt: status.totalSkillPoints,
           },
         })
       )

@@ -14,7 +14,7 @@ const BigCheckEdge = ({
 }: EdgeProps) => {
   const pathRef = useRef<SVGPathElement>(null); // 引用 SVG path
   const [pathLength, setPathLength] = useState(0); // 路径的总长度
-  const progress = data?.progress || 0; // 假设 progress 是 0-100 之间的数值
+  const progress = data?.progress || 0; //  progress 是 0-1 之间的数值
   const unlockDepNodeCount = data?.unlockDepNodeCount || 0; // 获取 unlockDepNodeCount
   const userRole = data?.userRole || "teacher";
   const unlockDepClusterTotalSkillPt = data?.unlockDepClusterTotalSkillPt || 1; // 获取 unlockDepClusterTotalSkillPt
@@ -40,7 +40,7 @@ const BigCheckEdge = ({
 
   // 动态计算 strokeDasharray 和 strokeDashoffset
   const dashArray = pathLength;
-  const dashOffset = pathLength * (progress / 100); // 计算进度的偏移量
+  const dashOffset = pathLength * progress; // 计算进度的偏移量
 
   return (
     <>

@@ -37,15 +37,17 @@ export default async function handler(
       acc[curr.nodeId] = {
         unlocked: curr.unlocked,
         level: curr.level,
+        clusterSkillPt: curr.clusterSkillPt,
       };
       return acc;
-    }, {} as Record<number, { unlocked: boolean; level: number }>);
+    }, {} as Record<number, { unlocked: boolean; level: number; clusterSkillPt: number }>);
 
     // 合并节点信息和对应的学习进度
     const formattedNodes = nodes.map((node) => {
       const progressData = nodeProgressMap[node.id] || {
         unlocked: false,
         level: 0,
+        clusterSkillPt: 0,
       };
       return {
         nodeId: node.id,
@@ -55,6 +57,7 @@ export default async function handler(
         maxLevel: node.maxLevel,
         unlocked: progressData.unlocked,
         level: progressData.level,
+        clusterSkillPt: progressData.clusterSkillPt,
       };
     });
 

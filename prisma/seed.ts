@@ -104,6 +104,7 @@ async function main() {
       nodeType: "BIGCHECK",
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
+      unlockDepClusterTotalSkillPt: 0,
       maxLevel: -1, // BigCheck has no levels
       iconUrl: "/images/node_water_adaption.jpg",
     },
@@ -212,6 +213,7 @@ async function main() {
       nodeType: "BIGCHECK",
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
+      unlockDepClusterTotalSkillPt: 5,
       maxLevel: -1, // BigCheck has no levels
       iconUrl: "/images/node_basic_swimming_strokes.jpg",
     },
@@ -316,6 +318,7 @@ async function main() {
       nodeType: "BIGCHECK",
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
+      unlockDepClusterTotalSkillPt: 4,
       maxLevel: -1, // BigCheck has no levels
     },
   });
@@ -426,6 +429,7 @@ async function main() {
       nodeType: "BIGCHECK",
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
+      unlockDepClusterTotalSkillPt: 6,
       maxLevel: -1, // BigCheck has no levels
     },
   });

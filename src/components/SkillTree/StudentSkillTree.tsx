@@ -66,6 +66,7 @@ const StudentSkillTree = () => {
           acc[node.nodeId] = {
             unlocked: node.unlocked,
             level: node.level,
+            clusterSkillPt: node.clusterSkillPt,
           };
           return acc;
         },
@@ -88,9 +89,13 @@ const StudentSkillTree = () => {
         if (studentProgress[bigCheckNode.nodeId]) {
           bigCheckNode.unlocked = studentProgress[bigCheckNode.nodeId].unlocked;
           bigCheckNode.level = studentProgress[bigCheckNode.nodeId].level;
+          bigCheckNode.progress =
+            studentProgress[bigCheckNode.nodeId].clusterSkillPt /
+            bigCheckNode.unlockDepClusterTotalSkillPt;
         } else {
           bigCheckNode.unlocked = false;
           bigCheckNode.level = 0;
+          bigCheckNode.progress = 0;
         }
 
         // Get the cluster nodes and edges
@@ -158,7 +163,7 @@ const StudentSkillTree = () => {
                   animated: false,
                   data: {
                     userRole: "student",
-                    progress: 0,
+                    progress: bigCheckNode.progress,
                   },
                 });
               }

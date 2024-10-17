@@ -80,6 +80,7 @@ export default async function handler(
         nodeId: node.id,
         level: initialLevel, // bigcheck 节点初始为 1，其他节点初始为 0
         unlocked, // 根据前置依赖判断是否解锁
+        clusterSkillPt: 0,
       };
     });
 
