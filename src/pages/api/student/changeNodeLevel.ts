@@ -284,9 +284,15 @@ async function checkUnlockStatus(courseId: number, studentId: number) {
   const nodesMap = new Map(nodes.map((node) => [node.id, node]));
 
   let unlockStatuses = new Map<number, UnlockStatus>();
+  let totalReleasedSkillPoints = 0;
 
   // 第一次遍历，更新初始的 unlocked 状态
-  await processNodes(nodes, progressMap, nodesMap, unlockStatuses);
+  totalReleasedSkillPoints += await processNodes(
+    nodes,
+    progressMap,
+    nodesMap,
+    unlockStatuses
+  );
 
   // 第一次遍历完成后，将 unlockStatuses 的结果回写到 progressMap
   unlockStatuses.forEach((status: any) => {
@@ -299,9 +305,14 @@ async function checkUnlockStatus(courseId: number, studentId: number) {
   });
 
   // 第二次遍历，处理二级连锁的解锁状态
-  await processNodes(nodes, progressMap, nodesMap, unlockStatuses);
+  totalReleasedSkillPoints += await processNodes(
+    nodes,
+    progressMap,
+    nodesMap,
+    unlockStatuses
+  );
 
-  return unlockStatuses;
+  return { unlockStatuses, totalReleasedSkillPoints };
 }
 
 export default async function handler(
@@ -379,16 +390,6 @@ export default async function handler(
         .json({ error: "Not enough skill points to add to this node." });
     }
 
-    // 更新学生的技能点数（减少或恢复）
-    await prisma.user.update({
-      where: { id: Number(studentId) },
-      data: {
-        skillPt: {
-          decrement: points, // 仅在增加技能点时减少学生的技能点数
-        },
-      },
-    });
-
     // 更新节点的进度
     await prisma.courseProgress.update({
       where: {
@@ -402,14 +403,27 @@ export default async function handler(
       },
     });
 
-    // 再次检查解锁状态并更新课程进度
-    const updatedUnlockStatus = await Promise.all(
-      await checkUnlockStatus(node.courseId, studentId)
-    );
-    const updatedUnlockStatusArray = Array.from(updatedUnlockStatus.values());
+    // 检查解锁状态并更新课程进度
+    const { unlockStatuses, totalReleasedSkillPoints } =
+      await checkUnlockStatus(node.courseId, studentId);
+
+    // 计算最终的技能点数变化：原来的 points 加上 totalReleasedSkillPoints
+    const finalPoints = points - totalReleasedSkillPoints;
+
+    // 更新学生的技能点数
+    await prisma.user.update({
+      where: { id: Number(studentId) },
+      data: {
+        skillPt: {
+          decrement: finalPoints,
+        },
+      },
+    });
+
+    const updatedUnlockStatusArray = Array.from(unlockStatuses.values());
 
     await Promise.all(
-      updatedUnlockStatusArray.map(([nodeId, status]) =>
+      updatedUnlockStatusArray.map((status) =>
         prisma.courseProgress.update({
           where: {
             userId_nodeId: {
