@@ -23,6 +23,8 @@ async function calculateTotalSkillPoints(
 
   // 遍历节点的 unlockDependenciesFrom 依赖，递归累加其技能点
   for (const dep of node.unlockDependenciesFrom) {
+    const toNode = nodesMap.get(dep.toNodeId);
+    if (!toNode || toNode.nodeType == "BIGCHECK") continue;
     totalSkillPoints += await calculateTotalSkillPoints(
       dep.toNodeId,
       progressMap,
@@ -44,25 +46,31 @@ async function lockAndReleaseSkillPoints(
   if (!node) return 0;
 
   let releasedSkillPoints = 0;
+  let level = 0;
 
-  // 获取当前节点的进度
-  const progress = progressMap.get(nodeId);
-  if (progress && progress.level > 0) {
-    releasedSkillPoints += progress.level; // 释放的技能点等于当前节点的等级
-    // 将该节点的level设为0，并锁住
-    await prisma.courseProgress.update({
-      where: {
-        userId_nodeId: {
-          userId: Number(studentId),
-          nodeId: Number(nodeId),
-        },
-      },
-      data: {
-        level: 0,
-        unlocked: false,
-      },
-    });
+  if (node && node.nodeType === "BIGCHECK") {
+    level = 1;
+  } else {
+    // 获取当前节点的进度
+    const progress = progressMap.get(nodeId);
+    if (progress && progress.level > 0) {
+      releasedSkillPoints += progress.level; // 释放的技能点等于当前节点的等级
+    }
   }
+
+  // 将该节点锁住
+  await prisma.courseProgress.update({
+    where: {
+      userId_nodeId: {
+        userId: Number(studentId),
+        nodeId: Number(nodeId),
+      },
+    },
+    data: {
+      level: level,
+      unlocked: false,
+    },
+  });
 
   // 递归锁住子节点
   if (node.unlockDependenciesFrom) {
@@ -116,77 +124,84 @@ async function checkUnlockStatus(courseId: number, studentId: number) {
   );
   const nodesMap = new Map(nodes.map((node) => [node.id, node]));
 
+  const unlockStatuses = [];
   // 遍历所有节点，检查解锁和锁住状态
-  const unlockStatuses = await Promise.all(
-    nodes.map(async (node) => {
-      let unlocked = false;
-      let totalSkillPoints = 0;
+  // 使用 for...of 保证按顺序处理节点
+  for (const node of nodes) {
+    let unlocked = false;
+    let totalSkillPoints = 0;
 
-      // 解锁规则
-      if (node.nodeType === "BIGCHECK") {
-        if (node.unlockDependenciesTo.length === 0) {
-          unlocked = true; // 没有前置依赖，直接解锁
-        } else {
-          // 使用 Promise.all 等待所有异步操作完成
-          totalSkillPoints = await Promise.all(
-            node.unlockDependenciesTo.map(async (dep) => {
-              return await calculateTotalSkillPoints(
-                dep.fromNodeId,
-                progressMap,
-                nodesMap
-              );
-            })
-          ).then((results) => results.reduce((sum, points) => sum + points, 0)); // 计算总技能点
-
-          if (totalSkillPoints >= (node.unlockDepClusterTotalSkillPt || 0)) {
-            unlocked = true; // 技能点达到要求，解锁
-          }
-        }
+    // 解锁规则
+    if (node.nodeType === "BIGCHECK") {
+      if (node.unlockDependenciesTo.length === 0) {
+        unlocked = true; // 没有前置依赖，直接解锁
       } else {
-        // MAJOR_NODE 或 MINOR_NODE 解锁依赖
-        unlocked = node.unlockDependenciesTo.every((dep) => {
-          const depProgress = progressMap.get(dep.fromNodeId);
-          return depProgress && depProgress.unlocked && depProgress.level > 0;
-        });
-      }
+        // 使用 Promise.all 等待所有异步操作完成
+        totalSkillPoints = await Promise.all(
+          node.unlockDependenciesTo.map(async (dep) => {
+            return await calculateTotalSkillPoints(
+              dep.fromNodeId,
+              progressMap,
+              nodesMap
+            );
+          })
+        ).then((results) => results.reduce((sum, points) => sum + points, 0)); // 计算总技能点
 
-      // 锁住规则（优先级高于解锁规则）
-      if (node.nodeType !== "BIGCHECK") {
-        node.lockDependenciesFrom.forEach((lockDep) => {
-          const depProgress = progressMap.get(lockDep.toNodeId);
-          if (depProgress && depProgress.unlocked && depProgress.level > 0) {
-            unlocked = false; // 如果锁住依赖节点解锁且其level > 0，本节点保持锁住
-          }
-        });
+        if (totalSkillPoints >= (node.unlockDepClusterTotalSkillPt || 0)) {
+          unlocked = true; // 技能点达到要求，解锁
+        } else {
+          unlocked = false;
+        }
       }
+    } else {
+      // MAJOR_NODE 或 MINOR_NODE 解锁依赖
+      unlocked = node.unlockDependenciesTo.every((dep) => {
+        const depProgress = progressMap.get(dep.fromNodeId);
+        return depProgress && depProgress.unlocked && depProgress.level > 0;
+      });
+    }
 
-      // 如果节点被锁住并且有子节点，锁住并释放技能点
-      const nodeProgress = progressMap.get(node.id);
-      if (!unlocked && nodeProgress && nodeProgress.level > 0) {
-        const releasedSkillPoints = await lockAndReleaseSkillPoints(
-          node.id,
-          progressMap,
-          nodesMap,
-          studentId
-        );
-        // 将技能点返还给用户
-        await prisma.user.update({
-          where: { id: Number(studentId) },
-          data: {
-            skillPt: {
-              increment: releasedSkillPoints,
-            },
+    // 锁住规则（优先级高于解锁规则）
+    if (node.nodeType !== "BIGCHECK") {
+      node.lockDependenciesFrom.forEach((lockDep) => {
+        const depProgress = progressMap.get(lockDep.toNodeId);
+        if (depProgress && depProgress.unlocked && depProgress.level > 0) {
+          unlocked = false; // 如果锁住依赖节点解锁且其level > 0，本节点保持锁住
+        }
+      });
+    }
+
+    // 回写到 progressMap 和 nodesMap
+    const nodeProgress = progressMap.get(node.id);
+    if (nodeProgress) {
+      nodeProgress.unlocked = unlocked;
+    }
+
+    // 如果节点被锁住并且有子节点，锁住并释放技能点
+    if (!unlocked && nodeProgress) {
+      const releasedSkillPoints = await lockAndReleaseSkillPoints(
+        node.id,
+        progressMap,
+        nodesMap,
+        studentId
+      );
+      // 将技能点返还给用户
+      await prisma.user.update({
+        where: { id: Number(studentId) },
+        data: {
+          skillPt: {
+            increment: releasedSkillPoints,
           },
-        });
-      }
+        },
+      });
+    }
 
-      return {
-        nodeId: node.id,
-        unlocked,
-        totalSkillPoints,
-      };
-    })
-  );
+    unlockStatuses.push({
+      nodeId: node.id,
+      unlocked,
+      totalSkillPoints,
+    });
+  }
 
   return unlockStatuses;
 }
