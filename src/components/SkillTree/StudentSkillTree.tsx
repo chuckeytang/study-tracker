@@ -18,7 +18,8 @@ import {
   majornodeRadius,
   minornodeRadius,
 } from "@/types/Values";
-import { calculateHandlePosition } from "@/tools/utils";
+import { calculateHandlePosition } from "@/utils/utils";
+import { apiRequest } from "@/utils/api";
 
 // Define options for the course selection dropdown
 const options = [
@@ -38,27 +39,19 @@ const StudentSkillTree = () => {
   // Fetch and update the skill tree along with student progress
   const updateSkillTree = async () => {
     try {
-      const userResponse = await fetch(`/api/users/getOne?id=${userId}`);
-      const userData = await userResponse.json();
-
-      if (userResponse.ok) {
-        setAvailableSkillPoints(userData.skillPt || 0);
-      } else {
-        console.error("Failed to fetch user info:", userData.error);
-      }
+      const userData = await apiRequest(`/api/users/getOne?id=${userId}`);
+      setAvailableSkillPoints(userData.skillPt || 0);
 
       // Fetch course data
-      const response = await fetch(
+      const data = await apiRequest(
         `/api/courses/getBigChecks?courseId=${courseId}`
       );
-      const data = await response.json();
       const bigChecks = data.data;
 
       // Fetch student progress data
-      const progressResponse = await fetch(
+      const progressData = await apiRequest(
         `/api/student/getStudentCourseInfo?studentId=${userId}&courseId=${courseId}`
       );
-      const progressData = await progressResponse.json();
 
       // Create a mapping from nodeId to progress data
       const studentProgress = progressData.data.reduce(
@@ -184,14 +177,8 @@ const StudentSkillTree = () => {
 
     const fetchUserInfo = async () => {
       try {
-        const response = await fetch(`/api/users/getOne?id=${userId}`);
-        const data = await response.json();
-
-        if (response.ok) {
-          setAvailableSkillPoints(data.skillPt || 0); // 设置技能点数
-        } else {
-          console.error("Failed to fetch user info:", data.error);
-        }
+        const data = await apiRequest(`/api/users/getOne?id=${userId}`);
+        setAvailableSkillPoints(data.skillPt || 0); // 设置技能点数
       } catch (error) {
         console.error("Error fetching user info:", error);
       }
@@ -247,27 +234,14 @@ const StudentSkillTree = () => {
 
     try {
       // 调用后端 API，传递 nodeId、points（可为负数） 和 studentId
-      const response = await fetch("/api/student/changeNodeLevel", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nodeId: nodeId,
-          points: delta, // delta 可为正或负数
-          studentId: userId,
-        }),
+      const data = await apiRequest("/api/student/changeNodeLevel", "POST", {
+        nodeId: nodeId,
+        points: delta, // delta 可为正或负数
+        studentId: userId,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error("Failed to change node level:", data.error);
-      } else {
-        // 如果成功，更新可用技能点数
-        setAvailableSkillPoints((prev) => prev - delta);
-        updateSkillTree();
-      }
+      // 如果成功，更新可用技能点数
+      setAvailableSkillPoints((prev) => prev - delta);
+      updateSkillTree();
     } catch (error) {
       console.error("Error changing node level:", error);
     }

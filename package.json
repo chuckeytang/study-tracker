@@ -12,9 +12,11 @@
   "dependencies": {
     "@headlessui/react": "^2.1.9",
     "@prisma/client": "^5.19.1",
+    "bcryptjs": "^2.4.3",
     "classnames": "^2.5.1",
     "echarts-for-react": "^3.0.2",
     "final-form": "^4.20.10",
+    "jsonwebtoken": "^9.0.2",
     "multer": "1.4.5-lts.1",
     "mysql2": "^3.11.2",
     "next": "14.2.11",
@@ -30,7 +32,9 @@
     "reactflow": "^11.11.4"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/classnames": "^2.3.1",
+    "@types/jsonwebtoken": "^9.0.7",
     "@types/multer": "^1.4.12",
     "@types/node": "^20",
     "@types/react": "^18",

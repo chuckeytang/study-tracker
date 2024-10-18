@@ -10,6 +10,7 @@ datasource db {
 model User {
   id              Int              @id @default(autoincrement())
   name            String
+  password        String
   avartarPicUrl   String?          // 用户头像，可选
   email           String           @unique
   role            Role             // 使用枚举类型来定义用户角色

@@ -17,6 +17,7 @@ async function main() {
       email: "john.doe@example.com",
       role: "TEACHER", // Enum type TEACHER
       skillPt: 100,
+      password: "$2a$10$VhHajf3Pd5mYPub8/O.hDOWboHm5LcfB8szIo0v11zp5CTfCrLCuy",
     },
   });
 
@@ -26,6 +27,7 @@ async function main() {
       email: "jane.smith@example.com",
       role: "TEACHER", // Enum type TEACHER
       skillPt: 100,
+      password: "$2a$10$VhHajf3Pd5mYPub8/O.hDOWboHm5LcfB8szIo0v11zp5CTfCrLCuy",
     },
   });
 
@@ -36,6 +38,7 @@ async function main() {
       email: "alice.johnson@example.com",
       role: "STUDENT", // Enum type STUDENT
       skillPt: 100,
+      password: "$2a$10$VhHajf3Pd5mYPub8/O.hDOWboHm5LcfB8szIo0v11zp5CTfCrLCuy",
     },
   });
 
@@ -45,6 +48,7 @@ async function main() {
       email: "bob.brown@example.com",
       role: "STUDENT", // Enum type STUDENT
       skillPt: 100,
+      password: "$2a$10$VhHajf3Pd5mYPub8/O.hDOWboHm5LcfB8szIo0v11zp5CTfCrLCuy",
     },
   });
 
@@ -54,6 +58,7 @@ async function main() {
       email: "charlie.clark@example.com",
       role: "STUDENT", // Enum type STUDENT
       skillPt: 100,
+      password: "$2a$10$VhHajf3Pd5mYPub8/O.hDOWboHm5LcfB8szIo0v11zp5CTfCrLCuy",
     },
   });
 
@@ -63,6 +68,7 @@ async function main() {
       email: "diana.davis@example.com",
       role: "STUDENT", // Enum type STUDENT
       skillPt: 100,
+      password: "$2a$10$VhHajf3Pd5mYPub8/O.hDOWboHm5LcfB8szIo0v11zp5CTfCrLCuy",
     },
   });
 
@@ -72,6 +78,7 @@ async function main() {
       email: "edward.evans@example.com",
       role: "STUDENT", // Enum type STUDENT
       skillPt: 100,
+      password: "$2a$10$VhHajf3Pd5mYPub8/O.hDOWboHm5LcfB8szIo0v11zp5CTfCrLCuy",
     },
   });
 

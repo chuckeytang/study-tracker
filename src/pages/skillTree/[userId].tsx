@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import TeacherSkillTree from "@/components/SkillTree/TeacherSkillTree";
 import StudentSkillTree from "@/components/SkillTree/StudentSkillTree";
 import OtherStudentSkillTree from "@/components/SkillTree/OtherStudentSkillTree";
+import { apiRequest } from "@/utils/api";
 
 const SkillTree = (props) => {
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -15,14 +16,8 @@ const SkillTree = (props) => {
     // Fetch user role
     const fetchUserRole = async () => {
       try {
-        const response = await fetch(`/api/users/getOne?id=${userId}`);
-        const data = await response.json();
-
-        if (response.ok) {
-          setUserRole(data.role); // data.role should be 'TEACHER' or 'STUDENT'
-        } else {
-          console.error("Failed to fetch user role:", data.error);
-        }
+        const data = await apiRequest(`/api/users/getOne?id=${userId}`);
+        setUserRole(data.role);
       } catch (error) {
         console.error("Error fetching user role:", error);
       }
@@ -36,13 +31,7 @@ const SkillTree = (props) => {
   }
 
   return (
-    <>
-      {userRole === "TEACHER" ? (
-        <TeacherSkillTree />
-      ) : (
-        <OtherStudentSkillTree />
-      )}
-    </>
+    <>{userRole === "TEACHER" ? <TeacherSkillTree /> : <StudentSkillTree />}</>
   );
 };
 

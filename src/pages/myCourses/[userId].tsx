@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import UserInfo from "@/components/UserInfo";
 import Link from "next/link";
 import { Dialog } from "@headlessui/react";
+import { apiRequest } from "@/utils/api";
 
 interface Course {
   id: number;
@@ -28,14 +29,8 @@ const MyCourses: React.FC = (props) => {
     // Fetch user role
     const fetchUserRole = async () => {
       try {
-        const response = await fetch(`/api/users/getOne?id=${userId}`);
-        const data = await response.json();
-
-        if (response.ok) {
-          setUserRole(data.role); // 设置用户角色为 'TEACHER' 或 'STUDENT'
-        } else {
-          console.error("Failed to fetch user role:", data.error);
-        }
+        const data = await apiRequest(`/api/users/getOne?id=${userId}`);
+        setUserRole(data.role);
       } catch (error) {
         console.error("Error fetching user role:", error);
       }
@@ -55,14 +50,8 @@ const MyCourses: React.FC = (props) => {
             ? `/api/teacher/getCourseList?userId=${userId}`
             : `/api/student/getCourseList?userId=${userId}`;
 
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-
-        if (response.ok) {
-          setCourses(data.courses);
-        } else {
-          console.error("Error fetching courses:", data.error);
-        }
+        const data = await apiRequest(apiUrl);
+        setCourses(data.courses);
       } catch (error) {
         console.error("Error fetching course list:", error);
       } finally {
@@ -77,32 +66,19 @@ const MyCourses: React.FC = (props) => {
     if (!selectedCourseId || !userId) return;
 
     try {
-      const response = await fetch("/api/student/joinCourse", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          studentId: Number(userId),
-          courseId: selectedCourseId,
-        }),
+      const data = await apiRequest("/api/student/joinCourse", "POST", {
+        studentId: Number(userId),
+        courseId: selectedCourseId,
       });
 
-      if (response.ok) {
-        alert("Successfully joined the course!");
-        // 刷新页面或更新课程列表
-        const updatedCourses = courses.map((course) =>
-          course.id === selectedCourseId
-            ? { ...course, isLearning: true }
-            : course
-        );
-        setCourses(updatedCourses);
-        setIsJoinDialogOpen(false); // 关闭对话框
-      } else {
-        const errorData = await response.json();
-        console.error("Failed to join course:", errorData.error);
-        alert("Failed to join course.");
-      }
+      // 刷新页面或更新课程列表
+      const updatedCourses = courses.map((course) =>
+        course.id === selectedCourseId
+          ? { ...course, isLearning: true }
+          : course
+      );
+      setCourses(updatedCourses);
+      setIsJoinDialogOpen(false); // 关闭对话框
     } catch (error) {
       console.error("Error joining course:", error);
       alert("An error occurred while joining the course.");

@@ -1,3 +1,4 @@
+import { apiRequest } from "@/utils/api";
 import React, { useEffect, useState } from "react";
 
 interface User {
@@ -29,14 +30,8 @@ const UserInfo: React.FC<{ userId: number }> = ({ userId }) => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch(`/api/users/getOne?id=${userId}`);
-        const data = await response.json();
-
-        if (response.ok) {
-          setUser(data);
-        } else {
-          console.error("Error fetching user:", data.error);
-        }
+        const data = await apiRequest(`/api/users/getOne?id=${userId}`);
+        setUser(data);
       } catch (error) {
         console.error("Failed to fetch user:", error);
       } finally {

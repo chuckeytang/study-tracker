@@ -2,13 +2,27 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import WidgetInput from "@/components/Widget/WidgetInput";
 import WidgetButton from "@/components/Widget/WidgetButton";
+import { apiRequest } from "@/utils/api";
+
+const fetchUserDetails = async (token: string) => {
+  try {
+    const userDetails = await apiRequest(
+      "/api/users/getOne",
+      "GET",
+      null,
+      false
+    );
+    localStorage.setItem("user", JSON.stringify(userDetails));
+    return userDetails;
+  } catch (error) {
+    console.error("Failed to fetch user details:", error);
+  }
+};
 
 export default function LoginPage(props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [provider, setProvider] = useState<any>(null);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const router = useRouter();
 
   // 处理邮箱和密码登录
@@ -21,21 +35,27 @@ export default function LoginPage(props) {
     }
 
     try {
-      // 调用后端 API 进行身份验证 (将来需要对接后端)
-      console.log("Email:", email);
-      console.log("Password:", password);
+      const data = await apiRequest(
+        "/api/system/login",
+        "POST",
+        {
+          email,
+          password,
+        },
+        true
+      );
 
-      const success = true; // 模拟后端响应
-      if (!success) {
-        setErrorMessage("Invalid email or password");
+      if (data.token) {
+        const token = data.token;
+        localStorage.setItem("token", token); // 将 token 存储到 localStorage
+        setErrorMessage(""); // 清空错误信息
+        let userDetails = await fetchUserDetails(token); // 获取用户详细信息
+        router.push(`/myCourses/${userDetails.id}`); // 跳转到用户主页
       } else {
-        setErrorMessage("");
-        alert("Login successful");
-        router.push("/myCourses");
+        setErrorMessage("Invalid email or password");
       }
     } catch (error) {
-      console.error("Error logging in:", error);
-      setErrorMessage("Something went wrong, please try again");
+      setErrorMessage("Something went wrong, please try again.");
     }
   };
 

@@ -1,4 +1,5 @@
 // components/Forms/BigCheckConnectForm.tsx
+import { apiRequest } from "@/utils/api";
 import React, { useState, useEffect } from "react";
 
 const BigCheckConnectForm: React.FC<{
@@ -22,14 +23,22 @@ const BigCheckConnectForm: React.FC<{
 
   // 获取可用的 BigCheck 节点列表
   useEffect(() => {
-    fetch(`/api/teacher/getUnlockBigCheckList?nodeId=${nodeId}`)
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchAvailableBigChecks = async () => {
+      try {
+        // 使用 apiRequest 发送请求
+        const data = await apiRequest(
+          `/api/teacher/getUnlockBigCheckList?nodeId=${nodeId}`
+        );
+
+        // 设置可用的 BigCheck 节点数据
         setAvailableBigChecks(data.data || []);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error fetching unlock BigCheck nodes:", error);
-      });
+      }
+    };
+
+    // 调用异步函数
+    fetchAvailableBigChecks();
   }, [nodeId]);
 
   // 表单提交

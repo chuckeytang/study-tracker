@@ -11,7 +11,41 @@ import {
   Filter,
   ImageField,
   ImageInput,
+  useInput,
 } from "react-admin";
+import { useState } from "react";
+import {
+  IconButton,
+  InputAdornment,
+  TextField as MuiTextField,
+} from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+
+// 自定义密码输入控件，带可见性切换
+const PasswordInput = (props: any) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const { field } = useInput(props);
+
+  return (
+    <MuiTextField
+      {...field}
+      type={showPassword ? "text" : "password"}
+      label="Password"
+      InputProps={{
+        endAdornment: (
+          <InputAdornment position="end">
+            <IconButton
+              onClick={() => setShowPassword(!showPassword)}
+              edge="end"
+            >
+              {showPassword ? <VisibilityOff /> : <Visibility />}
+            </IconButton>
+          </InputAdornment>
+        ),
+      }}
+    />
+  );
+};
 
 // 创建过滤器组件，确保只显示学生
 const StudentFilter = (props: any) => (
@@ -40,6 +74,7 @@ export const StudentCreate = (props: any) => (
     <SimpleForm>
       <TextInput source="name" />
       <TextInput source="email" />
+      <PasswordInput source="password" /> {/* 密码输入控件 */}
       <TextInput
         source="role"
         defaultValue="STUDENT"
@@ -62,6 +97,7 @@ export const StudentEdit = (props: any) => (
     <SimpleForm>
       <TextInput source="name" />
       <TextInput source="email" />
+      <PasswordInput source="password" /> {/* 密码输入控件 */}
       <TextInput
         source="role"
         defaultValue="STUDENT"

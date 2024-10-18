@@ -6,6 +6,7 @@ import {
   CreateParams,
 } from "react-admin";
 import { stringify } from "query-string";
+import { apiRequest } from "@/utils/api";
 
 const apiUrl = "/api"; // 基础API URL
 const httpClient = fetchUtils.fetchJson;
@@ -125,12 +126,12 @@ const dataProvider: DataProvider = {
     // 检查是否有文件需要上传
     if (Object.values(params.data).some(isFile)) {
       const formData = convertDataToFormData(params.data);
-      const response = await fetch(`${apiUrl}/${resource}/update`, {
-        method: "PUT",
-        body: formData,
-      });
-      const json = await response.json();
-      return { data: json };
+      const data = await apiRequest(
+        `${apiUrl}/${resource}/update`,
+        "PUT",
+        formData
+      );
+      return { data: data };
     }
 
     return httpClient(`${apiUrl}/${resource}/update`, {
@@ -143,6 +144,7 @@ const dataProvider: DataProvider = {
     if (resource === "students" || resource === "teachers") {
       resource = "users";
     }
+
     // 检查是否有任何对象包含文件需要上传
     if (params.data.some((item: any) => Object.values(item).some(isFile))) {
       const formDataArray: FormData[] = params.data.map(convertDataToFormData);
@@ -150,34 +152,22 @@ const dataProvider: DataProvider = {
       // 使用Promise.all处理多个并发请求
       const responses = await Promise.all(
         formDataArray.map((formData, index) =>
-          fetch(`${apiUrl}/${resource}/update`, {
-            method: "PUT",
-            body: formData,
-          })
+          apiRequest(`${resource}/update`, "PUT", formData, true)
         )
       );
 
-      const jsonArray = await Promise.all(
-        responses.map((response) => response.json())
-      );
-
       return {
-        data: jsonArray.map((json, index) => ({
+        data: responses.map((json, index) => ({
           ...params.data[index],
           id: json.id,
         })),
       };
     }
 
-    const query = {
-      id: params.ids,
-    };
-    const url = `${apiUrl}/${resource}?${stringify(query)}`;
-    const { json } = await httpClient(url, {
-      method: "PUT",
-      body: JSON.stringify(params.data),
-    });
-    return { data: json };
+    const query = { id: params.ids };
+    const url = `${resource}?${stringify(query)}`;
+    const data = await apiRequest(url, "PUT", params.data);
+    return { data };
   },
 
   create: async <RecordType extends RaRecord = RaRecord>(
@@ -187,29 +177,25 @@ const dataProvider: DataProvider = {
     if (resource === "students" || resource === "teachers") {
       resource = "users";
     }
-    // 总是使用 FormData 即使没有文件
+
     const formData = new FormData();
-    // 遍历 params.data，处理文件和其他字段
     Object.keys(params.data).forEach((key) => {
       const value = params.data[key];
       if (isFile(value)) {
-        // 如果是文件，添加到 FormData
         formData.append(key, value.rawFile);
       } else {
-        // 如果不是文件，作为普通字段添加到 FormData
         formData.append(key, value);
       }
     });
 
-    // 发送 multipart/form-data 请求
-    const response = await fetch(`${apiUrl}/${resource}/add`, {
-      method: "POST",
-      body: formData,
-    });
-
-    const json = await response.json();
+    const response = await apiRequest(
+      `${resource}/add`,
+      "POST",
+      formData,
+      true
+    );
     return {
-      data: { ...params.data, id: json.id },
+      data: { ...params.data, id: response.id },
     } as CreateResult<RecordType>;
   },
 
@@ -220,41 +206,32 @@ const dataProvider: DataProvider = {
     if (resource === "students" || resource === "teachers") {
       resource = "users";
     }
-    // 检查是否有任何对象包含文件需要上传
+
     if (params.data.some((item) => Object.values(item).some(isFile))) {
       const formDataArray: FormData[] = params.data.map(convertDataToFormData);
 
       // 使用Promise.all处理多个并发请求
       const responses = await Promise.all(
         formDataArray.map((formData) =>
-          fetch(`${apiUrl}/${resource}/createMany`, {
-            method: "POST",
-            body: formData,
-          })
+          apiRequest(`${resource}/createMany`, "POST", formData, true)
         )
       );
 
-      const jsonArray = await Promise.all(
-        responses.map((response) => response.json())
-      );
-
       return {
-        data: jsonArray.map((json, index) => ({
+        data: responses.map((json, index) => ({
           ...params.data[index],
           id: json.id,
         })),
       } as unknown as CreateResult<RecordType>;
     }
 
-    const url = `${apiUrl}/${resource}/createMany`;
-    const options = {
-      method: "POST",
-      body: JSON.stringify(params.data),
-    };
-    const response = await httpClient(url, options);
-    const json = await response.json;
+    const response = await apiRequest(
+      `${resource}/createMany`,
+      "POST",
+      params.data
+    );
     return {
-      data: json.success.map((item: any, index: number) => ({
+      data: response.success.map((item: any, index: number) => ({
         ...params.data[index],
         id: item.id,
       })),

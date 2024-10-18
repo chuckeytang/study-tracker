@@ -20,7 +20,8 @@ import {
   majornodeRadius,
   minornodeRadius,
 } from "@/types/Values";
-import { calculateHandlePosition } from "@/tools/utils";
+import { calculateHandlePosition } from "@/utils/utils";
+import { apiRequest } from "@/utils/api";
 
 // Define options for the course selection dropdown
 const options = [
@@ -51,10 +52,9 @@ const TeacherSkillTree = () => {
   // Fetch and update the skill tree
   const updateSkillTree = async () => {
     try {
-      const response = await fetch(
+      const data = await apiRequest(
         `/api/courses/getBigChecks?courseId=${courseId}`
       );
-      const data = await response.json();
       const bigChecks = data.data;
 
       const clusters: { nodes: Node[]; edges: Edge[] }[] = [];
@@ -245,24 +245,16 @@ const TeacherSkillTree = () => {
   const handleBigCheckDisconnect = async () => {
     try {
       // 调用后端 API 断开 BigCheck 的依赖关系
-      const response = await fetch("/api/teacher/disconnectBigCheck", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const data = await apiRequest(
+        "/api/teacher/disconnectBigCheck",
+        "DELETE",
+        {
           bigCheckNodeId: selectedNode.nodeId, // 传递当前 BigCheck 节点的 ID
-        }),
-      });
+        }
+      );
 
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log("BigCheck node disconnected successfully:", data);
-        updateSkillTree(); // 断开成功后刷新技能树
-      } else {
-        console.error("Failed to disconnect BigCheck node:", data.error);
-      }
+      console.log("BigCheck node disconnected successfully:", data);
+      updateSkillTree(); // 断开成功后刷新技能树
     } catch (error) {
       console.error("Error disconnecting BigCheck node:", error);
     }
@@ -304,29 +296,13 @@ const TeacherSkillTree = () => {
 
     try {
       // 调用后端删除节点的 API
-      const response = await fetch("/api/teacher/deleteNode", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: userId,
-          nodeId: nodeId,
-        }),
+      const data = await apiRequest("/api/teacher/deleteNode", "DELETE", {
+        userId: userId,
+        nodeId: nodeId,
       });
 
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || "Failed to delete node");
-      }
-
-      const result = await response.json();
-      console.log("Node deleted successfully:", result);
-
-      // 可以在这里更新前端的视图或做其他处理
       alert("Node deleted successfully.");
-      await updateSkillTree(); // 在删除后刷新课程树
-      // 例如，刷新页面或重载节点列表
+      await updateSkillTree();
     } catch (error) {
       console.error("Error deleting node:", error);
     }
@@ -339,29 +315,20 @@ const TeacherSkillTree = () => {
     lockDepNodeCount: number
   ) => {
     try {
-      const response = await fetch("/api/teacher/setUnlockBigcheckNode", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const data = await apiRequest(
+        "/api/teacher/setUnlockBigcheckNode",
+        "POST",
+        {
           fromNodeId: selectedBigCheckId, // 被依赖的BigCheck节点ID
           toNodeId: selectedNode.nodeId, // 本BigCheck节点ID
           unlockDepNodeCount,
           unlockDepClusterTotalSkillPt,
           lockDepNodeCount,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log("BigCheck nodes connected successfully:", data);
-        setBigCheckFormVisible(false);
-        updateSkillTree(); // 成功后刷新技能树
-      } else {
-        console.error("Failed to connect BigCheck nodes:", data.error);
-      }
+        }
+      );
+      console.log("BigCheck nodes connected successfully:", data);
+      setBigCheckFormVisible(false);
+      updateSkillTree(); // 成功后刷新技能树
     } catch (error) {
       console.error("Error connecting BigCheck nodes:", error);
     }
@@ -414,17 +381,7 @@ const TeacherSkillTree = () => {
       }
 
       // 调用后端接口进行创建或更新
-      const response = await fetch(url, {
-        method: method,
-        body: formData, // 使用 FormData 格式提交
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to update node: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log("Node updated successfully:", result);
+      const data = await apiRequest(url, method, formData);
       await updateSkillTree(); // 在删除后刷新课程树
 
       // 关闭表单并刷新视图（或执行其他后续操作）

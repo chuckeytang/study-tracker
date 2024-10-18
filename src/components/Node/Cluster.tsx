@@ -1,4 +1,4 @@
-import { calculateHandlePosition } from "@/tools/utils";
+import { calculateHandlePosition } from "@/utils/utils";
 import {
   bigCheckRadius,
   clusterBaseDistance,
@@ -8,6 +8,7 @@ import {
   minornodeRadius,
 } from "@/types/Values";
 import { Node, Edge, Position } from "reactflow";
+import { apiRequest } from "@/utils/api";
 
 // 定义Cluster函数，接受一个bigCheckNode，返回该Cluster的nodes和edges
 const Cluster = async (
@@ -160,10 +161,9 @@ const Cluster = async (
 
     // 获取当前节点的依赖节点
     try {
-      const response = await fetch(
+      const depData = await apiRequest(
         `/api/courses/getDepNodes?nodeId=${currentNode.nodeId}`
       );
-      const depData = await response.json();
 
       const depNodes = depData.data || [];
       const numChildren = depNodes.length;

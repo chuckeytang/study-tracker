@@ -16,7 +16,8 @@ import {
   majornodeRadius,
   minornodeRadius,
 } from "@/types/Values";
-import { calculateHandlePosition } from "@/tools/utils";
+import { calculateHandlePosition } from "@/utils/utils";
+import { apiRequest } from "@/utils/api";
 
 const OtherStudentSkillTree = () => {
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -29,17 +30,15 @@ const OtherStudentSkillTree = () => {
   const updateSkillTree = async () => {
     try {
       // Fetch course data
-      const response = await fetch(
+      const data = await apiRequest(
         `/api/courses/getBigChecks?courseId=${courseId}`
       );
-      const data = await response.json();
       const bigChecks = data.data;
 
       // Fetch student progress data
-      const progressResponse = await fetch(
+      const progressData = await apiRequest(
         `/api/student/getStudentCourseInfo?studentId=${userId}&courseId=${courseId}`
       );
-      const progressData = await progressResponse.json();
 
       // Create a mapping from nodeId to progress data
       const studentProgress = progressData.data.reduce(

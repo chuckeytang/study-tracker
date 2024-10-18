@@ -1,3 +1,4 @@
+import { apiRequest } from "@/utils/api";
 import React, { useEffect, useState } from "react";
 
 const NodeForm: React.FC<{
@@ -28,58 +29,71 @@ const NodeForm: React.FC<{
   );
 
   // 获取解锁依赖节点列表
-  useEffect(() => {
-    const unlockDepUrl = nodeId
-      ? `/api/teacher/getUnlockDepNodeList?nodeId=${nodeId}`
-      : parentNodeId
-      ? `/api/teacher/getUnlockDepNodeList?parentNodeId=${parentNodeId}`
-      : `/api/teacher/getUnlockDepNodeList`;
 
-    fetch(unlockDepUrl)
-      .then((res) => res.json())
-      .then((data) => {
+  useEffect(() => {
+    const fetchUnlockDepNodes = async () => {
+      try {
+        // 构建 API 请求 URL
+        const unlockDepUrl = nodeId
+          ? `/api/teacher/getUnlockDepNodeList?nodeId=${nodeId}`
+          : parentNodeId
+          ? `/api/teacher/getUnlockDepNodeList?parentNodeId=${parentNodeId}`
+          : `/api/teacher/getUnlockDepNodeList`;
+
+        // 使用 apiRequest 调用 API
+        const data = await apiRequest(unlockDepUrl);
+
+        // 设置解锁依赖节点的数据
         setUnlockDepNodes(data.data || []);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error fetching unlock dependency nodes:", error);
-      });
+      }
+    };
+
+    // 调用异步函数
+    fetchUnlockDepNodes();
   }, [nodeId, parentNodeId]);
 
-  // 获取锁定依赖节点列表和已锁定的节点列表
   useEffect(() => {
-    const lockDepUrl = nodeId
-      ? `/api/teacher/getLockDepNodeList?nodeId=${nodeId}`
-      : parentNodeId
-      ? `/api/teacher/getLockDepNodeList?parentNodeId=${parentNodeId}`
-      : null;
+    const fetchLockDepNodes = async () => {
+      try {
+        const lockDepUrl = nodeId
+          ? `/api/teacher/getLockDepNodeList?nodeId=${nodeId}`
+          : parentNodeId
+          ? `/api/teacher/getLockDepNodeList?parentNodeId=${parentNodeId}`
+          : null;
 
-    if (lockDepUrl) {
-      // 获取候选的可供锁定的节点
-      fetch(lockDepUrl)
-        .then((res) => res.json())
-        .then((data) => {
+        if (lockDepUrl) {
+          // 使用 apiRequest 调用 API
+          const data = await apiRequest(lockDepUrl);
           setLockDepNodes(data.data || []);
-        })
-        .catch((error) => {
-          console.error("Error fetching lock dependency nodes:", error);
-        });
-    }
+        }
+      } catch (error) {
+        console.error("Error fetching lock dependency nodes:", error);
+      }
+    };
 
-    // 获取已经锁定的节点（仅在编辑模式下）
-    if (formType === "edit" && nodeId && nodeType !== "BIGCHECK") {
-      fetch(`/api/teacher/getAlreadyLockDepNodeList?nodeId=${nodeId}`)
-        .then((res) => res.json())
-        .then((data) => {
+    const fetchAlreadyLockedNodes = async () => {
+      try {
+        if (formType === "edit" && nodeId && nodeType !== "BIGCHECK") {
+          const data = await apiRequest(
+            `/api/teacher/getAlreadyLockDepNodeList?nodeId=${nodeId}`
+          );
+
           const lockedNodeIds = data.data.map((node: any) =>
             node.nodeId.toString()
           );
           setAlreadyLockedNodeIds(lockedNodeIds);
           setSelectedLockNodes(lockedNodeIds); // 预先选中已锁定的节点
-        })
-        .catch((error) => {
-          console.error("Error fetching already locked nodes:", error);
-        });
-    }
+        }
+      } catch (error) {
+        console.error("Error fetching already locked nodes:", error);
+      }
+    };
+
+    // 调用异步函数获取数据
+    fetchLockDepNodes();
+    fetchAlreadyLockedNodes();
   }, [formType, nodeId, parentNodeId, nodeType]);
 
   // 合并候选节点和已锁定的节点，并自动选中已锁定的节点

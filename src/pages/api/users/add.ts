@@ -1,15 +1,19 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
+import { authMiddleware } from "@/utils/auth";
 import { upload } from "@/lib/middleware/multer";
 import { createRouter } from "next-connect";
 import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
 import { AppError } from "@/types/AppError";
 import { runMiddleware } from "@/lib/middleware/runMiddleware";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 // 使用 createRouter 创建 API 路由
 const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();
+
+router.use(authMiddleware);
 
 // POST 请求处理逻辑
 router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
@@ -17,7 +21,7 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     // 手动运行 multer 中间件以处理文件上传
     await runMiddleware(req, res, upload.single("avartar"));
 
-    const { name, email, role } = req.body;
+    const { name, email, role, password } = req.body;
     const file = req.file;
 
     let avartarPicUrl;
@@ -27,12 +31,16 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       avartarPicUrl = `/uploads/${file.filename}`;
     }
 
+    // 密码加密
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     // 创建新用户
     const newUser = await prisma.user.create({
       data: {
         name,
         email,
         role,
+        password: hashedPassword,
         ...(avartarPicUrl && { avartarPicUrl }), // 如果有上传文件，保存头像 URL
       },
     });
