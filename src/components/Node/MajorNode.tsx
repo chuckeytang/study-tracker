@@ -6,7 +6,7 @@ interface MajorNodeProps {
   data: any;
   radius: number;
   selected?: boolean;
-  userRole: "teacher" | "student";
+  userRole: "teacher" | "student" | "otherStudent";
   onContextMenu: (event: React.MouseEvent, nodeData: any) => void;
   handleLevelChange?: (nodeId: string, delta: number) => void;
 }

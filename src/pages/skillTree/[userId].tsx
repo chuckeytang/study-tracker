@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import TeacherSkillTree from "@/components/SkillTree/TeacherSkillTree";
 import StudentSkillTree from "@/components/SkillTree/StudentSkillTree";
+import OtherStudentSkillTree from "@/components/SkillTree/OtherStudentSkillTree";
 
 const SkillTree = (props) => {
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -35,7 +36,13 @@ const SkillTree = (props) => {
   }
 
   return (
-    <>{userRole === "TEACHER" ? <TeacherSkillTree /> : <StudentSkillTree />}</>
+    <>
+      {userRole === "TEACHER" ? (
+        <TeacherSkillTree />
+      ) : (
+        <OtherStudentSkillTree />
+      )}
+    </>
   );
 };
 

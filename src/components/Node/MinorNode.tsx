@@ -5,7 +5,7 @@ import { Handle, HandleType, Position } from "reactflow";
 interface MinorNodeProps {
   data: any;
   radius: number;
-  userRole: "teacher" | "student";
+  userRole: "teacher" | "student" | "otherStudent";
   onContextMenu: (event: React.MouseEvent, nodeData: any) => void;
   handleLevelChange?: (nodeId: string, delta: number) => void;
 }

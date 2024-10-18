@@ -7,7 +7,6 @@ import {
   majornodeRadius,
   minornodeRadius,
 } from "@/types/Values";
-import { randomInt } from "crypto";
 import { Node, Edge, Position } from "reactflow";
 
 // 定义Cluster函数，接受一个bigCheckNode，返回该Cluster的nodes和edges
@@ -132,7 +131,10 @@ const Cluster = async (
     }
 
     // Merge student progress data if userRole is 'student'
-    if (userRole === "student" && studentProgress) {
+    if (
+      (userRole === "student" || userRole === "otherStudent") &&
+      studentProgress
+    ) {
       const progress = studentProgress[currentNode.nodeId] || {
         unlocked: false,
         level: 0,

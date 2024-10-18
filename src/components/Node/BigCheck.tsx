@@ -11,7 +11,7 @@ interface BigCheckProps {
   unlocked: boolean;
   selected?: boolean;
   radius: number;
-  userRole: "teacher" | "student";
+  userRole: "teacher" | "student" | "otherStudent";
   updateSkillTree: () => void;
   onContextMenu: (event: React.MouseEvent, nodeData: any) => void;
 }
