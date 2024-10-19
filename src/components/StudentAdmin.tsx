@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   List,
   Datagrid,
@@ -12,6 +13,7 @@ import {
   ImageField,
   ImageInput,
   PasswordInput,
+  useEditController,
 } from "react-admin";
 
 // 创建过滤器组件，确保只显示学生
@@ -51,32 +53,50 @@ export const StudentCreate = (props: any) => (
         source="avartar"
         label="Avartar"
         accept={{ "image/*": [".png", ".jpg"] }}
+        defaultValue={[
+          { src: "/uploads/1729319788393.jpg", title: "Current Avatar" },
+        ]}
       >
-        <ImageField source="src" title="title" />
+        <ImageField source="src" title="Current Avatar" />
       </ImageInput>
     </SimpleForm>
   </Create>
 );
 
 // 编辑学生
-export const StudentEdit = (props: any) => (
-  <Edit mutationMode="pessimistic" {...props}>
-    <SimpleForm>
-      <TextInput source="name" />
-      <TextInput source="email" />
-      <PasswordInput source="password" defaultValue="" />
-      <TextInput
-        source="role"
-        defaultValue="STUDENT"
-        style={{ display: "none" }}
-      />
-      <ImageInput
-        source="avartar"
-        label="Avartar"
-        accept={{ "image/*": [".png", ".jpg"] }}
-      >
-        <ImageField source="src" title="title" />
-      </ImageInput>
-    </SimpleForm>
-  </Edit>
-);
+export const StudentEdit = (props: any) => {
+  const { record, isLoading } = useEditController(props);
+
+  useEffect(() => {
+    if (record) {
+      console.log("Record:", record); // 打印加载的 record 数据
+    }
+  }, [record]);
+
+  return (
+    <Edit mutationMode="pessimistic" {...props}>
+      <SimpleForm>
+        <TextInput source="name" />
+        <TextInput source="email" />
+        <PasswordInput source="password" defaultValue="" />
+        <TextInput
+          source="role"
+          defaultValue="STUDENT"
+          style={{ display: "none" }}
+        />
+        <ImageInput
+          source="avartar"
+          label="Avartar"
+          accept={{ "image/*": [".png", ".jpg"] }}
+          defaultValue={
+            record?.avartarPicUrl
+              ? [{ src: record.avartarPicUrl, title: "Current Avatar" }]
+              : []
+          }
+        >
+          <ImageField source="src" title="Current Avatar" />
+        </ImageInput>
+      </SimpleForm>
+    </Edit>
+  );
+};

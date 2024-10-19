@@ -49,7 +49,8 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       },
     });
 
-    res.status(200).json(updatedUser);
+    const { password: removedPassword, ...userWithoutPassword } = updatedUser;
+    res.status(200).json(userWithoutPassword);
   } catch (error) {
     res.status(500).json({ error: `Failed to update user: ${error}` });
   }

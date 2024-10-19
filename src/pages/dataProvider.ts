@@ -9,8 +9,6 @@ import { stringify } from "query-string";
 import { apiRequest } from "@/utils/api";
 
 const apiUrl = "/api"; // 基础API URL
-const httpClient = fetchUtils.fetchJson;
-
 const isFile = (field: any) => {
   return field && field.rawFile;
 };

@@ -111,8 +111,6 @@ export default function LoginPage(props) {
           </WidgetButton>
         </form>
 
-        <p className="text-center text-gray-900">OR</p>
-
         {/* 注册按钮 */}
         <p className="mt-4 text-center text-gray-400">
           Don't have an account?{" "}

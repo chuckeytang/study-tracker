@@ -41,9 +41,14 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       },
     });
 
+    // 过滤掉每个用户的密码字段
+    const usersWithoutPassword = users.map(
+      ({ password, ...userWithoutPassword }) => userWithoutPassword
+    );
+
     // 返回结果，符合格式
     res.status(200).json({
-      data: users,
+      data: usersWithoutPassword,
       total: total,
     });
   } catch (error) {
