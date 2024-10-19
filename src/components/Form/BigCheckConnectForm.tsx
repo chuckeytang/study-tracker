@@ -11,7 +11,8 @@ const BigCheckConnectForm: React.FC<{
     unlockDepClusterTotalSkillPt: number,
     lockDepNodeCount: number
   ) => void;
-}> = ({ nodeId, onClose, onSubmit }) => {
+  courseId: string;
+}> = ({ nodeId, onClose, onSubmit, courseId }) => {
   const [availableBigChecks, setAvailableBigChecks] = useState<any[]>([]);
   const [selectedBigCheckId, setSelectedBigCheckId] = useState<number | null>(
     null
@@ -27,7 +28,7 @@ const BigCheckConnectForm: React.FC<{
       try {
         // 使用 apiRequest 发送请求
         const data = await apiRequest(
-          `/api/teacher/getUnlockBigCheckList?nodeId=${nodeId}`
+          `/api/teacher/getUnlockBigCheckList?courseId=${courseId}&nodeId=${nodeId}`
         );
 
         // 设置可用的 BigCheck 节点数据
@@ -90,32 +91,6 @@ const BigCheckConnectForm: React.FC<{
             min={1}
           />
         </div>
-
-        {/* <div className="mb-4">
-          <label className="block font-semibold mb-2">
-            Unlock Dependency Node Count:
-          </label>
-          <input
-            type="number"
-            value={unlockDepNodeCount}
-            onChange={(e) => setUnlockDepNodeCount(Number(e.target.value))}
-            className="p-2 border border-gray-300 rounded w-full"
-            min={1}
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block font-semibold mb-2">
-            Lock Dependency Node Count:
-          </label>
-          <input
-            type="number"
-            value={lockDepNodeCount}
-            onChange={(e) => setLockDepNodeCount(Number(e.target.value))}
-            className="p-2 border border-gray-300 rounded w-full"
-            min={1}
-          />
-        </div> */}
 
         <div className="flex justify-end">
           <button

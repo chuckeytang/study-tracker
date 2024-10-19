@@ -43,13 +43,21 @@ const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();
 router.use(authMiddleware);
 
 router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
-  const { nodeId } = req.query;
+  const { nodeId, courseId } = req.query;
+  const { user } = req;
 
   if (!nodeId) {
     return res.status(400).json({ error: "nodeId is required" });
   }
 
   try {
+    // 1. 检查用户角色是否为 TEACHER
+    if (user.role !== "TEACHER") {
+      return res.status(403).json({
+        error: "Only teachers can access this API",
+      });
+    }
+
     // 获取当前节点的信息
     const currentNode = await prisma.node.findUnique({
       where: { id: Number(nodeId) },
@@ -74,7 +82,11 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
 
     // 获取所有的 BIGCHECK 节点
     const allBigCheckNodes = await prisma.node.findMany({
-      where: { nodeType: NodeType.BIGCHECK, id: { not: Number(nodeId) } },
+      where: {
+        nodeType: NodeType.BIGCHECK,
+        id: { not: Number(nodeId) },
+        courseId: Number(courseId),
+      },
       select: { id: true, name: true, description: true, maxLevel: true },
     });
 

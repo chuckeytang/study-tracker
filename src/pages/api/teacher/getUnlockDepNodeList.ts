@@ -13,9 +13,17 @@ const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();
 router.use(authMiddleware);
 
 router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
-  const { nodeId, parentNodeId } = req.query;
+  const { nodeId, parentNodeId, courseId } = req.query;
+  const { user } = req;
 
   try {
+    // 1. 检查用户角色是否为 TEACHER
+    if (user.role !== "TEACHER") {
+      return res.status(403).json({
+        error: "Only teachers can access this API",
+      });
+    }
+
     let availableNodes: any = [];
 
     // 1. 如果 nodeId 和 parentNodeId 都为空，查找其他 BigCheck 作为解锁依赖
@@ -23,6 +31,7 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       availableNodes = await prisma.node.findMany({
         where: {
           nodeType: NodeType.BIGCHECK,
+          courseId: Number(courseId),
           unlockDependenciesTo: { none: {} }, // 没有其他节点依赖于它
         },
       });

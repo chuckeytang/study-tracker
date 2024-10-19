@@ -24,13 +24,15 @@ const BigCheck: React.FC<BigCheckProps> = ({
   radius = bigCheckRadius,
   onContextMenu,
 }) => {
-  const { nodeName, handles, nodeId, nodeDescription } = data;
+  const { nodeName, handles, nodeId, nodeDescription, unlocked } = data;
 
   let bgColor = "bg-gray-700"; // 默认锁定状态灰色
-  let imgFilter = "grayscale(100%)"; // 默认图片置灰
+  let imgFilter =
+    userRole === "teacher" || unlocked ? "grayscale(0%)" : "grayscale(100%)"; // 默认图片置灰
+  let opacity = userRole === "teacher" || unlocked ? 1 : 0.5;
 
   // 根据不同状态设置颜色和透明度
-  if (data.unlocked) {
+  if (unlocked) {
     bgColor = "bg-yellow-700"; // 解锁状态
     imgFilter = "none"; // 解锁后取消置灰
   }
@@ -48,7 +50,7 @@ const BigCheck: React.FC<BigCheckProps> = ({
         height: `${radius * 2}px`,
         transform: "translate(-50%, -50%)", // 调整节点使其中心与 position 对齐
         boxSizing: "border-box",
-        opacity: data.unlocked ? 1 : 0.5,
+        opacity: opacity,
       }}
     >
       <div className="rounded-full bg-white w-11/12 h-11/12 overflow-hidden">

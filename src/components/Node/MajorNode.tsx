@@ -19,17 +19,17 @@ const MajorNode: React.FC<MajorNodeProps> = ({
   onContextMenu,
   handleLevelChange,
 }) => {
-  const { nodeName, handles, maxLevel, nodeId, nodeDescription } = data;
+  const { nodeName, handles, maxLevel, nodeId, nodeDescription, unlocked } =
+    data;
 
   let bgColor = "bg-gray-700"; // 默认锁定状态灰色
-  let imgFilter = "grayscale(100%)"; // 默认图片置灰
-  let opacity = 0.5;
+  let imgFilter =
+    userRole === "teacher" || unlocked ? "grayscale(0%)" : "grayscale(100%)"; // 默认图片置灰
+  let opacity = userRole === "teacher" || unlocked ? 1 : 0.5;
 
   // 根据不同状态设置颜色和透明度
-  if (data.unlocked) {
+  if (unlocked) {
     bgColor = "bg-yellow-700"; // 解锁状态
-    imgFilter = "none"; // 解锁后取消置灰
-    opacity = 1;
     if (data.level === data.maxLevel) {
       bgColor = "bg-green-700"; // 满级状态绿色
     }

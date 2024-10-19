@@ -511,6 +511,7 @@ const TeacherSkillTree = () => {
             nodeId={selectedNode.nodeId}
             onClose={() => setBigCheckFormVisible(false)}
             onSubmit={handleBigcheckFormSubmit}
+            courseId={Array.isArray(courseId) ? courseId[0] : courseId || ""}
           />
         )}
       </div>

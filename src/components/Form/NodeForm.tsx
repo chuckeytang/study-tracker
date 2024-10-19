@@ -7,7 +7,15 @@ const NodeForm: React.FC<{
   defaultValue?: any;
   nodeId?: number;
   parentNodeId?: number;
-}> = ({ formType, onSubmit, defaultValue = {}, nodeId, parentNodeId }) => {
+  courseId?: string;
+}> = ({
+  formType,
+  onSubmit,
+  defaultValue = {},
+  nodeId,
+  parentNodeId,
+  courseId,
+}) => {
   const [name, setName] = useState(defaultValue.nodeName || "");
   const [description, setDescription] = useState(
     defaultValue.nodeDescription || ""
@@ -35,10 +43,10 @@ const NodeForm: React.FC<{
       try {
         // 构建 API 请求 URL
         const unlockDepUrl = nodeId
-          ? `/api/teacher/getUnlockDepNodeList?nodeId=${nodeId}`
+          ? `/api/teacher/getUnlockDepNodeList?courseId=${courseId}&nodeId=${nodeId}`
           : parentNodeId
-          ? `/api/teacher/getUnlockDepNodeList?parentNodeId=${parentNodeId}`
-          : `/api/teacher/getUnlockDepNodeList`;
+          ? `/api/teacher/getUnlockDepNodeList?courseId=${courseId}&parentNodeId=${parentNodeId}`
+          : `/api/teacher/getUnlockDepNodeList?courseId=${courseId}`;
 
         // 使用 apiRequest 调用 API
         const data = await apiRequest(unlockDepUrl);
@@ -58,9 +66,9 @@ const NodeForm: React.FC<{
     const fetchLockDepNodes = async () => {
       try {
         const lockDepUrl = nodeId
-          ? `/api/teacher/getLockDepNodeList?nodeId=${nodeId}`
+          ? `/api/teacher/getLockDepNodeList?courseId=${courseId}&nodeId=${nodeId}`
           : parentNodeId
-          ? `/api/teacher/getLockDepNodeList?parentNodeId=${parentNodeId}`
+          ? `/api/teacher/getLockDepNodeList?courseId=${courseId}&parentNodeId=${parentNodeId}`
           : null;
 
         if (lockDepUrl) {
@@ -77,7 +85,7 @@ const NodeForm: React.FC<{
       try {
         if (formType === "edit" && nodeId && nodeType !== "BIGCHECK") {
           const data = await apiRequest(
-            `/api/teacher/getAlreadyLockDepNodeList?nodeId=${nodeId}`
+            `/api/teacher/getAlreadyLockDepNodeList?courseId=${courseId}&nodeId=${nodeId}`
           );
 
           const lockedNodeIds = data.data.map((node: any) =>
@@ -158,16 +166,18 @@ const NodeForm: React.FC<{
         />
       </div>
 
-      <div className="flex items-center mb-2">
-        <label className="w-1/3 font-semibold">Max Level:</label>
-        <input
-          type="number"
-          placeholder="Max Level"
-          value={maxLevel}
-          onChange={(e) => setMaxLevel(Number(e.target.value))}
-          className="p-2 border border-gray-300 rounded w-2/3"
-        />
-      </div>
+      {nodeType !== "BIGCHECK" && (
+        <div className="flex items-center mb-2">
+          <label className="w-1/3 font-semibold">Max Level:</label>
+          <input
+            type="number"
+            placeholder="Max Level"
+            value={maxLevel}
+            onChange={(e) => setMaxLevel(Number(e.target.value))}
+            className="p-2 border border-gray-300 rounded w-2/3"
+          />
+        </div>
+      )}
 
       <div className="flex items-center mb-2">
         <label className="w-1/3 font-semibold">Icon:</label>
@@ -183,7 +193,7 @@ const NodeForm: React.FC<{
         />
       </div>
 
-      {formType === "create" && (
+      {formType === "create" && nodeType !== "BIGCHECK" && (
         <div>
           <div className="flex items-center mb-2">
             <label className="w-1/3 font-semibold">Unlock Dependencies:</label>
