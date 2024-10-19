@@ -5,11 +5,15 @@ import { createRouter } from "next-connect";
 import { runMiddleware } from "@/lib/middleware/runMiddleware";
 import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
 import { AppError } from "@/types/AppError";
+import { authMiddleware } from "@/utils/auth";
 
 const prisma = new PrismaClient();
 
 // 使用 createRouter 创建 API 路由
 const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();
+
+// 使用 authMiddleware 中间件，确保请求已通过鉴权
+router.use(authMiddleware);
 
 // PUT 请求处理逻辑
 router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {

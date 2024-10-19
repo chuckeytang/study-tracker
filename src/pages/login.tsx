@@ -7,7 +7,7 @@ import { apiRequest } from "@/utils/api";
 const fetchUserDetails = async (token: string) => {
   try {
     const userDetails = await apiRequest(
-      "/api/users/getOne",
+      "/api/users/getMe",
       "GET",
       null,
       false
@@ -50,7 +50,12 @@ export default function LoginPage(props) {
         localStorage.setItem("token", token); // 将 token 存储到 localStorage
         setErrorMessage(""); // 清空错误信息
         let userDetails = await fetchUserDetails(token); // 获取用户详细信息
-        router.push(`/myCourses/${userDetails.id}`); // 跳转到用户主页
+        // 根据用户角色跳转
+        if (userDetails.role === "ADMIN") {
+          router.push("/admin");
+        } else {
+          router.push(`/myCourses/${userDetails.id}`);
+        }
       } else {
         setErrorMessage("Invalid email or password");
       }

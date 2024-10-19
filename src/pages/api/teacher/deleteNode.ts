@@ -1,11 +1,16 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
 import { createRouter } from "next-connect"; // 使用 createRouter 替代 nextConnect
+import { authMiddleware } from "@/utils/auth";
+import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
 
 const prisma = new PrismaClient();
 
 // 创建 API 路由
-const router = createRouter<NextApiRequest, NextApiResponse>();
+const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();
+
+// 使用 authMiddleware 中间件，确保请求已通过鉴权
+router.use(authMiddleware);
 
 // 递归删除节点及其子节点依赖关系
 async function deleteNodeRecursively(nodeId: number) {
@@ -62,11 +67,11 @@ router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // if (user.role !== "TEACHER") {
-    //   return res
-    //     .status(403)
-    //     .json({ error: "Only teachers can delete node dependencies." });
-    // }
+    if (user.role !== "TEACHER") {
+      return res
+        .status(403)
+        .json({ error: "Only teachers can delete node dependencies." });
+    }
 
     // 2. 验证节点是否属于该用户的课程
     const node = await prisma.node.findUnique({

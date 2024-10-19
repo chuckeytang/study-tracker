@@ -13,26 +13,30 @@ const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();
 router.use(authMiddleware);
 
 router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
-  const { id } = req.query;
+  const { user } = req; // 从请求中获取用户ID参数
 
   try {
-    // 根据课程ID获取单个课程
-    const course = await prisma.course.findUnique({
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // 查询用户的已绑定课程数量
+    const coursesSelected = await prisma.userCourse.count({
       where: {
-        id: Number(id),
-      },
-      include: {
-        nodes: true, // 如果需要，可以包含与节点的关系
+        userId: Number(user.id),
       },
     });
 
-    if (!course) {
-      return res.status(404).json({ error: "Course not found" });
-    }
+    // 返回用户信息和绑定的课程数量，确保不返回敏感信息（例如：密码）
+    const { password, ...userData } = user;
 
-    res.status(200).json(course);
+    // 返回用户信息和绑定的课程数量
+    res.status(200).json({
+      ...userData,
+      coursesSelected,
+    });
   } catch (error) {
-    res.status(500).json({ error: `Failed to fetch course: ${error}` });
+    res.status(500).json({ error: "Failed to fetch user information" });
   }
 });
 
@@ -40,8 +44,5 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
 export default router.handler({
   onError: (err, req, res) => {
     res.status(500).json({ error: `An error occurred: ${err}` });
-  },
-  onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
   },
 });

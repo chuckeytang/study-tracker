@@ -1,11 +1,16 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient, NodeType } from "@prisma/client";
 import { createRouter } from "next-connect"; // 使用 createRouter 替代 nextConnect
+import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
+import { authMiddleware } from "@/utils/auth";
 
 const prisma = new PrismaClient();
 
 // 创建 API 路由
-const router = createRouter<NextApiRequest, NextApiResponse>();
+const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();
+
+// 使用 authMiddleware 中间件，确保请求已通过鉴权
+router.use(authMiddleware);
 
 // DELETE 请求处理逻辑，删除 BigCheck 节点的相关依赖关系
 router.delete(async (req: NextApiRequest, res: NextApiResponse) => {

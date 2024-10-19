@@ -11,6 +11,7 @@ import {
   Filter,
   ImageInput,
   ImageField,
+  PasswordInput,
 } from "react-admin";
 
 // 创建过滤器组件，确保只显示老师
@@ -29,17 +30,18 @@ export const TeacherList = (props: any) => (
       <TextField source="email" />
       <ImageField source="avartarPicUrl" label="Avartar" />
       <EditButton />
-      <DeleteButton />
+      <DeleteButton mutationMode="pessimistic" />
     </Datagrid>
   </List>
 );
 
 // 创建老师
 export const TeacherCreate = (props: any) => (
-  <Create {...props}>
+  <Create mutationMode="pessimistic" {...props}>
     <SimpleForm>
       <TextInput source="name" />
       <TextInput source="email" />
+      <PasswordInput source="password" defaultValue="" />
       <TextInput
         source="role"
         defaultValue="TEACHER"
@@ -58,10 +60,11 @@ export const TeacherCreate = (props: any) => (
 
 // 编辑老师
 export const TeacherEdit = (props: any) => (
-  <Edit {...props}>
+  <Edit mutationMode="pessimistic" {...props}>
     <SimpleForm>
       <TextInput source="name" />
       <TextInput source="email" />
+      <PasswordInput source="password" defaultValue="" />
       <TextInput
         source="role"
         defaultValue="TEACHER"

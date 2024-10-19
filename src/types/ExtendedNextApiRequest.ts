@@ -1,3 +1,4 @@
+import { User } from "@prisma/client";
 import { NextApiRequest } from "next";
 // 自定义文件类型
 interface MulterFile {
@@ -15,4 +16,5 @@ interface MulterFile {
 export interface ExtendedNextApiRequest extends NextApiRequest {
   file?: MulterFile;
   files?: MulterFile[];
+  user: User;
 }

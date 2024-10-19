@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
-import { User } from "@prisma/client";
+import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
@@ -35,13 +35,11 @@ export async function getAuthenticatedUser(
 
     return user;
   } catch (error) {
-    res.status(403).json({ error: "Invalid token" });
-    throw new Error("Invalid token");
+    res
+      .status(403)
+      .json({ error: "Invalid token or Token expired. Please relogin." });
+    throw new Error("Invalid token or Token expired. Please relogin.");
   }
-}
-
-export interface ExtendedNextApiRequest extends NextApiRequest {
-  user?: User; // 用户可能存在，也可能为空
 }
 
 export async function authMiddleware(

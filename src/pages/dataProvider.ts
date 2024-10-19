@@ -30,18 +30,16 @@ const convertDataToFormData = (data: any) => {
 const dataProvider: DataProvider = {
   getList: async (resource, params) => {
     try {
-      // 如果 params.pagination 为 undefined，提供默认值 { page: 1, perPage: 10 }
       const { page = 1, perPage = 10 } = params.pagination || {
         page: 1,
         perPage: 10,
       };
-
-      // 如果 params.sort 为 undefined，提供默认值 { field: 'id', order: 'ASC' }
       const { field = "id", order = "ASC" } = params.sort || {
         field: "id",
         order: "ASC",
       };
-      const { role, ...otherFilters } = params.filter || {}; // 从filter中提取role
+      const { role, ...otherFilters } = params.filter || {};
+
       if (resource === "students" || resource === "teachers") {
         resource = "users";
       }
@@ -51,19 +49,20 @@ const dataProvider: DataProvider = {
         _order: order,
         _start: (page - 1) * perPage,
         _end: page * perPage,
-        ...(role ? { role } : {}), // 如果存在 role，则将其添加到查询条件中
-        ...params.filter,
+        ...(role ? { role } : {}),
+        ...otherFilters,
       };
+
       const url = `${apiUrl}/${resource}/search?${stringify(query)}`;
-      const { json } = await httpClient(url);
+      const data = await apiRequest(url, "GET");
 
       return {
-        data: json.data, // 确保后端响应中有 data 字段
-        total: json.total, // 确保后端返回 total 字段
+        data: data.data,
+        total: data.total,
       };
     } catch (error) {
       console.error("Error fetching data from getList:", error);
-      throw error; // 抛出错误以便更好地处理
+      throw error;
     }
   },
 
@@ -74,14 +73,14 @@ const dataProvider: DataProvider = {
       }
 
       const url = `${apiUrl}/${resource}/getOne?id=${params.id}`;
-      const { json } = await httpClient(url);
+      const data = await apiRequest(url, "GET");
 
       return {
-        data: json,
+        data: data,
       };
     } catch (error) {
       console.error("Error fetching data from getOne:", error);
-      throw error; // 抛出错误以便更好地处理
+      throw error;
     }
   },
 
@@ -92,14 +91,17 @@ const dataProvider: DataProvider = {
     const query = {
       id: params.ids,
     };
+
     const url = `${apiUrl}/${resource}?${stringify(query)}`;
-    const { json } = await httpClient(url);
-    return { data: json };
+    const data = await apiRequest(url, "GET");
+
+    return { data: data };
   },
 
   getManyReference: async (resource, params) => {
     const { page, perPage } = params.pagination;
     const { field, order } = params.sort;
+
     const query = {
       _sort: field,
       _order: order,
@@ -108,14 +110,17 @@ const dataProvider: DataProvider = {
       [params.target]: params.id,
       ...params.filter,
     };
+
     if (resource === "students" || resource === "teachers") {
       resource = "users";
     }
+
     const url = `${apiUrl}/${resource}?${stringify(query)}`;
-    const { json } = await httpClient(url);
+    const data = await apiRequest(url, "GET");
+
     return {
-      data: json,
-      total: json.length,
+      data: data,
+      total: data.length,
     };
   },
 
@@ -123,21 +128,14 @@ const dataProvider: DataProvider = {
     if (resource === "students" || resource === "teachers") {
       resource = "users";
     }
-    // 检查是否有文件需要上传
-    if (Object.values(params.data).some(isFile)) {
-      const formData = convertDataToFormData(params.data);
-      const data = await apiRequest(
-        `${apiUrl}/${resource}/update`,
-        "PUT",
-        formData
-      );
-      return { data: data };
-    }
 
-    return httpClient(`${apiUrl}/${resource}/update`, {
-      method: "PUT",
-      body: JSON.stringify(params.data),
-    }).then(({ json }) => ({ data: json }));
+    const formData = convertDataToFormData(params.data);
+    const data = await apiRequest(
+      `${apiUrl}/${resource}/update`,
+      "PUT",
+      formData
+    );
+    return { data: data };
   },
 
   updateMany: async (resource, params) => {
@@ -145,29 +143,21 @@ const dataProvider: DataProvider = {
       resource = "users";
     }
 
-    // 检查是否有任何对象包含文件需要上传
-    if (params.data.some((item: any) => Object.values(item).some(isFile))) {
-      const formDataArray: FormData[] = params.data.map(convertDataToFormData);
+    const formDataArray: FormData[] = params.data.map(convertDataToFormData);
 
-      // 使用Promise.all处理多个并发请求
-      const responses = await Promise.all(
-        formDataArray.map((formData, index) =>
-          apiRequest(`${resource}/update`, "PUT", formData, true)
-        )
-      );
+    // 使用Promise.all处理多个并发请求
+    const responses = await Promise.all(
+      formDataArray.map((formData, index) =>
+        apiRequest(`${resource}/update`, "PUT", formData)
+      )
+    );
 
-      return {
-        data: responses.map((json, index) => ({
-          ...params.data[index],
-          id: json.id,
-        })),
-      };
-    }
-
-    const query = { id: params.ids };
-    const url = `${resource}?${stringify(query)}`;
-    const data = await apiRequest(url, "PUT", params.data);
-    return { data };
+    return {
+      data: responses.map((json, index) => ({
+        ...params.data[index],
+        id: json.id,
+      })),
+    };
   },
 
   create: async <RecordType extends RaRecord = RaRecord>(
@@ -189,10 +179,9 @@ const dataProvider: DataProvider = {
     });
 
     const response = await apiRequest(
-      `${resource}/add`,
+      `${apiUrl}/${resource}/add`,
       "POST",
-      formData,
-      true
+      formData
     );
     return {
       data: { ...params.data, id: response.id },
@@ -207,35 +196,21 @@ const dataProvider: DataProvider = {
       resource = "users";
     }
 
-    if (params.data.some((item) => Object.values(item).some(isFile))) {
-      const formDataArray: FormData[] = params.data.map(convertDataToFormData);
+    const formDataArray: FormData[] = params.data.map(convertDataToFormData);
 
-      // 使用Promise.all处理多个并发请求
-      const responses = await Promise.all(
-        formDataArray.map((formData) =>
-          apiRequest(`${resource}/createMany`, "POST", formData, true)
-        )
-      );
-
-      return {
-        data: responses.map((json, index) => ({
-          ...params.data[index],
-          id: json.id,
-        })),
-      } as unknown as CreateResult<RecordType>;
-    }
-
-    const response = await apiRequest(
-      `${resource}/createMany`,
-      "POST",
-      params.data
+    // 使用Promise.all处理多个并发请求
+    const responses = await Promise.all(
+      formDataArray.map((formData) =>
+        apiRequest(`${resource}/createMany`, "POST", formData)
+      )
     );
+
     return {
-      data: response.success.map((item: any, index: number) => ({
+      data: responses.map((json, index) => ({
         ...params.data[index],
-        id: item.id,
+        id: json.id,
       })),
-    } as CreateResult<RecordType>;
+    } as unknown as CreateResult<RecordType>;
   },
 
   delete: async (resource, params) => {
@@ -246,15 +221,10 @@ const dataProvider: DataProvider = {
 
       // 发起 DELETE 请求，删除指定的资源
       const url = `${apiUrl}/${resource}/delete`;
-      const response = await httpClient(url, {
-        method: "DELETE",
-        body: JSON.stringify({ id: params.id }), // 确保只传递 ID 进行删除
-      });
-
-      const { json } = response;
+      const data = await apiRequest(url, "DELETE", { id: params.id }); // 传递 ID 进行删除
 
       return {
-        data: json,
+        data: data,
       };
     } catch (error) {
       console.error("Error deleting data from delete:", error);
@@ -263,18 +233,19 @@ const dataProvider: DataProvider = {
   },
 
   deleteMany: async (resource, params) => {
-    if (resource === "students" || resource === "teachers") {
-      resource = "users";
+    try {
+      if (resource === "students" || resource === "teachers") {
+        resource = "users";
+      }
+
+      const url = `${apiUrl}/${resource}/deleteMany`;
+      const data = await apiRequest(url, "DELETE", { ids: params.ids }); // 传递多个 ID 进行批量删除
+
+      return { data: params.ids };
+    } catch (error) {
+      console.error("Error deleting data from deleteMany:", error);
+      throw error; // 抛出错误以便更好地处理
     }
-    const query = {
-      id: params.ids,
-    };
-    const url = `${apiUrl}/${resource}/deleteMany`;
-    const { json } = await httpClient(url, {
-      method: "DELETE",
-      body: JSON.stringify({ ids: params.ids }),
-    });
-    return { data: params.ids };
   },
 };
 

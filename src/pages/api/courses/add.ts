@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
 import { upload } from "@/lib/middleware/multer";
+import { authMiddleware } from "@/utils/auth";
 import { createRouter } from "next-connect";
 import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
 import { AppError } from "@/types/AppError";

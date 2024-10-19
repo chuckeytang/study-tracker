@@ -1,11 +1,15 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
 import { createRouter } from "next-connect"; // 使用 next-connect 路由
+import { authMiddleware } from "@/utils/auth";
+import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
 
 const prisma = new PrismaClient();
 
 // 使用 createRouter 创建 API 路由
-const router = createRouter<NextApiRequest, NextApiResponse>();
+const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();
+
+router.use(authMiddleware);
 
 // GET 请求处理逻辑，获取课程列表并标记 isLearning
 router.get(async (req: NextApiRequest, res: NextApiResponse) => {
