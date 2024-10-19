@@ -25,3 +25,8 @@ body {
     text-wrap: balance;
   }
 }
+
+/* hide react-admin app bar */
+.RaConfigurable-root span {
+  display: none !important;
+}

@@ -146,7 +146,7 @@ const MyCourses: React.FC = (props) => {
             My Courses
           </div>
           {/* User Info */}
-          <UserInfo userId={Number(userId)} />
+          {/* <UserInfo userId={Number(userId)} /> */}
           {courses.length === 0 && (
             <div className="flex justify-center items-center p-10">
               No courses

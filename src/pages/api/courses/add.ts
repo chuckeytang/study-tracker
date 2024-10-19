@@ -12,14 +12,17 @@ const prisma = new PrismaClient();
 // 使用 createRouter 创建 API 路由
 const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();
 
-// POST 请求处理逻辑
+// 使用 authMiddleware 确保用户已通过身份验证
+router.use(authMiddleware);
+
 router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
   try {
     // 手动运行 multer 中间件
     await runMiddleware(req, res, upload.single("icon"));
 
-    const { name, description } = req.body; // 移除 teacherId
+    const { name, description } = req.body;
     const file = req.file;
+    const { user } = req; // 获取经过身份验证的用户信息
 
     // 生成 iconUrl
     const iconUrl = file ? `/uploads/${file.filename}` : null;
@@ -33,13 +36,21 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       },
     });
 
+    // 将课程与用户（如教师）关联
+    await prisma.userCourse.create({
+      data: {
+        userId: user.id, // 使用当前登录用户的 ID
+        courseId: newCourse.id, // 新创建的课程的 ID
+      },
+    });
+
     res.status(201).json(newCourse);
   } catch (error) {
     res.status(500).json({ error: `Failed to create course: ${error}` });
   }
 });
 
-// 在 handler 中添加错误处理
+// 错误处理
 export default router.handler({
   onError: (err: unknown, req, res) => {
     if (err instanceof AppError) {

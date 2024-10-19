@@ -14,6 +14,7 @@ router.use(authMiddleware);
 
 router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
   const { _start, _end, _sort, _order } = req.query;
+  const { user } = req;
 
   const start = parseInt(_start as string, 10) || 0;
   const end = parseInt(_end as string, 10) || 10;
@@ -24,17 +25,46 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
   const sortOrder = _order === "DESC" ? "desc" : "asc"; // 默认升序
 
   try {
-    // 获取分页数据
-    const courses = await prisma.course.findMany({
-      skip: skip,
-      take: take,
-      orderBy: {
-        [sortField]: sortOrder,
-      },
-    });
+    let courses;
+    let total;
 
-    // 获取总条目数
-    const total = await prisma.course.count();
+    // 判断用户的角色
+    if (user.role === "ADMIN") {
+      // ADMIN 返回所有课程
+      courses = await prisma.course.findMany({
+        skip: skip,
+        take: take,
+        orderBy: {
+          [sortField]: sortOrder,
+        },
+      });
+      total = await prisma.course.count();
+    } else {
+      // TEACHER 或 STUDENT 只返回与该用户相关的课程
+      courses = await prisma.course.findMany({
+        where: {
+          enrolledUsers: {
+            some: {
+              userId: user.id, // 过滤出与当前用户相关的课程
+            },
+          },
+        },
+        skip: skip,
+        take: take,
+        orderBy: {
+          [sortField]: sortOrder,
+        },
+      });
+      total = await prisma.course.count({
+        where: {
+          enrolledUsers: {
+            some: {
+              userId: user.id,
+            },
+          },
+        },
+      });
+    }
 
     // 设置 Content-Range 响应头
     res.setHeader(

@@ -38,7 +38,6 @@ export const CourseList = (props: any) => {
   return (
     <List {...props} actions={<ListActions role={role} />}>
       <Datagrid>
-        <TextField source="id" />
         <TextField source="name" />
         <TextField source="description" />
         <ImageField source="iconUrl" label="Icon" />
@@ -68,7 +67,7 @@ export const CourseCreate = (props: any) => {
   if (role !== "TEACHER") return null;
 
   return (
-    <Create {...props}>
+    <Create mutationMode="pessimistic" {...props}>
       <SimpleForm>
         <TextInput source="name" />
         <TextInput source="description" />
@@ -106,7 +105,7 @@ export const CourseEdit = (props: any) => {
   const isDisabled = role === "ADMIN";
 
   return (
-    <Edit {...props}>
+    <Edit mutationMode="pessimistic" {...props}>
       <SimpleForm>
         <TextInput source="name" disabled={isDisabled} />
         <TextInput source="description" disabled={isDisabled} />
@@ -118,7 +117,7 @@ export const CourseEdit = (props: any) => {
             accept={{ "image/*": [".png", ".jpg"] }}
             defaultValue={
               record?.iconUrl
-                ? [{ src: record.avartarPicUrl, title: "Current Avatar" }]
+                ? [{ src: record.iconUrl, title: "Current Avatar" }]
                 : []
             }
           >

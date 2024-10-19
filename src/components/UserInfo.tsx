@@ -1,4 +1,5 @@
 import { apiRequest } from "@/utils/api";
+import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 
 interface User {
@@ -23,32 +24,16 @@ const DecLightBulb: React.FC = () => {
   );
 };
 
-const UserInfo: React.FC<{ userId: number }> = ({ userId }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const data = await apiRequest(`/api/users/getOne?id=${userId}`);
-        setUser(data);
-      } catch (error) {
-        console.error("Failed to fetch user:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, [userId]);
-
-  if (loading) {
-    return <div className="text-center">Loading...</div>;
-  }
-
-  if (!user) {
-    return <div className="text-center">User not found</div>;
-  }
+const UserInfo: React.FC<{ user: User }> = ({ user }) => {
+  const router = useRouter();
+  // 根据角色跳转
+  const handleButtonClick = () => {
+    if (user.role === "TEACHER") {
+      router.push("/admin");
+    } else if (user.role === "STUDENT") {
+      router.push("/joinCourse");
+    }
+  };
 
   return (
     <div className="bg-amber-500 rounded-2xl p-5 relative text-center h-[300px] w-full">
@@ -82,6 +67,14 @@ const UserInfo: React.FC<{ userId: number }> = ({ userId }) => {
         <div className="absolute -bottom-5 -right-5">
           <DecLightBulb />
         </div>
+      </div>
+      <div className="absolute bottom-2 right-4">
+        <button
+          onClick={handleButtonClick}
+          className="bg-white text-amber-500 shadow-lg font-extrabold underline py-2 px-4 rounded-lg"
+        >
+          {user.role === "TEACHER" ? "Add Course" : "Join Course"}
+        </button>
       </div>
     </div>
   );

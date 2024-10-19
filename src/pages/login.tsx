@@ -54,7 +54,7 @@ export default function LoginPage(props) {
         if (userDetails.role === "ADMIN") {
           router.push("/admin");
         } else {
-          router.push(`/myCourses/${userDetails.id}`);
+          router.push(`/myCourses`);
         }
       } else {
         setErrorMessage("Invalid email or password");
