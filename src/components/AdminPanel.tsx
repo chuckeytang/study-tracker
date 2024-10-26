@@ -6,6 +6,11 @@ import { TeacherCreate, TeacherEdit, TeacherList } from "./TeacherAdmin";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { useEffect, useState } from "react";
 import AdminCustomLayout from "./AdminCustomLayout";
+import {
+  AdministratorCreate,
+  AdministratorEdit,
+  AdministratorList,
+} from "./AdministratorAdmin";
 
 const AdminPanel = () => {
   const [role, setRole] = useState<string | null>(null);
@@ -45,6 +50,15 @@ const AdminPanel = () => {
                 />
               )}
 
+              {role === "ADMIN" && (
+                <Resource
+                  name="administrators"
+                  list={AdministratorList}
+                  create={AdministratorCreate}
+                  edit={AdministratorEdit}
+                  options={{ label: "Administrators" }} // 左侧菜单名称为 'Admin'
+                />
+              )}
               {role === "ADMIN" && (
                 <Resource
                   name="students"

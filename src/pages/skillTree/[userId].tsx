@@ -8,7 +8,7 @@ import { apiRequest } from "@/utils/api";
 const SkillTree = (props) => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
-  const { userId } = router.query;
+  const { userId, courseName, otherStudent } = router.query;
 
   useEffect(() => {
     if (!router.isReady || !userId) return;
@@ -31,7 +31,15 @@ const SkillTree = (props) => {
   }
 
   return (
-    <>{userRole === "TEACHER" ? <TeacherSkillTree /> : <StudentSkillTree />}</>
+    <>
+      {userRole === "TEACHER" ? (
+        <TeacherSkillTree courseName={courseName as string} />
+      ) : otherStudent === "1" ? (
+        <OtherStudentSkillTree courseName={courseName as string} />
+      ) : (
+        <StudentSkillTree courseName={courseName as string} />
+      )}
+    </>
   );
 };
 

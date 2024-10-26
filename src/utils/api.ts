@@ -42,6 +42,6 @@ export const apiRequest = async (
   } else {
     // 抛出异常，并包含状态码和错误信息
     const errorData = await response.json();
-    throw new Error(`Error: ${response.status} - ${errorData.error}`);
+    throw new Error(`Error: ${response.status} - ${errorData.message}`);
   }
 };

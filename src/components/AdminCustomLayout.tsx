@@ -1,4 +1,4 @@
-import { Layout, AppBar, TitlePortal } from "react-admin";
+import { Layout, AppBar, TitlePortal, useLogout, Button } from "react-admin";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
@@ -6,6 +6,7 @@ import { useRouter } from "next/router";
 const AdminCustomAppBar = (props: any) => {
   const [role, setRole] = useState<string | null>(null);
   const router = useRouter();
+  const logout = useLogout();
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -22,6 +23,11 @@ const AdminCustomAppBar = (props: any) => {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    window.location.href = "/login";
+  };
+
   return (
     <AppBar {...props}>
       {/* 显示默认标题，并绑定点击事件 */}
@@ -30,6 +36,9 @@ const AdminCustomAppBar = (props: any) => {
           My Courses
         </span>
       </TitlePortal>
+      <Button color="inherit" onClick={handleLogout}>
+        <span>Logout</span>
+      </Button>
     </AppBar>
   );
 };

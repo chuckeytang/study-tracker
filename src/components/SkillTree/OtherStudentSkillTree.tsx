@@ -19,9 +19,10 @@ import {
 import { calculateHandlePosition } from "@/utils/utils";
 import { apiRequest } from "@/utils/api";
 
-const OtherStudentSkillTree = () => {
+const OtherStudentSkillTree = ({ courseName }: { courseName: string }) => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const [name, setName] = useState("");
 
   const router = useRouter();
   const { userId, courseId } = router.query;
@@ -161,7 +162,16 @@ const OtherStudentSkillTree = () => {
 
   useEffect(() => {
     if (!router.isReady || !userId) return;
+    const fetchUserInfo = async () => {
+      try {
+        const data = await apiRequest(`/api/users/getOne?id=${userId}`);
+        setName(data.name);
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+      }
+    };
 
+    fetchUserInfo();
     updateSkillTree();
   }, [router.isReady, userId]);
 
@@ -209,7 +219,12 @@ const OtherStudentSkillTree = () => {
 
   return (
     <div className="flex items-center justify-center bg-[url('/images/bg_student.jpg')] h-screen w-screen bg-cover">
-      <div className="rounded-2xl bg-stone-50 w-full m-10 h-full flex flex-col justify-between">
+      <div className="rounded-2xl bg-stone-50 w-full m-10 h-[90vh] flex justify-center items-start">
+        <div className="flex flex-col justify-center items-center">
+          <div className="flex justify-start p-4 m-4 bg-amber-500 rounded-2xl w-40">
+            {name}'s {courseName}
+          </div>
+        </div>
         <ReactFlowProvider>
           <ReactFlow
             nodes={nodes}
@@ -222,6 +237,12 @@ const OtherStudentSkillTree = () => {
           />
         </ReactFlowProvider>
       </div>
+      <button
+        onClick={() => router.back()}
+        className="fixed bottom-4 right-4 bg-amber-700 text-white px-4 py-2 rounded-lg shadow-lg font-bold"
+      >
+        Back
+      </button>
     </div>
   );
 };

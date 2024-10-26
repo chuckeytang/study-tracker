@@ -27,21 +27,21 @@ export default async function loginHandler(
     }
 
     // 验证密码
-    // const passwordMatch = await bcrypt.compare(password, user.password);
-    // if (!passwordMatch) {
-    //   return res.status(401).json({ message: "Invalid email or password" });
-    // }
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
 
     // 生成 JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
       JWT_SECRET,
-      { expiresIn: "1h" } // token 1小时过期
+      { expiresIn: "24h" } // token 1小时过期
     );
 
     // 返回 token
     res.status(200).json({ token });
-  } catch (error) {
-    res.status(500).json({ message: "Something went wrong" });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
   }
 }

@@ -63,6 +63,8 @@ const MyCourses: React.FC = (props) => {
 
   const courseBorderColor =
     user?.role === "TEACHER" ? "border-purple-500" : "border-amber-400";
+  const buttonColor =
+    user?.role === "TEACHER" ? "bg-purple-700" : "bg-amber-700";
   const backgroundImage =
     user?.role === "TEACHER"
       ? "bg-[url('/images/bg_teacher.jpg')]"
@@ -89,7 +91,9 @@ const MyCourses: React.FC = (props) => {
                 key={course.id}
                 className="flex justify-start mb-4 items-center cursor-pointer"
                 onClick={() => {
-                  router.push(`/skillTree/${user?.id}?courseId=${course.id}`);
+                  router.push(
+                    `/skillTree/${user?.id}?courseId=${course.id}&courseName=${course.name}`
+                  );
                 }}
               >
                 <div className={`rounded-xl border-8 ${courseBorderColor} p-2`}>
@@ -116,8 +120,11 @@ const MyCourses: React.FC = (props) => {
           {/* User Info */}
           <UserInfo user={user!} />
           {courses.length === 0 && (
-            <div className="flex flex-col justify-center items-start mb-20 text-2xl font-bold">
-              <div>No courses?</div> <div>Click Join Course.</div>
+            <div className="flex flex-col justify-center items-start mb-20 text-2xl font-bold text-gray-700">
+              <div>No courses?</div>{" "}
+              <div>
+                Click {user?.role === "TEACHER" ? "Add Course" : "Join Course"}.
+              </div>
             </div>
           )}
           {courses.length != 0 && (
@@ -133,7 +140,9 @@ const MyCourses: React.FC = (props) => {
                 key={course.id}
                 className="flex justify-start mb-4 items-center cursor-pointer"
                 onClick={() => {
-                  router.push(`/skillTree/${user?.id}?courseId=${course.id}`);
+                  router.push(
+                    `/skillTree/${user?.id}?courseId=${course.id}&courseName=${course.name}`
+                  );
                 }}
               >
                 <div className="mr-4 text-gray-800 font-bold">
@@ -150,6 +159,12 @@ const MyCourses: React.FC = (props) => {
             ))}
         </div>
       </div>
+      <button
+        onClick={() => router.push("/login")}
+        className={`fixed bottom-4 right-4 ${buttonColor} text-white px-4 py-2 rounded-lg shadow-lg font-bold`}
+      >
+        Logout
+      </button>
     </div>
   );
 };

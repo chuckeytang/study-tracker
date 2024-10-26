@@ -38,7 +38,11 @@ const dataProvider: DataProvider = {
       };
       const { role, ...otherFilters } = params.filter || {};
 
-      if (resource === "students" || resource === "teachers") {
+      if (
+        resource === "students" ||
+        resource === "teachers" ||
+        resource === "administrators"
+      ) {
         resource = "users";
       }
 
@@ -66,7 +70,11 @@ const dataProvider: DataProvider = {
 
   getOne: async (resource, params) => {
     try {
-      if (resource === "students" || resource === "teachers") {
+      if (
+        resource === "students" ||
+        resource === "teachers" ||
+        resource === "administrators"
+      ) {
         resource = "users";
       }
 
@@ -83,7 +91,11 @@ const dataProvider: DataProvider = {
   },
 
   getMany: async (resource, params) => {
-    if (resource === "students" || resource === "teachers") {
+    if (
+      resource === "students" ||
+      resource === "teachers" ||
+      resource === "administrators"
+    ) {
       resource = "users";
     }
     const query = {
@@ -109,7 +121,11 @@ const dataProvider: DataProvider = {
       ...params.filter,
     };
 
-    if (resource === "students" || resource === "teachers") {
+    if (
+      resource === "students" ||
+      resource === "teachers" ||
+      resource === "administrators"
+    ) {
       resource = "users";
     }
 
@@ -123,7 +139,11 @@ const dataProvider: DataProvider = {
   },
 
   update: async (resource, params) => {
-    if (resource === "students" || resource === "teachers") {
+    if (
+      resource === "students" ||
+      resource === "teachers" ||
+      resource === "administrators"
+    ) {
       resource = "users";
     }
 
@@ -137,7 +157,11 @@ const dataProvider: DataProvider = {
   },
 
   updateMany: async (resource, params) => {
-    if (resource === "students" || resource === "teachers") {
+    if (
+      resource === "students" ||
+      resource === "teachers" ||
+      resource === "administrators"
+    ) {
       resource = "users";
     }
 
@@ -162,7 +186,11 @@ const dataProvider: DataProvider = {
     resource: string,
     params: CreateParams
   ) => {
-    if (resource === "students" || resource === "teachers") {
+    if (
+      resource === "students" ||
+      resource === "teachers" ||
+      resource === "administrators"
+    ) {
       resource = "users";
     }
 
@@ -190,7 +218,11 @@ const dataProvider: DataProvider = {
     resource: string,
     params: { data: RecordType[] }
   ) => {
-    if (resource === "students" || resource === "teachers") {
+    if (
+      resource === "students" ||
+      resource === "teachers" ||
+      resource === "administrators"
+    ) {
       resource = "users";
     }
 
@@ -213,7 +245,11 @@ const dataProvider: DataProvider = {
 
   delete: async (resource, params) => {
     try {
-      if (resource === "students" || resource === "teachers") {
+      if (
+        resource === "students" ||
+        resource === "teachers" ||
+        resource === "administrators"
+      ) {
         resource = "users";
       }
 
@@ -232,7 +268,11 @@ const dataProvider: DataProvider = {
 
   deleteMany: async (resource, params) => {
     try {
-      if (resource === "students" || resource === "teachers") {
+      if (
+        resource === "students" ||
+        resource === "teachers" ||
+        resource === "administrators"
+      ) {
         resource = "users";
       }
 

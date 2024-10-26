@@ -202,7 +202,7 @@ const JoinCourse: React.FC = (props) => {
       </Dialog>
       <button
         onClick={() => router.push("/myCourses")}
-        className="fixed bottom-4 right-4 bg-amber-500 text-white px-4 py-2 rounded-lg shadow-lg font-bold"
+        className="fixed bottom-4 right-4 bg-amber-700 text-white px-4 py-2 rounded-lg shadow-lg font-bold"
       >
         Back to My Courses
       </button>

@@ -60,7 +60,7 @@ export default function LoginPage(props) {
         setErrorMessage("Invalid email or password");
       }
     } catch (error) {
-      setErrorMessage("Something went wrong, please try again.");
+      setErrorMessage("Login failed: " + error);
     }
   };
 

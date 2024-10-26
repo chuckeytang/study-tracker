@@ -24,7 +24,7 @@ import { calculateHandlePosition } from "@/utils/utils";
 import { apiRequest } from "@/utils/api";
 import { FaHome } from "react-icons/fa";
 
-const TeacherSkillTree = () => {
+const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
@@ -390,7 +390,7 @@ const TeacherSkillTree = () => {
   // 根据用户角色获取课程列表
   const fetchCourses = async () => {
     try {
-      const apiUrl = `/api/student/getCourseList?userId=${userId}`;
+      const apiUrl = `/api/teacher/getCourseList?userId=${userId}`;
 
       const data = await apiRequest(apiUrl);
       const filteredCourses = data.courses.filter(
@@ -416,9 +416,8 @@ const TeacherSkillTree = () => {
       onContextMenu={handleBlankContextMenu}
     >
       <div className="rounded-2xl bg-stone-50 w-full m-10 h-[90vh] flex justify-center items-start">
-        {/* Top navigation and course selection */}
         <div className="flex flex-col justify-center items-center">
-          <div className="flex justify-start p-4 m-4 bg-violet-700 rounded-2xl">
+          <div className="flex justify-start p-4 m-4 bg-purple-700 rounded-2xl">
             <button
               type="button"
               className="text-base items-center flex text-white"
@@ -436,6 +435,7 @@ const TeacherSkillTree = () => {
                 value: course.id,
                 icon: <img src={course.iconUrl}></img>,
               }))}
+              value={courseId}
               onChange={(selectedCourse) => {
                 router.push(`/skillTree/${userId}?courseId=${selectedCourse}`);
               }}

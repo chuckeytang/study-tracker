@@ -10,12 +10,14 @@ interface Option {
 interface WidgetSelectProps {
   options: Option[];
   className?: string;
+  value?: any;
   onChange?: (selectedValue: any) => void; // 添加 onChange 属性
 }
 
 const WidgetSelect: React.FC<WidgetSelectProps> = ({
   options,
   className,
+  value,
   onChange,
 }) => {
   return (
@@ -23,6 +25,7 @@ const WidgetSelect: React.FC<WidgetSelectProps> = ({
       <select
         className="input w-full rounded-full bg-white text-black pl-10 h-10"
         onChange={(e) => onChange && onChange(e.target.value)} // 调用 onChange
+        value={value}
       >
         {options.map((option, index) => (
           <option key={index} value={option.value}>

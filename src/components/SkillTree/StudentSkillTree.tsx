@@ -20,6 +20,7 @@ import {
 } from "@/types/Values";
 import { calculateHandlePosition } from "@/utils/utils";
 import { apiRequest } from "@/utils/api";
+import { FaHome } from "react-icons/fa";
 
 // Define options for the course selection dropdown
 const options = [
@@ -28,13 +29,32 @@ const options = [
   { label: "Cycling", icon: null },
 ];
 
-const StudentSkillTree = () => {
+const StudentSkillTree = ({ courseName }: { courseName: string }) => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [availableSkillPoints, setAvailableSkillPoints] = useState(0);
 
   const router = useRouter();
   const { userId, courseId } = router.query;
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchCourses = async () => {
+    try {
+      const apiUrl = `/api/student/getCourseList?userId=${userId}`;
+
+      const data = await apiRequest(apiUrl);
+      const filteredCourses = data.courses.filter(
+        (course: any) => course.isLearning
+      );
+
+      setCourses(filteredCourses);
+    } catch (error) {
+      console.error("Error fetching course list:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Fetch and update the skill tree along with student progress
   const updateSkillTree = async () => {
@@ -184,14 +204,27 @@ const StudentSkillTree = () => {
       }
     };
 
+    const fetchOtherStudents = async () => {
+      if (courseId) {
+        const data = await apiRequest(
+          `/api/student/getOtherStudentListForCourse?courseId=${courseId}`
+        );
+        setOtherStudents(data.students);
+      }
+    };
+
     fetchUserInfo();
+    fetchCourses();
+    fetchOtherStudents();
   }, [router.isReady, userId]);
 
   useEffect(() => {
     if (!router.isReady) return;
 
     updateSkillTree();
-  }, [router.isReady]);
+  }, [router.isReady, courseId]);
+
+  const [otherStudents, setOtherStudents] = useState([]);
 
   const handleNodeContextMenu = (event: React.MouseEvent, nodeData: any) => {
     event.preventDefault();
@@ -297,23 +330,56 @@ const StudentSkillTree = () => {
       className="flex items-center justify-center bg-[url('/images/bg_student.jpg')] h-screen w-screen bg-cover"
       onContextMenu={handleBlankContextMenu}
     >
-      <div className="rounded-2xl bg-stone-50 w-full m-10 h-full flex flex-col justify-between">
+      <div className="rounded-2xl bg-stone-50 w-full m-10 h-[90vh] flex justify-center items-start">
         {/* Top navigation and course selection */}
-        <div className="flex justify-start p-4">
-          <WidgetButton
-            style="primary"
-            type="button"
-            className="text-base items-center"
-          >
-            <img src="/icons/home.svg" alt="Home" className="mr-2" />
-            Home Page
-          </WidgetButton>
-        </div>
+        <div className="flex flex-col justify-center items-center">
+          <div className="flex justify-start p-4 m-4 bg-amber-500 rounded-2xl">
+            <button
+              type="button"
+              className="text-base items-center flex text-white"
+              onClick={() => router.push("/myCourses")}
+            >
+              <FaHome className="mr-3" />
+              Home Page
+            </button>
+          </div>
 
-        <div className="flex justify-center space-x-10 items-center">
-          <WidgetSelect options={options} />
-          <div className="text-gray-800">
-            Available Skill Points: {availableSkillPoints}
+          <div className="flex justify-center m-4">
+            <WidgetSelect
+              options={courses.map((course: any) => ({
+                label: course.name,
+                value: course.id,
+                icon: <img src={course.iconUrl}></img>,
+              }))}
+              value={courseId}
+              onChange={(selectedCourse) => {
+                router.push(`/skillTree/${userId}?courseId=${selectedCourse}`);
+              }}
+            />
+          </div>
+
+          {/* Other students list */}
+          <div className="flex flex-col items-center mt-4">
+            <h3 className="text-lg font-semibold mb-2 text-gray-700">
+              Other Students
+            </h3>
+            {otherStudents.length === 0 ? (
+              <p className="text-gray-500">No other students enrolled</p>
+            ) : (
+              otherStudents.map((student: any) => (
+                <button
+                  key={student.id}
+                  onClick={() =>
+                    router.push(
+                      `/skillTree/${userId}?courseId=${courseId}&otherStudent=1&courseName=${courseName}`
+                    )
+                  }
+                  className="text-blue-500 hover:underline mb-1"
+                >
+                  {student.name}
+                </button>
+              ))
+            )}
           </div>
         </div>
 

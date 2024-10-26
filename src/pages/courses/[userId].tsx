@@ -118,7 +118,9 @@ const MyCourses: React.FC = (props) => {
               onClick={() => {
                 // 如果是学生且已经学习了该课程，则跳转到 skillTree 页面
                 if (course.isLearning) {
-                  router.push(`/skillTree/${userId}?courseId=${course.id}`);
+                  router.push(
+                    `/skillTree/${userId}?courseId=${course.id}&courseName=${course.name}`
+                  );
                 } else if (userRole === "STUDENT" && !course.isLearning) {
                   // 如果是学生且未学习该课程，则弹出加入课程的对话框
                   openJoinDialog(course.id);
@@ -165,7 +167,9 @@ const MyCourses: React.FC = (props) => {
               onClick={() => {
                 // 如果是学生且已经学习了该课程，则跳转到 skillTree 页面
                 if (course.isLearning) {
-                  router.push(`/skillTree/${userId}?courseId=${course.id}`);
+                  router.push(
+                    `/skillTree/${userId}?courseId=${course.id}&courseName=${course.name}`
+                  );
                 } else if (userRole === "STUDENT" && !course.isLearning) {
                   // 如果是学生且未学习该课程，则弹出加入课程的对话框
                   openJoinDialog(course.id);

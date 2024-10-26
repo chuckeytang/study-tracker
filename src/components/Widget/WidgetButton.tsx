@@ -21,7 +21,7 @@ const WidgetButton: React.FC<WidgetButtonProps> = ({
   children,
 }) => {
   const baseStyles = {
-    primary: "text-white bg-violet-600 rounded-xl",
+    primary: "text-white bg-amber-600 rounded-xl",
     secondary:
       "bg-[rgba(255,255,255,0.2)] border border-green-500 rounded-lg hover:bg-green-600",
   };

@@ -46,7 +46,8 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     const courseList = courses.map((course) => {
       const isLearning = course.enrolledUsers.some(
         (enrollment) =>
-          enrollment.userId === (meId !== Number(teacherId) ? meId : teacherId)
+          enrollment.userId ===
+          (meId !== Number(teacherId) ? meId : Number(teacherId))
       );
       return {
         id: course.id,
