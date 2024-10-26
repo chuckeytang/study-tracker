@@ -108,7 +108,7 @@ const MyCourses: React.FC = (props) => {
   }
 
   return (
-    <div className="flex items-center justify-center bg-[url('/images/bg.jpg')] min-h-screen bg-cover">
+    <div className="flex items-center justify-center bg-[url('/images/bg_student.jpg')] min-h-screen bg-cover">
       <div className="rounded-2xl bg-stone-100 w-3/4 my-10 min-h-screen flex justify-between">
         <div className="flex flex-col items-start p-10 w-1/3">
           {leftCourses.map((course) => (

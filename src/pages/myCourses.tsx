@@ -61,6 +61,13 @@ const MyCourses: React.FC = (props) => {
   const leftCourses = courses.slice(0, Math.ceil(courses.length / 2)); // First half of courses
   const rightCourses = courses.slice(Math.ceil(courses.length / 2)); // Second half of courses
 
+  const courseBorderColor =
+    user?.role === "TEACHER" ? "border-purple-500" : "border-amber-400";
+  const backgroundImage =
+    user?.role === "TEACHER"
+      ? "bg-[url('/images/bg_teacher.jpg')]"
+      : "bg-[url('/images/bg_student.jpg')]";
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -70,7 +77,9 @@ const MyCourses: React.FC = (props) => {
   }
 
   return (
-    <div className="flex items-center justify-center bg-[url('/images/bg.jpg')] min-h-screen bg-cover">
+    <div
+      className={`flex items-center justify-center ${backgroundImage} min-h-screen bg-cover`}
+    >
       <div className="rounded-2xl bg-stone-100 w-3/4 my-10 min-h-screen flex justify-between">
         <div className="flex flex-col items-start p-10 w-1/3">
           {leftCourses
@@ -83,11 +92,7 @@ const MyCourses: React.FC = (props) => {
                   router.push(`/skillTree/${user?.id}?courseId=${course.id}`);
                 }}
               >
-                <div
-                  className={`rounded-xl border-8 ${
-                    course.isLearning ? "border-amber-400" : "border-gray-300"
-                  } p-2`}
-                >
+                <div className={`rounded-xl border-8 ${courseBorderColor} p-2`}>
                   <img
                     src={course.iconUrl || "/images/course_default_icon.png"}
                     alt={course.name}
@@ -97,6 +102,9 @@ const MyCourses: React.FC = (props) => {
                 <div className="ml-4 text-gray-800 font-bold">
                   {course.name}
                 </div>
+                {/* <div className="text-sm text-gray-600">
+                  Instructor: {selectedTeacher?.name}
+                </div> */}
               </div>
             ))}
         </div>
@@ -108,8 +116,8 @@ const MyCourses: React.FC = (props) => {
           {/* User Info */}
           <UserInfo user={user!} />
           {courses.length === 0 && (
-            <div className="flex justify-center items-center p-10">
-              No courses
+            <div className="flex flex-col justify-center items-start mb-20 text-2xl font-bold">
+              <div>No courses?</div> <div>Click Join Course.</div>
             </div>
           )}
           {courses.length != 0 && (
@@ -131,11 +139,7 @@ const MyCourses: React.FC = (props) => {
                 <div className="mr-4 text-gray-800 font-bold">
                   {course.name}
                 </div>
-                <div
-                  className={`rounded-xl border-8 ${
-                    course.isLearning ? "border-amber-400" : "border-gray-300"
-                  } p-2`}
-                >
+                <div className={`rounded-xl border-8 ${courseBorderColor} p-2`}>
                   <img
                     src={course.iconUrl || "/images/course_default_icon.png"}
                     alt={course.name}

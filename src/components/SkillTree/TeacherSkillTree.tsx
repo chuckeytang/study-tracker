@@ -22,13 +22,7 @@ import {
 } from "@/types/Values";
 import { calculateHandlePosition } from "@/utils/utils";
 import { apiRequest } from "@/utils/api";
-
-// Define options for the course selection dropdown
-const options = [
-  { label: "Swimming", icon: null },
-  { label: "Running", icon: null },
-  { label: "Cycling", icon: null },
-];
+import { FaHome } from "react-icons/fa";
 
 const TeacherSkillTree = () => {
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -153,7 +147,7 @@ const TeacherSkillTree = () => {
     if (!router.isReady) return;
 
     updateSkillTree();
-  }, [router.isReady]);
+  }, [router.isReady, courseId]);
 
   const nodeTypes = useMemo(
     () => ({
@@ -391,26 +385,62 @@ const TeacherSkillTree = () => {
     }
   };
 
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  // 根据用户角色获取课程列表
+  const fetchCourses = async () => {
+    try {
+      const apiUrl = `/api/student/getCourseList?userId=${userId}`;
+
+      const data = await apiRequest(apiUrl);
+      const filteredCourses = data.courses.filter(
+        (course: any) => course.isLearning
+      );
+
+      setCourses(filteredCourses);
+    } catch (error) {
+      console.error("Error fetching course list:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    fetchCourses();
+  }, [router.isReady, userId]);
+
   return (
     <div
-      className="flex items-center justify-center bg-[url('/images/bg.jpg')] h-screen w-screen bg-cover"
+      className="flex items-center justify-center bg-[url('/images/bg_teacher.jpg')] h-screen w-screen bg-cover"
       onContextMenu={handleBlankContextMenu}
     >
-      <div className="rounded-2xl bg-stone-50 w-full m-10 h-full flex flex-col justify-between">
+      <div className="rounded-2xl bg-stone-50 w-full m-10 h-[90vh] flex justify-center items-start">
         {/* Top navigation and course selection */}
-        <div className="flex justify-start p-4">
-          <WidgetButton
-            style="primary"
-            type="button"
-            className="text-base items-center"
-          >
-            <img src="/icons/home.svg" alt="Home" className="mr-2" />
-            Home Page
-          </WidgetButton>
-        </div>
+        <div className="flex flex-col justify-center items-center">
+          <div className="flex justify-start p-4 m-4 bg-violet-700 rounded-2xl">
+            <button
+              type="button"
+              className="text-base items-center flex text-white"
+              onClick={() => router.push("/myCourses")}
+            >
+              <FaHome className="mr-3" />
+              Home Page
+            </button>
+          </div>
 
-        <div className="flex justify-center mb-4">
-          <WidgetSelect options={options} />
+          <div className="flex justify-center m-4">
+            <WidgetSelect
+              options={courses.map((course: any) => ({
+                label: course.name,
+                value: course.id,
+                icon: <img src={course.iconUrl}></img>,
+              }))}
+              onChange={(selectedCourse) => {
+                router.push(`/skillTree/${userId}?courseId=${selectedCourse}`);
+              }}
+            />
+          </div>
         </div>
 
         <ReactFlowProvider>

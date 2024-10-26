@@ -13,16 +13,26 @@ const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();
 router.use(authMiddleware);
 
 // GET 请求处理逻辑，获取课程列表并标记 isLearning
-router.get(async (req: NextApiRequest, res: NextApiResponse) => {
+router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
   const { userId } = req.query; // 从查询参数中获取 userId
+  const { user } = req; // 从请求中获取本用户ID参数
+  const meId = user?.id;
+  const teacherId = userId;
 
   try {
-    if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
+    if (!teacherId) {
+      return res.status(400).json({ error: "teacher's id is required" });
     }
 
     // 获取所有课程以及选修这些课程的用户
     const courses = await prisma.course.findMany({
+      where: {
+        enrolledUsers: {
+          some: {
+            userId: Number(teacherId),
+          },
+        },
+      },
       include: {
         enrolledUsers: {
           select: {
@@ -35,7 +45,8 @@ router.get(async (req: NextApiRequest, res: NextApiResponse) => {
     // 构造返回数据，判断是否正在学习课程
     const courseList = courses.map((course) => {
       const isLearning = course.enrolledUsers.some(
-        (enrollment) => enrollment.userId === Number(userId)
+        (enrollment) =>
+          enrollment.userId === (meId !== Number(teacherId) ? meId : teacherId)
       );
       return {
         id: course.id,

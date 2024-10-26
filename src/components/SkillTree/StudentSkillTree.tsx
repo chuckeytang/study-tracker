@@ -294,7 +294,7 @@ const StudentSkillTree = () => {
 
   return (
     <div
-      className="flex items-center justify-center bg-[url('/images/bg.jpg')] h-screen w-screen bg-cover"
+      className="flex items-center justify-center bg-[url('/images/bg_student.jpg')] h-screen w-screen bg-cover"
       onContextMenu={handleBlankContextMenu}
     >
       <div className="rounded-2xl bg-stone-50 w-full m-10 h-full flex flex-col justify-between">

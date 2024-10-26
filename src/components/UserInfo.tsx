@@ -35,8 +35,14 @@ const UserInfo: React.FC<{ user: User }> = ({ user }) => {
     }
   };
 
+  const bgColor = user.role === "TEACHER" ? "bg-purple-500" : "bg-amber-500";
+  const textColor =
+    user.role === "TEACHER" ? "text-purple-500" : "text-amber-500";
+
   return (
-    <div className="bg-amber-500 rounded-2xl p-5 relative text-center h-[300px] w-full">
+    <div
+      className={`${bgColor} rounded-2xl p-5 relative text-center h-[300px] w-full`}
+    >
       {/* User Avatar */}
       <div className="rounded-3xl absolute -top-14 left-10 flex flex-col">
         {user.avartarPicUrl ? (
@@ -58,7 +64,9 @@ const UserInfo: React.FC<{ user: User }> = ({ user }) => {
 
       {/* User Info */}
       <div className="absolute bottom-16 left-10 flex items-baseline">
-        <div className="text-white text-base">Courses Started:</div>
+        <div className="text-white text-base">
+          {user.role === "TEACHER" ? "Courses Created:" : "Courses Started:"}
+        </div>
         <div className="text-white text-[60px] ml-8">
           {user.coursesSelected}
         </div>
@@ -71,7 +79,7 @@ const UserInfo: React.FC<{ user: User }> = ({ user }) => {
       <div className="absolute bottom-2 right-4">
         <button
           onClick={handleButtonClick}
-          className="bg-white text-amber-500 shadow-lg font-extrabold underline py-2 px-4 rounded-lg"
+          className={`bg-white ${textColor} shadow-lg font-extrabold underline py-2 px-4 rounded-lg`}
         >
           {user.role === "TEACHER" ? "Add Course" : "Join Course"}
         </button>
