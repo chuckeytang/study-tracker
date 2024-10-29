@@ -17,18 +17,18 @@ const MinorNode: React.FC<MinorNodeProps> = ({
   onContextMenu,
   handleLevelChange,
 }) => {
-  const { nodeName, handles, maxLevel, nodeId } = data;
+  const { nodeName, handles, maxLevel, nodeId, unlocked } = data;
 
   // 状态颜色和图片滤镜初始化
   let bgColor = "bg-gray-700"; // 默认锁定状态灰色
-  let imgFilter = "grayscale(100%)"; // 默认图片置灰
-  let opacity = 0.5; // 默认透明度50%用于锁定状态
+  let imgFilter =
+    userRole === "teacher" || unlocked ? "grayscale(0%)" : "grayscale(100%)";
+  let opacity = userRole === "teacher" || unlocked ? 1 : 0.5;
 
   // 如果节点解锁
-  if (data.unlocked) {
+  if (unlocked) {
     bgColor = "bg-yellow-700"; // 解锁状态黄色
     imgFilter = "none"; // 取消图片置灰
-    opacity = 1; // 透明度恢复正常
 
     // 如果达到最大等级
     if (data.level === maxLevel) {
@@ -57,7 +57,7 @@ const MinorNode: React.FC<MinorNodeProps> = ({
     >
       <div className="rounded-full bg-white w-11/12 h-11/12 overflow-hidden">
         <img
-          src={data.picUrl}
+          src={data.picUrl || "/images/minornode_default_icon.jpg"}
           alt="minor node"
           className="w-full h-full object-cover rounded-full"
           style={{ filter: imgFilter }} // 根据状态调整图片灰度

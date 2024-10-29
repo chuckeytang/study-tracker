@@ -18,7 +18,7 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
   if (!studentId || !courseId) {
     return res
       .status(400)
-      .json({ error: "studentId and courseId are required" });
+      .json({ message: "studentId and courseId are required" });
   }
 
   try {
@@ -73,16 +73,16 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
   } catch (error) {
     res
       .status(500)
-      .json({ error: `Failed to fetch student course info: ${error}` });
+      .json({ message: `Failed to fetch student course info: ${error}` });
   }
 });
 
 // 错误处理
 export default router.handler({
   onError: (err, req, res) => {
-    res.status(500).json({ error: `An error occurred: ${err}` });
+    res.status(500).json({ message: `An error occurred: ${err}` });
   },
   onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
   },
 });

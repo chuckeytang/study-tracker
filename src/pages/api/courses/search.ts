@@ -78,16 +78,16 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       total: total,
     });
   } catch (error) {
-    res.status(500).json({ error: `Failed to fetch courses: ${error}` });
+    res.status(500).json({ message: `Failed to fetch courses: ${error}` });
   }
 });
 
 // 错误处理
 export default router.handler({
   onError: (err, req, res) => {
-    res.status(500).json({ error: `An error occurred: ${err}` });
+    res.status(500).json({ message: `An error occurred: ${err}` });
   },
   onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
   },
 });

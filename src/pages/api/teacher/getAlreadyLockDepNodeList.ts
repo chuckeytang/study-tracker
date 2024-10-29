@@ -16,7 +16,7 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
   const { nodeId } = req.query;
 
   if (!nodeId) {
-    return res.status(400).json({ error: "nodeId is required" });
+    return res.status(400).json({ message: "nodeId is required" });
   }
 
   try {
@@ -33,7 +33,7 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     });
 
     if (!currentNode) {
-      return res.status(404).json({ error: "Node not found" });
+      return res.status(404).json({ message: "Node not found" });
     }
 
     // 提取已锁住的节点
@@ -56,9 +56,9 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
 // 错误处理
 export default router.handler({
   onError: (err, req, res) => {
-    res.status(500).json({ error: `An error occurred: ${err}` });
+    res.status(500).json({ message: `An error occurred: ${err}` });
   },
   onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
   },
 });

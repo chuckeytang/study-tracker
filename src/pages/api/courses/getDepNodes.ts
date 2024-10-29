@@ -16,7 +16,7 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
   const { nodeId } = req.query;
 
   if (!nodeId) {
-    return res.status(400).json({ error: "nodeId is required" });
+    return res.status(400).json({ message: "nodeId is required" });
   }
 
   try {
@@ -43,16 +43,18 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       })),
     });
   } catch (error) {
-    res.status(500).json({ error: `Failed to fetch cluster nodes: ${error}` });
+    res
+      .status(500)
+      .json({ message: `Failed to fetch cluster nodes: ${error}` });
   }
 });
 
 // 错误处理
 export default router.handler({
   onError: (err, req, res) => {
-    res.status(500).json({ error: `An error occurred: ${err}` });
+    res.status(500).json({ message: `An error occurred: ${err}` });
   },
   onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
   },
 });

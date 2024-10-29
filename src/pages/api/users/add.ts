@@ -47,7 +47,7 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
 
     res.status(201).json(newUser);
   } catch (error) {
-    res.status(500).json({ error: `Failed to create user: ${error}` });
+    res.status(500).json({ message: `Failed to create user: ${error}` });
   }
 });
 
@@ -68,7 +68,7 @@ export default router.handler({
     }
   },
   onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
   },
 });
 

@@ -18,7 +18,7 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
   if (!studentId || !courseId) {
     return res
       .status(400)
-      .json({ error: "studentId and courseId are required" });
+      .json({ message: "studentId and courseId are required" });
   }
 
   try {
@@ -97,16 +97,16 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     res.status(200).json({ message: "Course joined successfully" });
   } catch (error) {
     console.error("Error joining course:", error);
-    res.status(500).json({ error: `Failed to join course: ${error}` });
+    res.status(500).json({ message: `Failed to join course: ${error}` });
   }
 });
 
 // 错误处理
 export default router.handler({
   onError: (err, req, res) => {
-    res.status(500).json({ error: `An error occurred: ${err}` });
+    res.status(500).json({ message: `An error occurred: ${err}` });
   },
   onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
   },
 });

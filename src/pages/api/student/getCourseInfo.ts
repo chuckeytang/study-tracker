@@ -16,7 +16,7 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
   const { courseId } = req.query;
 
   if (!courseId) {
-    return res.status(400).json({ error: "courseId is required" });
+    return res.status(400).json({ message: "courseId is required" });
   }
 
   try {
@@ -26,7 +26,7 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     });
 
     if (!course) {
-      return res.status(404).json({ error: "Course not found" });
+      return res.status(404).json({ message: "Course not found" });
     }
 
     // 获取课程的所有节点信息，并通过 UnlockDependency 和 LockDependency 查询解锁和锁住的依赖关系
@@ -81,16 +81,16 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       nodes: formattedNodes,
     });
   } catch (error) {
-    res.status(500).json({ error: `Failed to fetch course info: ${error}` });
+    res.status(500).json({ message: `Failed to fetch course info: ${error}` });
   }
 });
 
 // 错误处理
 export default router.handler({
   onError: (err, req, res) => {
-    res.status(500).json({ error: `An error occurred: ${err}` });
+    res.status(500).json({ message: `An error occurred: ${err}` });
   },
   onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
   },
 });

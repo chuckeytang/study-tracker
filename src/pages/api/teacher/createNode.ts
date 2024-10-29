@@ -45,7 +45,7 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
 
     // 验证基本参数
     if (!name || !nodeType || !courseId || maxLevel === undefined) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return res.status(400).json({ message: "Missing required fields" });
     }
 
     // 默认解锁和锁住依赖的节点数处理
@@ -95,7 +95,7 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
 
     res.status(201).json({ data: createdNode });
   } catch (error) {
-    res.status(500).json({ error: `Failed to create node: ${error}` });
+    res.status(500).json({ message: `Failed to create node: ${error}` });
   }
 });
 
@@ -113,7 +113,7 @@ export default router.handler({
     }
   },
   onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
   },
 });
 

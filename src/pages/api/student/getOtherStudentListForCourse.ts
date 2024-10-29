@@ -20,7 +20,7 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
 
   try {
     if (!courseId) {
-      return res.status(400).json({ error: "courseId is required" });
+      return res.status(400).json({ message: "courseId is required" });
     }
 
     // 查询所有选修该课程的用户，并排除当前用户
@@ -47,7 +47,7 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     res.status(200).json({ students: otherStudents });
   } catch (error) {
     console.error("Failed to fetch other students:", error);
-    res.status(500).json({ error: "Failed to fetch other students" });
+    res.status(500).json({ message: "Failed to fetch other students" });
   }
 });
 
@@ -55,9 +55,9 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
 export default router.handler({
   onError: (err: unknown, req, res) => {
     console.error(err);
-    res.status(500).json({ error: "An unexpected error occurred" });
+    res.status(500).json({ message: "An unexpected error occurred" });
   },
   onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
   },
 });

@@ -17,7 +17,7 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
 
   try {
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ message: "User not found" });
     }
 
     // 查询用户的已绑定课程数量
@@ -36,13 +36,13 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       coursesSelected,
     });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch user information" });
+    res.status(500).json({ message: "Failed to fetch user information" });
   }
 });
 
 // 错误处理
 export default router.handler({
   onError: (err, req, res) => {
-    res.status(500).json({ error: `An error occurred: ${err}` });
+    res.status(500).json({ message: `An error occurred: ${err}` });
   },
 });

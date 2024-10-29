@@ -15,7 +15,7 @@ export async function getAuthenticatedUser(
   const token = authHeader && authHeader.split(" ")[1];
 
   if (!token) {
-    res.status(401).json({ error: "No token provided" });
+    res.status(401).json({ message: "No token provided" });
     throw new Error("No token provided");
   }
 
@@ -29,7 +29,7 @@ export async function getAuthenticatedUser(
     });
 
     if (!user) {
-      res.status(404).json({ error: "User not found" });
+      res.status(404).json({ message: "User not found" });
       throw new Error("User not found");
     }
 
@@ -37,7 +37,7 @@ export async function getAuthenticatedUser(
   } catch (error) {
     res
       .status(403)
-      .json({ error: "Invalid token or Token expired. Please relogin." });
+      .json({ message: "Invalid token or Token expired. Please relogin." });
     throw new Error("Invalid token or Token expired. Please relogin.");
   }
 }

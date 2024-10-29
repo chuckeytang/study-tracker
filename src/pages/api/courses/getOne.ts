@@ -27,21 +27,21 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     });
 
     if (!course) {
-      return res.status(404).json({ error: "Course not found" });
+      return res.status(404).json({ message: "Course not found" });
     }
 
     res.status(200).json(course);
   } catch (error) {
-    res.status(500).json({ error: `Failed to fetch course: ${error}` });
+    res.status(500).json({ message: `Failed to fetch course: ${error}` });
   }
 });
 
 // 错误处理
 export default router.handler({
   onError: (err, req, res) => {
-    res.status(500).json({ error: `An error occurred: ${err}` });
+    res.status(500).json({ message: `An error occurred: ${err}` });
   },
   onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
   },
 });

@@ -330,7 +330,7 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
   if (!nodeId || points === undefined || !studentId) {
     return res
       .status(400)
-      .json({ error: "nodeId, points, and studentId are required" });
+      .json({ message: "nodeId, points, and studentId are required" });
   }
 
   try {
@@ -353,15 +353,15 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     ]);
 
     if (!node) {
-      return res.status(404).json({ error: "Node not found" });
+      return res.status(404).json({ message: "Node not found" });
     }
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ message: "User not found" });
     }
     if (!progress) {
       return res
         .status(404)
-        .json({ error: "Progress not found for the given node and student" });
+        .json({ message: "Progress not found for the given node and student" });
     }
 
     // 检查节点是否已解锁
@@ -393,7 +393,7 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     if (points > 0 && user.skillPt && user.skillPt < points) {
       return res
         .status(400)
-        .json({ error: "Not enough skill points to add to this node." });
+        .json({ message: "Not enough skill points to add to this node." });
     }
 
     // 更新节点的进度
@@ -450,16 +450,18 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       message: `Skill point ${points > 0 ? "added" : "reduced"} successfully`,
     });
   } catch (error) {
-    res.status(500).json({ error: `Failed to modify skill points: ${error}` });
+    res
+      .status(500)
+      .json({ message: `Failed to modify skill points: ${error}` });
   }
 });
 
 // 错误处理
 export default router.handler({
   onError: (err, req, res) => {
-    res.status(500).json({ error: `An error occurred: ${err}` });
+    res.status(500).json({ message: `An error occurred: ${err}` });
   },
   onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
   },
 });

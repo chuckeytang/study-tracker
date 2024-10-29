@@ -21,7 +21,7 @@ router.delete(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     });
     res.status(200).json(deletedUser);
   } catch (error) {
-    res.status(500).json({ error: `Failed to delete user: ${error}` });
+    res.status(500).json({ message: `Failed to delete user: ${error}` });
   }
 });
 

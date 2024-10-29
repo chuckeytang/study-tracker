@@ -14,7 +14,7 @@ router.use(authMiddleware);
 
 router.delete(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
   if (req.method !== "DELETE") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ message: "Method not allowed" });
   }
 
   const { ids } = req.body; // 从请求体中获取要删除的ID数组
@@ -27,16 +27,16 @@ router.delete(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
 
     res.status(200).json(deletedCourses); // 返回删除的结果
   } catch (error) {
-    res.status(500).json({ error: `Failed to delete courses: ${error}` });
+    res.status(500).json({ message: `Failed to delete courses: ${error}` });
   }
 });
 
 // 错误处理
 export default router.handler({
   onError: (err, req, res) => {
-    res.status(500).json({ error: `An error occurred: ${err}` });
+    res.status(500).json({ message: `An error occurred: ${err}` });
   },
   onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
   },
 });

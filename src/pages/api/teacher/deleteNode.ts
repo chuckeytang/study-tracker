@@ -64,13 +64,13 @@ router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
     });
 
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ message: "User not found" });
     }
 
     if (user.role !== "TEACHER") {
       return res
         .status(403)
-        .json({ error: "Only teachers can delete node dependencies." });
+        .json({ message: "Only teachers can delete node dependencies." });
     }
 
     // 2. 验证节点是否属于该用户的课程
@@ -88,7 +88,7 @@ router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
     });
 
     if (!node) {
-      return res.status(404).json({ error: "Node not found" });
+      return res.status(404).json({ message: "Node not found" });
     }
 
     const isTeacherOfCourse = node.course.enrolledUsers.some(
@@ -111,7 +111,7 @@ router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
     });
   } catch (error) {
     console.error("Error deleting node dependencies:", error);
-    res.status(500).json({ error: "An unexpected error occurred" });
+    res.status(500).json({ message: "An unexpected error occurred" });
   }
 });
 
@@ -119,9 +119,9 @@ router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
 export default router.handler({
   onError: (err: unknown, req, res) => {
     console.error(err);
-    res.status(500).json({ error: "An unexpected error occurred" });
+    res.status(500).json({ message: "An unexpected error occurred" });
   },
   onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
   },
 });

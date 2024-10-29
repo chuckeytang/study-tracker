@@ -60,7 +60,7 @@ const MajorNode: React.FC<MajorNodeProps> = ({
     >
       <div className="rounded-full bg-white w-11/12 h-11/12 overflow-hidden">
         <img
-          src={data.picUrl}
+          src={data.picUrl || "/images/majornode_default_icon.jpg"}
           alt="big check"
           className="w-full h-full object-cover rounded-full"
           style={{

@@ -17,7 +17,7 @@ router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
   const { bigCheckNodeId } = req.body;
 
   if (!bigCheckNodeId) {
-    return res.status(400).json({ error: "bigCheckNodeId is required" });
+    return res.status(400).json({ message: "bigCheckNodeId is required" });
   }
 
   try {
@@ -78,7 +78,7 @@ router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
     });
   } catch (error) {
     console.error("Error disconnecting BigCheck node dependencies:", error);
-    res.status(500).json({ error: "An unexpected error occurred" });
+    res.status(500).json({ message: "An unexpected error occurred" });
   }
 });
 
@@ -86,9 +86,9 @@ router.delete(async (req: NextApiRequest, res: NextApiResponse) => {
 export default router.handler({
   onError: (err: unknown, req, res) => {
     console.error(err);
-    res.status(500).json({ error: "An unexpected error occurred" });
+    res.status(500).json({ message: "An unexpected error occurred" });
   },
   onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
   },
 });

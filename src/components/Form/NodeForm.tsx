@@ -27,10 +27,10 @@ const NodeForm: React.FC<{
   );
   const [iconFile, setIconFile] = useState<File | null>(null);
 
-  const [unlockDepNodes, setUnlockDepNodes] = useState([]); // 解锁依赖节点列表
+  const [unlockDepNodes, setUnlockDepNodes] = useState<any[]>([]); // 解锁依赖节点列表
   const [selectedUnlockNodes, setSelectedUnlockNodes] = useState<string[]>([]); // 解锁依赖节点选择
 
-  const [lockDepNodes, setLockDepNodes] = useState([]); // 锁定依赖节点列表
+  const [lockDepNodes, setLockDepNodes] = useState<any[]>([]); // 锁定依赖节点列表
   const [selectedLockNodes, setSelectedLockNodes] = useState<string[]>([]); // 锁定依赖节点选择
   const [alreadyLockedNodeIds, setAlreadyLockedNodeIds] = useState<string[]>(
     []
@@ -61,6 +61,12 @@ const NodeForm: React.FC<{
     // 调用异步函数
     fetchUnlockDepNodes();
   }, [nodeId, parentNodeId]);
+
+  useEffect(() => {
+    if (unlockDepNodes.length > 0 && selectedUnlockNodes.length === 0) {
+      setSelectedUnlockNodes([unlockDepNodes[0].id]); // 默认选择第一个
+    }
+  }, [unlockDepNodes]);
 
   useEffect(() => {
     const fetchLockDepNodes = async () => {
@@ -129,13 +135,35 @@ const NodeForm: React.FC<{
     };
     onSubmit(formType, nodeData);
   };
+
+  // Toggle selection on click
+  const handleToggleSelect = (nodeId: string, isUnlock: boolean) => {
+    if (isUnlock) {
+      setSelectedUnlockNodes((prev) => {
+        if (prev.includes(nodeId) && prev.length === 1) {
+          return prev; // 保持选中状态，不允许取消
+        }
+        return prev.includes(nodeId)
+          ? prev.filter((id) => id !== nodeId)
+          : [...prev, nodeId];
+      });
+    } else {
+      setSelectedLockNodes((prev) =>
+        prev.includes(nodeId)
+          ? prev.filter((id) => id !== nodeId)
+          : [...prev, nodeId]
+      );
+    }
+  };
   return (
     <div className="p-4 bg-white shadow-lg rounded-lg flex flex-col text-gray-800">
       <h2 className="text-lg font-bold mb-4">Node Form</h2>
 
       {/* 基本信息输入 */}
       <div className="flex items-center mb-2">
-        <label className="w-1/3 font-semibold">Name:</label>
+        <label className="w-1/3 font-semibold flex">
+          <div className="text-red-600">*</div>Name:
+        </label>
         <input
           type="text"
           placeholder="Name"
@@ -197,42 +225,36 @@ const NodeForm: React.FC<{
         <div>
           <div className="flex items-center mb-2">
             <label className="w-1/3 font-semibold">Unlock Dependencies:</label>
-            <select
-              multiple
-              className="p-2 border border-gray-300 rounded w-2/3"
-              value={selectedUnlockNodes}
-              onChange={(e) =>
-                setSelectedUnlockNodes(
-                  Array.from(e.target.selectedOptions, (option) => option.value)
-                )
-              }
-            >
+            <ul className="p-2 border border-gray-300 rounded w-2/3 bg-white">
               {unlockDepNodes.map((node: any) => (
-                <option key={node.id} value={node.id}>
+                <li
+                  key={node.id}
+                  className={`p-2 cursor-pointer ${
+                    selectedUnlockNodes.includes(node.id) ? "bg-blue-200" : ""
+                  }`}
+                  onClick={() => handleToggleSelect(node.id, true)}
+                >
                   {node.name}
-                </option>
+                </li>
               ))}
-            </select>
+            </ul>
           </div>
 
           <div className="flex items-center mb-2">
             <label className="w-1/3 font-semibold">Lock Dependencies:</label>
-            <select
-              multiple
-              className="p-2 border border-gray-300 rounded w-2/3"
-              value={selectedLockNodes}
-              onChange={(e) =>
-                setSelectedLockNodes(
-                  Array.from(e.target.selectedOptions, (option) => option.value)
-                )
-              }
-            >
+            <ul className="p-2 border border-gray-300 rounded w-2/3 bg-white">
               {lockDepNodes.map((node: any) => (
-                <option key={node.id} value={node.id}>
+                <li
+                  key={node.id}
+                  className={`p-2 cursor-pointer ${
+                    selectedLockNodes.includes(node.id) ? "bg-blue-200" : ""
+                  }`}
+                  onClick={() => handleToggleSelect(node.id, false)}
+                >
                   {node.name}
-                </option>
+                </li>
               ))}
-            </select>
+            </ul>
           </div>
         </div>
       )}

@@ -25,7 +25,7 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
   if (!fromNodeId || !toNodeId) {
     return res
       .status(400)
-      .json({ error: "Both fromNodeId and toNodeId are required" });
+      .json({ message: "Both fromNodeId and toNodeId are required" });
   }
 
   try {
@@ -44,13 +44,13 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     if (!fromNode || fromNode.nodeType !== NodeType.BIGCHECK) {
       return res
         .status(400)
-        .json({ error: "fromNodeId is not a valid BigCheck node" });
+        .json({ message: "fromNodeId is not a valid BigCheck node" });
     }
 
     if (!toNode || toNode.nodeType !== NodeType.BIGCHECK) {
       return res
         .status(400)
-        .json({ error: "toNodeId is not a valid BigCheck node" });
+        .json({ message: "toNodeId is not a valid BigCheck node" });
     }
 
     // 2. 检查是否已经存在解锁依赖，且依赖的都是 BigCheck 类型节点
@@ -110,16 +110,16 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     });
   } catch (error) {
     console.error("Error connecting BigCheck nodes:", error);
-    res.status(500).json({ error: "An unexpected error occurred" });
+    res.status(500).json({ message: "An unexpected error occurred" });
   }
 });
 
 // 错误处理
 export default router.handler({
   onError: (err, req, res) => {
-    res.status(500).json({ error: `An error occurred: ${err}` });
+    res.status(500).json({ message: `An error occurred: ${err}` });
   },
   onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
   },
 });

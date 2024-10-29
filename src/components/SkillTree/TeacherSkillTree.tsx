@@ -23,6 +23,7 @@ import {
 import { calculateHandlePosition } from "@/utils/utils";
 import { apiRequest } from "@/utils/api";
 import { FaHome } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -380,7 +381,8 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
 
       // 关闭表单并刷新视图（或执行其他后续操作）
       setFormVisible(false);
-    } catch (error) {
+    } catch (error: any) {
+      toast.error(error.message);
       console.error("Error updating node:", error);
     }
   };

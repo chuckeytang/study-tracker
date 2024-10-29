@@ -32,7 +32,7 @@ router.get(async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(200).json({ teachers });
   } catch (error) {
     console.error("Failed to fetch teachers:", error);
-    res.status(500).json({ error: "Failed to fetch teachers" });
+    res.status(500).json({ message: "Failed to fetch teachers" });
   }
 });
 
@@ -40,9 +40,9 @@ router.get(async (req: NextApiRequest, res: NextApiResponse) => {
 export default router.handler({
   onError: (err: unknown, req, res) => {
     console.error(err);
-    res.status(500).json({ error: "An unexpected error occurred" });
+    res.status(500).json({ message: "An unexpected error occurred" });
   },
   onNoMatch: (req, res) => {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
   },
 });
