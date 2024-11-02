@@ -20,6 +20,9 @@ const WidgetSelect: React.FC<WidgetSelectProps> = ({
   value,
   onChange,
 }) => {
+  const selectedOption = options.find(
+    (option) => option.value === Number(value)
+  );
   return (
     <div className={classNames("relative", className)}>
       <select
@@ -34,7 +37,7 @@ const WidgetSelect: React.FC<WidgetSelectProps> = ({
         ))}
       </select>
       <div className="absolute bottom-1 left-0 w-8 h-8 flex items-center pl-3">
-        {options[0]?.icon}
+        {selectedOption?.icon}
       </div>
     </div>
   );
