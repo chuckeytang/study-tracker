@@ -3,21 +3,7 @@ import { useRouter } from "next/router";
 import WidgetInput from "@/components/Widget/WidgetInput";
 import WidgetButton from "@/components/Widget/WidgetButton";
 import { apiRequest } from "@/utils/api";
-
-const fetchUserDetails = async (token: string) => {
-  try {
-    const userDetails = await apiRequest(
-      "/api/users/getMe",
-      "GET",
-      null,
-      false
-    );
-    localStorage.setItem("user", JSON.stringify(userDetails));
-    return userDetails;
-  } catch (error) {
-    console.error("Failed to fetch user details:", error);
-  }
-};
+import WebUser from "@/utils/user";
 
 export default function LoginPage(props: any) {
   const [email, setEmail] = useState("");
@@ -49,7 +35,8 @@ export default function LoginPage(props: any) {
         const token = data.token;
         localStorage.setItem("token", token); // 将 token 存储到 localStorage
         setErrorMessage(""); // 清空错误信息
-        let userDetails = await fetchUserDetails(token); // 获取用户详细信息
+        WebUser.getInstance().markAsExpired();
+        let userDetails = await WebUser.getInstance().getUserData();
         // 根据用户角色跳转
         if (userDetails.role === "ADMIN") {
           router.push("/admin");

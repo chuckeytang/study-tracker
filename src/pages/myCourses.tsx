@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import UserInfo from "@/components/UserInfo";
 import { Dialog } from "@headlessui/react";
 import { apiRequest } from "@/utils/api";
+import WebUser from "@/utils/user";
 
 interface Course {
   id: number;
@@ -20,14 +21,12 @@ const MyCourses: React.FC = (props: any) => {
   const router = useRouter();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const userDetails = JSON.parse(storedUser);
-      setUser(userDetails);
-    } else {
-      // 如果localStorage中没有用户信息，可以跳转到登录页面
-      router.push("/login");
-    }
+    const fetchUserData = async () => {
+      const storedUser = await WebUser.getInstance().getUserData();
+      setUser(storedUser);
+    };
+
+    fetchUserData();
   }, []);
 
   useEffect(() => {

@@ -7,6 +7,7 @@ import {
 } from "react-admin";
 import { stringify } from "query-string";
 import { apiRequest } from "@/utils/api";
+import WebUser from "./user";
 
 const apiUrl = "/api"; // 基础API URL
 const isFile = (field: any) => {
@@ -153,6 +154,7 @@ const dataProvider: DataProvider = {
       "PUT",
       formData
     );
+    WebUser.getInstance().markAsExpired();
     return { data: data };
   },
 
@@ -174,6 +176,7 @@ const dataProvider: DataProvider = {
       )
     );
 
+    WebUser.getInstance().markAsExpired();
     return {
       data: responses.map((json, index) => ({
         ...params.data[index],
@@ -209,6 +212,7 @@ const dataProvider: DataProvider = {
       "POST",
       formData
     );
+    WebUser.getInstance().markAsExpired();
     return {
       data: { ...params.data, id: response.id },
     } as CreateResult<RecordType>;
@@ -235,6 +239,7 @@ const dataProvider: DataProvider = {
       )
     );
 
+    WebUser.getInstance().markAsExpired();
     return {
       data: responses.map((json, index) => ({
         ...params.data[index],
@@ -257,6 +262,7 @@ const dataProvider: DataProvider = {
       const url = `${apiUrl}/${resource}/delete`;
       const data = await apiRequest(url, "DELETE", { id: params.id }); // 传递 ID 进行删除
 
+      WebUser.getInstance().markAsExpired();
       return {
         data: data,
       };
@@ -279,6 +285,7 @@ const dataProvider: DataProvider = {
       const url = `${apiUrl}/${resource}/deleteMany`;
       const data = await apiRequest(url, "DELETE", { ids: params.ids }); // 传递多个 ID 进行批量删除
 
+      WebUser.getInstance().markAsExpired();
       return { data: params.ids };
     } catch (error) {
       console.error("Error deleting data from deleteMany:", error);
