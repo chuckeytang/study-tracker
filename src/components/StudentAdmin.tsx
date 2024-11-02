@@ -14,6 +14,7 @@ import {
   ImageInput,
   PasswordInput,
   useEditController,
+  NumberInput,
 } from "react-admin";
 
 // 创建过滤器组件，确保只显示学生
@@ -49,13 +50,11 @@ export const StudentCreate = (props: any) => (
         defaultValue="STUDENT"
         style={{ display: "none" }}
       />
+      <NumberInput source="skillPt" label="Skill Points" />
       <ImageInput
         source="avartar"
         label="Avartar"
         accept={{ "image/*": [".png", ".jpg"] }}
-        defaultValue={[
-          { src: "/uploads/1729319788393.jpg", title: "Current Avatar" },
-        ]}
       >
         <ImageField source="src" title="Current Avatar" />
       </ImageInput>
@@ -84,6 +83,7 @@ export const StudentEdit = (props: any) => {
           defaultValue="STUDENT"
           style={{ display: "none" }}
         />
+        <NumberInput source="skillPt" label="Skill Points" />
         <ImageInput
           source="avartar"
           label="Avartar"

@@ -24,8 +24,14 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     const file = req.file;
     const { user } = req; // 获取经过身份验证的用户信息
 
-    // 生成 iconUrl
-    const iconUrl = file ? `/uploads/${file.filename}` : null;
+    const host = req.headers.host || process.env.NEXT_PUBLIC_BASE_URL;
+    const protocol = req.headers["x-forwarded-proto"] || "http";
+    let iconUrl;
+
+    if (file) {
+      // 使用 API 路由提供图片
+      iconUrl = `${protocol}://${host}/api/uploads/${file.filename}`;
+    }
 
     // 创建新课程
     const newCourse = await prisma.course.create({

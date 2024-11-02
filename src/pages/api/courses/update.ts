@@ -22,11 +22,13 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     const { id, name, description } = req.body; // 移除 teacherId
     const file = req.file;
 
+    const host = req.headers.host || process.env.NEXT_PUBLIC_BASE_URL;
+    const protocol = req.headers["x-forwarded-proto"] || "http";
     let iconUrl;
 
-    // 如果有文件上传，更新 iconUrl
     if (file) {
-      iconUrl = `/uploads/${file.filename}`;
+      // 使用 API 路由提供图片
+      iconUrl = `${protocol}://${host}/api/uploads/${file.filename}`;
     }
 
     // 更新课程信息

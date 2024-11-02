@@ -21,14 +21,16 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     // 手动运行 multer 中间件以处理文件上传
     await runMiddleware(req, res, upload.single("avartar"));
 
-    const { id, name, email, role, password } = req.body; // 从请求中获取数据
+    const { id, name, email, role, password, skillPt } = req.body; // 从请求中获取数据
     const file = req.file;
 
+    const host = req.headers.host || process.env.NEXT_PUBLIC_BASE_URL;
+    const protocol = req.headers["x-forwarded-proto"] || "http";
     let avartarPicUrl;
 
-    // 如果有文件上传，更新 avartarPicUrl
     if (file) {
-      avartarPicUrl = `/uploads/${file.filename}`;
+      // 使用 API 路由提供图片
+      avartarPicUrl = `${protocol}://${host}/api/uploads/${file.filename}`;
     }
 
     // 如果提交了密码，进行加密处理
@@ -44,6 +46,7 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         name,
         email,
         role,
+        skillPt: Number(skillPt) || 0,
         ...(hashedPassword && { password: hashedPassword }), // 如果有密码，则更新密码
         avartarPicUrl: avartarPicUrl === undefined ? null : avartarPicUrl, // 如果有上传文件，更新 avartarPicUrl
       },

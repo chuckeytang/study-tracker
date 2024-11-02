@@ -41,7 +41,15 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       : [];
 
     const file = req.file;
-    const iconUrl = file ? `/uploads/${file.filename}` : null; // 生成 iconUrl
+
+    const host = req.headers.host || process.env.NEXT_PUBLIC_BASE_URL;
+    const protocol = req.headers["x-forwarded-proto"] || "http";
+    let iconUrl;
+
+    if (file) {
+      // 使用 API 路由提供图片
+      iconUrl = `${protocol}://${host}/api/uploads/${file.filename}`;
+    }
 
     // 验证基本参数
     if (!name || !nodeType || !courseId || maxLevel === undefined) {
