@@ -5,7 +5,7 @@ import StudentSkillTree from "@/components/SkillTree/StudentSkillTree";
 import OtherStudentSkillTree from "@/components/SkillTree/OtherStudentSkillTree";
 import { apiRequest } from "@/utils/api";
 
-const SkillTree = (props) => {
+const SkillTree = (props: any) => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
   const { userId, courseName, otherStudent } = router.query;

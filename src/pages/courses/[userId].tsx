@@ -13,7 +13,7 @@ interface Course {
   iconUrl?: string; // 可能没有 iconUrl，所以用可选属性
 }
 
-const MyCourses: React.FC = (props) => {
+const MyCourses: React.FC = (props: any) => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<"STUDENT" | "TEACHER" | null>(null);

@@ -17,7 +17,7 @@ interface Teacher {
   name: string;
 }
 
-const JoinCourse: React.FC = (props) => {
+const JoinCourse: React.FC = (props: any) => {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);

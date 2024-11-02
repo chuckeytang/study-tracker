@@ -5,7 +5,7 @@ const AdminPanel = dynamic(() => import("@/components/AdminPanel"), {
   ssr: false,
 });
 
-const AdminPage = (props) => {
+const AdminPage = (props: any) => {
   return <AdminPanel />;
 };
 

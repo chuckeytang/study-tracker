@@ -2,7 +2,7 @@ import Loading from "@/components/Loading";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 
-export default function Home(props) {
+export default function Home(props: any) {
   const router = useRouter();
 
   useEffect(() => {

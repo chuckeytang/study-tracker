@@ -19,7 +19,7 @@ const fetchUserDetails = async (token: string) => {
   }
 };
 
-export default function LoginPage(props) {
+export default function LoginPage(props: any) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");

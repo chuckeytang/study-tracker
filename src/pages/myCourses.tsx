@@ -12,7 +12,7 @@ interface Course {
   iconUrl?: string;
 }
 
-const MyCourses: React.FC = (props) => {
+const MyCourses: React.FC = (props: any) => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
