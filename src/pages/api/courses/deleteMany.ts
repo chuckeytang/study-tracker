@@ -19,10 +19,50 @@ router.delete(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
 
   const { ids } = req.body; // 从请求体中获取要删除的ID数组
 
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ message: "Invalid or missing IDs" });
+  }
+
   try {
-    // 使用 Prisma 批量删除多个课程
+    const courseIds = ids.map((id: number) => Number(id));
+
+    // 删除与每个课程相关的依赖关系
+    await prisma.unlockDependency.deleteMany({
+      where: {
+        OR: [
+          { fromNode: { courseId: { in: courseIds } } },
+          { toNode: { courseId: { in: courseIds } } },
+        ],
+      },
+    });
+
+    await prisma.lockDependency.deleteMany({
+      where: {
+        OR: [
+          { fromNode: { courseId: { in: courseIds } } },
+          { toNode: { courseId: { in: courseIds } } },
+        ],
+      },
+    });
+
+    // 删除学生进度记录
+    await prisma.courseProgress.deleteMany({
+      where: { courseId: { in: courseIds } },
+    });
+
+    // 删除用户课程关系
+    await prisma.userCourse.deleteMany({
+      where: { courseId: { in: courseIds } },
+    });
+
+    // 删除课程的所有节点
+    await prisma.node.deleteMany({
+      where: { courseId: { in: courseIds } },
+    });
+
+    // 最后，删除课程
     const deletedCourses = await prisma.course.deleteMany({
-      where: { id: { in: ids.map((id: number) => Number(id)) } }, // 批量删除ID
+      where: { id: { in: courseIds } },
     });
 
     res.status(200).json(deletedCourses); // 返回删除的结果

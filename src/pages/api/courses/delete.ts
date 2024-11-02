@@ -1,3 +1,4 @@
+// pages/api/courses/delete.ts
 import { PrismaClient } from "@prisma/client";
 import { createRouter } from "next-connect";
 import { authMiddleware } from "@/utils/auth"; // 引入 authMiddleware
@@ -17,15 +18,51 @@ router.delete(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-  const { id } = req.body; // 从请求体中获取要删除的ID
+  const { id } = req.body; // 从请求体中获取要删除的课程ID
 
   try {
-    // 使用 Prisma 删除单个课程
-    const deletedCourse = await prisma.course.delete({
-      where: { id: Number(id) }, // 根据 ID 删除课程
+    // 确保删除操作按依赖顺序进行
+
+    // 1. 删除与该课程节点相关的解锁依赖和锁住依赖
+    await prisma.unlockDependency.deleteMany({
+      where: {
+        OR: [
+          { fromNode: { courseId: Number(id) } },
+          { toNode: { courseId: Number(id) } },
+        ],
+      },
     });
 
-    res.status(200).json(deletedCourse); // 返回删除的记录
+    await prisma.lockDependency.deleteMany({
+      where: {
+        OR: [
+          { fromNode: { courseId: Number(id) } },
+          { toNode: { courseId: Number(id) } },
+        ],
+      },
+    });
+
+    // 2. 删除与该课程相关的学生进度记录
+    await prisma.courseProgress.deleteMany({
+      where: { courseId: Number(id) },
+    });
+
+    // 3. 删除与该课程相关的用户-课程关系
+    await prisma.userCourse.deleteMany({
+      where: { courseId: Number(id) },
+    });
+
+    // 4. 删除该课程的所有节点
+    await prisma.node.deleteMany({
+      where: { courseId: Number(id) },
+    });
+
+    // 5. 删除课程本身
+    const deletedCourse = await prisma.course.delete({
+      where: { id: Number(id) },
+    });
+
+    res.status(200).json(deletedCourse); // 返回删除的课程记录
   } catch (error) {
     res.status(500).json({ message: `Failed to delete course: ${error}` });
   }
