@@ -13,72 +13,72 @@ async function main() {
   // Insert two teachers
   const teacher1 = await prisma.user.create({
     data: {
-      name: "John Doe",
-      email: "john.doe@example.com",
+      name: "Teacher1",
+      email: "teacher1@example.com",
       role: "TEACHER", // Enum type TEACHER
       skillPt: 100,
-      password: "$2a$10$VhHajf3Pd5mYPub8/O.hDOWboHm5LcfB8szIo0v11zp5CTfCrLCuy",
+      password: "$2a$10$Ha1S1eCa1roNLC53amp0U.hX2p.v/r72.E5auJ9FMDyCkQKuRnSRO",
     },
   });
 
   const teacher2 = await prisma.user.create({
     data: {
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
+      name: "Teacher2",
+      email: "teacher2@example.com",
       role: "TEACHER", // Enum type TEACHER
       skillPt: 100,
-      password: "$2a$10$VhHajf3Pd5mYPub8/O.hDOWboHm5LcfB8szIo0v11zp5CTfCrLCuy",
+      password: "$2a$10$Ha1S1eCa1roNLC53amp0U.hX2p.v/r72.E5auJ9FMDyCkQKuRnSRO",
     },
   });
 
   // Insert five students
   const student1 = await prisma.user.create({
     data: {
-      name: "Alice Johnson",
-      email: "alice.johnson@example.com",
+      name: "Student1",
+      email: "student1@example.com",
       role: "STUDENT", // Enum type STUDENT
       skillPt: 100,
-      password: "$2a$10$VhHajf3Pd5mYPub8/O.hDOWboHm5LcfB8szIo0v11zp5CTfCrLCuy",
+      password: "$2a$10$Ha1S1eCa1roNLC53amp0U.hX2p.v/r72.E5auJ9FMDyCkQKuRnSRO",
     },
   });
 
   const student2 = await prisma.user.create({
     data: {
-      name: "Bob Brown",
-      email: "bob.brown@example.com",
+      name: "Student2",
+      email: "student2@example.com",
       role: "STUDENT", // Enum type STUDENT
       skillPt: 100,
-      password: "$2a$10$VhHajf3Pd5mYPub8/O.hDOWboHm5LcfB8szIo0v11zp5CTfCrLCuy",
+      password: "$2a$10$Ha1S1eCa1roNLC53amp0U.hX2p.v/r72.E5auJ9FMDyCkQKuRnSRO",
     },
   });
 
   const student3 = await prisma.user.create({
     data: {
-      name: "Charlie Clark",
-      email: "charlie.clark@example.com",
+      name: "Student3",
+      email: "student3@example.com",
       role: "STUDENT", // Enum type STUDENT
       skillPt: 100,
-      password: "$2a$10$VhHajf3Pd5mYPub8/O.hDOWboHm5LcfB8szIo0v11zp5CTfCrLCuy",
+      password: "$2a$10$Ha1S1eCa1roNLC53amp0U.hX2p.v/r72.E5auJ9FMDyCkQKuRnSRO",
     },
   });
 
   const student4 = await prisma.user.create({
     data: {
-      name: "Diana Davis",
-      email: "diana.davis@example.com",
+      name: "Student4",
+      email: "student4@example.com",
       role: "STUDENT", // Enum type STUDENT
       skillPt: 100,
-      password: "$2a$10$VhHajf3Pd5mYPub8/O.hDOWboHm5LcfB8szIo0v11zp5CTfCrLCuy",
+      password: "$2a$10$Ha1S1eCa1roNLC53amp0U.hX2p.v/r72.E5auJ9FMDyCkQKuRnSRO",
     },
   });
 
-  const student5 = await prisma.user.create({
+  const admin1 = await prisma.user.create({
     data: {
-      name: "Edward Evans",
-      email: "edward.evans@example.com",
-      role: "STUDENT", // Enum type STUDENT
+      name: "Admin",
+      email: "admin@example.com",
+      role: "ADMIN", // Enum type STUDENT
       skillPt: 100,
-      password: "$2a$10$VhHajf3Pd5mYPub8/O.hDOWboHm5LcfB8szIo0v11zp5CTfCrLCuy",
+      password: "$2a$10$Ha1S1eCa1roNLC53amp0U.hX2p.v/r72.E5auJ9FMDyCkQKuRnSRO",
     },
   });
 
