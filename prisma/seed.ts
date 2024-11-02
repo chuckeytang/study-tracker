@@ -3,8 +3,12 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Clear tables
+  // Clear tables in the order of dependencies
+  await prisma.unlockDependency.deleteMany();
+  await prisma.lockDependency.deleteMany();
   await prisma.courseProgress.deleteMany();
+  await prisma.userCourse.deleteMany();
+  await prisma.node.deleteMany();
   await prisma.course.deleteMany();
   await prisma.user.deleteMany();
 
