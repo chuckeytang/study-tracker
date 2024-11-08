@@ -1,11 +1,11 @@
 // pages/api/courses/delete.ts
-import { PrismaClient } from "@prisma/client";
+
 import { createRouter } from "next-connect";
 import { authMiddleware } from "@/utils/auth"; // 引入 authMiddleware
 import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
 import { NextApiResponse } from "next";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 // 创建 API 路由
 const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();

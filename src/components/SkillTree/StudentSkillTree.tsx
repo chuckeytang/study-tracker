@@ -267,7 +267,7 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
 
     try {
       // 调用后端 API，传递 nodeId、points（可为负数） 和 studentId
-      const data = await apiRequest("/api/student/changeNodeLevel", "POST", {
+      const data = await apiRequest("/api/student/changeNodeLevel", "PUT", {
         nodeId: nodeId,
         points: delta, // delta 可为正或负数
         studentId: userId,
@@ -357,6 +357,11 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
               }}
             />
           </div>
+          <div>
+            <h3 className="text-lg font-semibold mb-2 text-gray-700">
+              Skill Points: {availableSkillPoints}
+            </h3>
+          </div>
 
           {/* Other students list */}
           <div className="flex flex-col items-center mt-4">
@@ -364,7 +369,7 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
               Other Students
             </h3>
             {otherStudents.length === 0 ? (
-              <p className="text-gray-500">No other students enrolled</p>
+              <p className="text-gray-500">Empty</p>
             ) : (
               otherStudents.map((student: any) => (
                 <button

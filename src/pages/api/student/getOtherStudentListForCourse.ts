@@ -1,10 +1,10 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient } from "@prisma/client";
+
 import { createRouter } from "next-connect"; // 使用 next-connect 路由
 import { authMiddleware } from "@/utils/auth";
 import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 // 使用 createRouter 创建 API 路由
 const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();

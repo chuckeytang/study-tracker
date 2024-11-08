@@ -7,7 +7,7 @@ import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
 import { AppError } from "@/types/AppError";
 import { authMiddleware } from "@/utils/auth";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 // 使用 createRouter 创建 API 路由
 const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();

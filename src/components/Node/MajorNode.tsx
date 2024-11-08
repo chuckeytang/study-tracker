@@ -97,7 +97,11 @@ const MajorNode: React.FC<MajorNodeProps> = ({
             />
           )
         )}
-      <div className="fixed bottom-2 -right-4 text-[12px] bg-gray-900 rounded-t-lg text-end border-3 border-green-900 rtext-white items-end p-1 pr-2 w-1/2">
+      <div
+        className={`fixed bottom-2 -right-4 text-[12px] bg-gray-900 ${
+          userRole === "student" ? "rounded-t-lg" : "rounded-lg"
+        } text-end border-3 border-green-900 rtext-white items-end p-1 pr-2 w-1/2`}
+      >
         <div>{nodeName}</div>
         {userRole === "teacher" && <div>maxlevel:{maxLevel}</div>}
       </div>

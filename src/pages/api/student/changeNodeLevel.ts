@@ -1,12 +1,12 @@
 // src/pages/api/student/changeNodeLevel.ts
 
 import { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient } from "@prisma/client";
+
 import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
 import { authMiddleware } from "@/utils/auth";
 import { createRouter } from "next-connect";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 // 递归计算所有非 BIGCHECK 类型的节点的技能点总和
 async function calculateTotalSkillPoints(

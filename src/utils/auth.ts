@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import jwt from "jsonwebtoken";
-import { PrismaClient } from "@prisma/client";
+
 import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
 // 验证 token 并返回用户

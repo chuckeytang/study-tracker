@@ -94,7 +94,11 @@ const MinorNode: React.FC<MinorNodeProps> = ({
         )}
 
       {/* 节点信息显示 */}
-      <div className="fixed bottom-4 -right-4 text-[8px] bg-gray-900 rounded-t-lg text-end border-3 border-green-900 rtext-white items-end p-1 w-3/5">
+      <div
+        className={`fixed bottom-4 -right-4 text-[8px] bg-gray-900 ${
+          userRole === "student" ? "rounded-t-lg" : "rounded-lg"
+        }  text-end border-3 border-green-900 rtext-white items-end p-1 w-3/5`}
+      >
         <div>{nodeName}</div>
         {userRole === "teacher" && <div>maxlevel:{maxLevel}</div>}
       </div>

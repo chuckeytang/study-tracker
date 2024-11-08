@@ -4,7 +4,7 @@ import { createRouter } from "next-connect"; // 使用 createRouter 替代 nextC
 import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
 import { authMiddleware } from "@/utils/auth";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 // 创建 API 路由
 const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();

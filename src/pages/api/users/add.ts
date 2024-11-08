@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient } from "@prisma/client";
+
 import { authMiddleware } from "@/utils/auth";
 import { upload } from "@/lib/middleware/multer";
 import { createRouter } from "next-connect";
@@ -8,7 +8,7 @@ import { AppError } from "@/types/AppError";
 import { runMiddleware } from "@/lib/middleware/runMiddleware";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 // 使用 createRouter 创建 API 路由
 const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();

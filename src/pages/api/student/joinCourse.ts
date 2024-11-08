@@ -1,10 +1,9 @@
-import { PrismaClient } from "@prisma/client";
 import { createRouter } from "next-connect";
 import { authMiddleware } from "@/utils/auth";
 import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
 import { NextApiResponse } from "next";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 // 创建 API 路由
 const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();
@@ -53,13 +52,13 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     // 查找已经解锁的 BIGCHECK 节点（没有前置依赖的 bigcheck 节点）
     const unlockedBigCheckIds = nodes
       .filter(
-        (node) =>
+        (node: any) =>
           node.nodeType === "BIGCHECK" && node.unlockDependenciesTo.length === 0
       )
-      .map((node) => node.id);
+      .map((node: any) => node.id);
 
     // 构建学习进度数据
-    const courseProgressData = nodes.map((node) => {
+    const courseProgressData = nodes.map((node: any) => {
       // 判断是否为 bigcheck，bigcheck 节点的初始 level 为 0
       const isBigCheck = node.nodeType === "BIGCHECK";
       let initialLevel = isBigCheck ? 1 : 0;
@@ -71,7 +70,7 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       let unlocked = !hasDependencies; // 如果没有依赖，则默认为解锁
       if (hasDependencies && !isBigCheck) {
         const onlyDependsOnUnlockedBigCheck = node.unlockDependenciesTo.every(
-          (dependency) =>
+          (dependency: any) =>
             dependency.fromNode.nodeType === "BIGCHECK" &&
             unlockedBigCheckIds.includes(dependency.fromNodeId)
         );

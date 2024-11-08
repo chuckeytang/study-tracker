@@ -27,7 +27,7 @@ const MyCourses: React.FC = (props: any) => {
     };
 
     fetchUserData();
-  }, []);
+  }, [courses]);
 
   useEffect(() => {
     if (!user) return;

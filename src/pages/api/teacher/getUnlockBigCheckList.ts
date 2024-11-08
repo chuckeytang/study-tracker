@@ -4,7 +4,7 @@ import { authMiddleware } from "@/utils/auth"; // 引入 authMiddleware
 import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
 import { NextApiResponse } from "next";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 // 递归函数：获取整个依赖链中的所有 BIGCHECK 节点
 async function getBigCheckDependencyChain(

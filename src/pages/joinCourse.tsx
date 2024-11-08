@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { Dialog } from "@headlessui/react";
 import WidgetSelect from "@/components/Widget/WidgetSelect";
 import { apiRequest } from "@/utils/api";
+import WebUser from "@/utils/user";
 
 interface Course {
   id: number;
@@ -87,6 +88,7 @@ const JoinCourse: React.FC = (props: any) => {
           : course
       );
       setCourses(updatedCourses);
+      WebUser.getInstance().markAsExpired();
       setIsJoinDialogOpen(false);
     } catch (error) {
       console.error("Error joining course:", error);

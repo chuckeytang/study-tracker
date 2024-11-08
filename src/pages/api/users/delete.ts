@@ -1,10 +1,10 @@
 import { createRouter } from "next-connect";
-import { PrismaClient } from "@prisma/client";
+
 import { authMiddleware } from "@/utils/auth";
 import { ExtendedNextApiRequest } from "@/types/ExtendedNextApiRequest";
 import { NextApiResponse } from "next";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();
 
