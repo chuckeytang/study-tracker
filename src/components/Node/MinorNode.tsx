@@ -96,7 +96,7 @@ const MinorNode: React.FC<MinorNodeProps> = ({
       {/* 节点信息显示 */}
       <div
         className={`fixed bottom-4 -right-4 text-[8px] bg-gray-900 ${
-          userRole === "student" ? "rounded-t-lg" : "rounded-lg"
+          userRole === "teacher" ? "rounded-lg" : "rounded-t-lg"
         }  text-end border-3 border-green-900 rtext-white items-end p-1 w-3/5`}
       >
         <div>{nodeName}</div>
@@ -121,6 +121,14 @@ const MinorNode: React.FC<MinorNodeProps> = ({
           >
             +
           </button>
+        </div>
+      )}
+
+      {userRole === "otherStudent" && (
+        <div className="fixed -bottom-4 -right-4 w-3/5 h-8 bg-gray-900 rounded-b-lg flex p-1 space-x-1 items-center justify-center">
+          <span className="text-white font-bold">
+            {data.level}/{data.maxLevel}
+          </span>
         </div>
       )}
     </div>

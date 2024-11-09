@@ -56,11 +56,26 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
     }
   };
 
+  const fetchOtherStudents = async () => {
+    if (courseId) {
+      const data = await apiRequest(
+        `/api/student/getOtherStudentListForCourse?courseId=${courseId}`
+      );
+      setOtherStudents(data.students);
+    }
+  };
+
+  const handleSelectCourse = async (selectedCourseId: string) => {
+    router.push(`/skillTree/${userId}?courseId=${selectedCourseId}`);
+  };
+
   // Fetch and update the skill tree along with student progress
   const updateSkillTree = async () => {
     try {
       const userData = await apiRequest(`/api/users/getOne?id=${userId}`);
       setAvailableSkillPoints(userData.skillPt || 0);
+
+      fetchOtherStudents();
 
       // Fetch course data
       const data = await apiRequest(
@@ -204,18 +219,8 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
       }
     };
 
-    const fetchOtherStudents = async () => {
-      if (courseId) {
-        const data = await apiRequest(
-          `/api/student/getOtherStudentListForCourse?courseId=${courseId}`
-        );
-        setOtherStudents(data.students);
-      }
-    };
-
     fetchUserInfo();
     fetchCourses();
-    fetchOtherStudents();
   }, [router.isReady, userId]);
 
   useEffect(() => {
@@ -313,7 +318,7 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
         />
       ),
     }),
-    []
+    [courseId, handleLevelChange]
   );
 
   const edgeTypes = useMemo(
@@ -353,7 +358,7 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
               }))}
               value={courseId}
               onChange={(selectedCourse) => {
-                router.push(`/skillTree/${userId}?courseId=${selectedCourse}`);
+                handleSelectCourse(selectedCourse);
               }}
             />
           </div>
@@ -376,7 +381,7 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
                   key={student.id}
                   onClick={() =>
                     router.push(
-                      `/skillTree/${userId}?courseId=${courseId}&otherStudent=1&courseName=${courseName}`
+                      `/skillTree/${student.id}?courseId=${courseId}&otherStudent=1&courseName=${courseName}`
                     )
                   }
                   className="text-blue-500 hover:underline mb-1"
