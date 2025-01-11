@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient, NodeType } from "@prisma/client";
+import { PrismaClient, NodeType, UnlockType } from "@prisma/client";
 import { upload } from "@/lib/middleware/multer";
 import { createRouter } from "next-connect";
 import { runMiddleware } from "@/lib/middleware/runMiddleware";
@@ -31,6 +31,11 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       unlockDepNodeCount,
       unlockDepClusterTotalSkillPt,
       lockDepNodeCount,
+      coolDown,
+      exp,
+      rewardPt,
+      unlockType,
+      unlockDepTimeInterval
     } = req.body;
 
     // 解析 unlockDepNodes 和 lockDepNodes 字段
@@ -82,6 +87,11 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
           computedUnlockDepClusterTotalSkillPt
         ),
         lockDepNodeCount: Number(computedLockDepNodeCount),
+        coolDown: Number(coolDown),
+        exp: Number(exp),
+        rewardPt: Number(rewardPt),
+        unlockType: unlockType as UnlockType,
+        unlockDepTimeInterval: unlockType === "TIME_BASED" ? Number(unlockDepTimeInterval) : null
       },
     });
 

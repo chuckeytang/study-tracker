@@ -26,6 +26,11 @@ const NodeForm: React.FC<{
     defaultValue.lockDepNodeCount || null
   );
   const [iconFile, setIconFile] = useState<File | null>(null);
+  const [coolDown, setCoolDown] = useState(defaultValue.coolDown || 0);
+  const [unlockType, setUnlockType] = useState(defaultValue.unlockType || "SKILL_POINT");
+  const [unlockDepTimeInterval, setUnlockDepTimeInterval] = useState(defaultValue.unlockDepTimeInterval || 0);
+  const [exp, setExp] = useState(defaultValue.exp || 0);
+  const [rewardPt, setRewardPt] = useState(defaultValue.rewardPt || 0);
 
   const [unlockDepNodes, setUnlockDepNodes] = useState<any[]>([]); // 解锁依赖节点列表
   const [selectedUnlockNodes, setSelectedUnlockNodes] = useState<string[]>([]); // 解锁依赖节点选择
@@ -132,6 +137,11 @@ const NodeForm: React.FC<{
       lockDepNodeCount,
       selectedUnlockNodes,
       selectedLockNodes,
+      coolDown: coolDown * 3600,
+      unlockType,
+      unlockDepTimeInterval: unlockType === "TIME_BASED" ? unlockDepTimeInterval * 3600 : undefined,
+      exp,
+      rewardPt,
     };
     onSubmit(formType, nodeData);
   };
@@ -217,6 +227,65 @@ const NodeForm: React.FC<{
               setIconFile(e.target.files[0]); // 设置选择的图片文件
             }
           }}
+          className="p-2 border border-gray-300 rounded w-2/3"
+        />
+      </div>
+
+      <div className="flex items-center mb-2">
+        <label className="w-1/3 font-semibold">Cooldown (hours):</label>
+        <input
+          type="number"
+          placeholder="Cooldown in hours"
+          value={coolDown}
+          onChange={(e) => setCoolDown(Number(e.target.value))}
+          className="p-2 border border-gray-300 rounded w-2/3"
+        />
+      </div>
+
+      <div className="flex items-center mb-2">
+        <label className="w-1/3 font-semibold">Unlock Type:</label>
+        <select
+          value={unlockType}
+          onChange={(e) => setUnlockType(e.target.value)}
+          className="p-2 border border-gray-300 rounded w-2/3"
+        >
+          <option value="SKILL_POINT">Skill Point</option>
+          <option value="TIME_BASED">Time Based</option>
+          <option value="CLUSTER_TOTAL_SKILL_POINT">Cluster Total Skill Point</option>
+        </select>
+      </div>
+
+      {unlockType === "TIME_BASED" && (
+        <div className="flex items-center mb-2">
+          <label className="w-1/3 font-semibold">Unlock Time Interval (hours):</label>
+          <input
+            type="number"
+            placeholder="Unlock Time Interval in hours"
+            value={unlockDepTimeInterval}
+            onChange={(e) => setUnlockDepTimeInterval(Number(e.target.value))}
+            className="p-2 border border-gray-300 rounded w-2/3"
+          />
+        </div>
+      )}
+
+      <div className="flex items-center mb-2">
+        <label className="w-1/3 font-semibold">Experience Points (EXP):</label>
+        <input
+          type="number"
+          placeholder="Experience Points"
+          value={exp}
+          onChange={(e) => setExp(Number(e.target.value))}
+          className="p-2 border border-gray-300 rounded w-2/3"
+        />
+      </div>
+
+      <div className="flex items-center mb-2">
+        <label className="w-1/3 font-semibold">Reward Points:</label>
+        <input
+          type="number"
+          placeholder="Reward Points"
+          value={rewardPt}
+          onChange={(e) => setRewardPt(Number(e.target.value))}
           className="p-2 border border-gray-300 rounded w-2/3"
         />
       </div>

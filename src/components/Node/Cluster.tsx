@@ -164,8 +164,12 @@ const Cluster = async (
       const depData = await apiRequest(
         `/api/courses/getDepNodes?nodeId=${currentNode.nodeId}`
       );
+      const depNodes = depData.data.map((node: any) => ({
+        ...node,
+        coolDown: node.coolDown / 3600, // Convert to hours
+        unlockDepTimeInterval: node.unlockDepTimeInterval / 3600, // Convert to hours
+      })) || [];
 
-      const depNodes = depData.data || [];
       const numChildren = depNodes.length;
 
       if (numChildren > 0) {

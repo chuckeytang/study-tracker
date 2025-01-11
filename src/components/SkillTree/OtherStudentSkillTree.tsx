@@ -34,7 +34,11 @@ const OtherStudentSkillTree = ({ courseName }: { courseName: string }) => {
       const data = await apiRequest(
         `/api/courses/getBigChecks?courseId=${courseId}`
       );
-      const bigChecks = data.data;
+      const bigChecks = data.data.map((node: any) => ({
+        ...node,
+        coolDown: node.coolDown / 3600, // Convert to hours
+        unlockDepTimeInterval: node.unlockDepTimeInterval / 3600, // Convert to hours
+      }));
 
       // Fetch student progress data
       const progressData = await apiRequest(

@@ -49,21 +49,34 @@ model Node {
   maxLevel         Int              // 最大等级
   iconUrl          String?
 
+  unlockType                   UnlockType       // 节点的解锁方式
+  unlockDepTimeInterval        Int?             // 时间解锁方式下的时间跨度配置，单位秒
+
   // 解锁和锁住依赖节点的数量字段放在 Node 表中
   unlockDepNodeCount Int?            // 解锁依赖的节点中需要解锁的最小节点数，若为-1或者null则所有依赖节点都需解锁
   lockDepNodeCount   Int?            // 锁住依赖的节点中需要解锁的最小节点数，若为-1则所有依赖节点都需解锁才能实现该节点锁住
+  coolDown           Int?            // 冷却时间，单位秒
 
   // 解锁依赖节点作为根节点，所代表的cluster整体中，增加的技能点数总合。即技能点数总合添加达到该值，本节点可解锁
   unlockDepClusterTotalSkillPt  Int?
 
-  unlockDependenciesFrom UnlockDependency[] @relation("UnlockFrom")
-  unlockDependenciesTo   UnlockDependency[] @relation("UnlockTo")
+  unlockDependenciesFrom UnlockDependency[] @relation("UnlockFrom")   //指向更深层级的node
+  unlockDependenciesTo   UnlockDependency[] @relation("UnlockTo")     //指向更高层级的node
 
   lockDependenciesFrom   LockDependency[]   @relation("LockFrom")
   lockDependenciesTo     LockDependency[]   @relation("LockTo")
 
+  exp                          Int              // 每次升级提供的经验值点数
+  rewardPt                     Float            // 每次升级提供的奖励币数量
+
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
+}
+
+enum UnlockType {
+  SKILL_POINT               // 传统技能点解锁
+  TIME_BASED                // 时间解锁
+  CLUSTER_TOTAL_SKILL_POINT // 集群总技能点数解锁
 }
 
 model UnlockDependency {
@@ -98,6 +111,7 @@ model CourseProgress {
   level           Int      // 学习的等级
   unlocked        Boolean  // 是否解锁
   clusterSkillPt  Int      // bigcheck所代表的cluster的全部已加skill pt
+  lastUpgradeTime DateTime? // 最近一次升级的时间
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

@@ -64,12 +64,22 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         lockDepNodeCount: node.lockDepNodeCount,
         unlockDepNodeCount: node.unlockDepNodeCount,
         unlockDepClusterTotalSkillPt: node.unlockDepClusterTotalSkillPt,
+        coolDown: node.coolDown,
+        unlockType: node.unlockType,
+        unlockDepTimeInterval: node.unlockDepTimeInterval,
+        exp: node.exp,
+        rewardPt: node.rewardPt,
         unlockDependencies: node.unlockDependenciesTo.map((dep) => ({
           nodeId: dep.fromNode.id,
           nodeName: dep.fromNode.name,
           nodeDescription: dep.fromNode.description,
           nodeType: dep.fromNode.nodeType,
           maxLevel: dep.fromNode.maxLevel,
+          coolDown: dep.fromNode.coolDown,
+          unlockType: dep.fromNode.unlockType,
+          unlockDepTimeInterval: dep.fromNode.unlockDepTimeInterval,
+          exp: dep.fromNode.exp,
+          rewardPt: dep.fromNode.rewardPt,
         })),
       };
     });

@@ -50,7 +50,11 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
       const data = await apiRequest(
         `/api/courses/getBigChecks?courseId=${courseId}`
       );
-      const bigChecks = data.data;
+      const bigChecks = data.data.map((node: any) => ({
+        ...node,
+        coolDown: node.coolDown / 3600, // Convert to hours
+        unlockDepTimeInterval: node.unlockDepTimeInterval / 3600, // Convert to hours
+      }));
 
       const clusters: { nodes: Node[]; edges: Edge[] }[] = [];
 
@@ -361,6 +365,15 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
     if (nodeData.iconFile) {
       formData.append("icon", nodeData.iconFile);
     }
+
+    // 添加新的字段
+    formData.append("coolDown", nodeData.coolDown.toString());
+    formData.append("unlockType", nodeData.unlockType);
+    if (nodeData.unlockDepTimeInterval !== undefined) {
+      formData.append("unlockDepTimeInterval", nodeData.unlockDepTimeInterval.toString());
+    }
+    formData.append("exp", nodeData.exp.toString());
+    formData.append("rewardPt", nodeData.rewardPt.toString());
 
     try {
       let url = "";

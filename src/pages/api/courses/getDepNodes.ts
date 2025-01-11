@@ -39,6 +39,11 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         nodeType: node.nodeType, // 可以是 MAJOR_NODE 或 MINOR_NODE
         maxLevel: node.maxLevel,
         picUrl: node.iconUrl,
+        coolDown: node.coolDown,
+        unlockType: node.unlockType,
+        unlockDepTimeInterval: node.unlockDepTimeInterval,
+        exp: node.exp,
+        rewardPt: node.rewardPt,
       })),
     });
   } catch (error) {

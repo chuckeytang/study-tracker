@@ -25,6 +25,7 @@ const BigCheck: React.FC<BigCheckProps> = ({
   onContextMenu,
 }) => {
   const { nodeName, handles, nodeId, nodeDescription, unlocked } = data;
+  const [showDescription, setShowDescription] = useState(false);
 
   let bgColor = "bg-gray-700"; // 默认锁定状态灰色
   let imgFilter =
@@ -44,6 +45,8 @@ const BigCheck: React.FC<BigCheckProps> = ({
   return (
     <div
       onContextMenu={(event) => onContextMenu(event, data)}
+      onMouseEnter={() => setShowDescription(true)}
+      onMouseLeave={() => setShowDescription(false)}
       className={`flex items-center justify-center rounded-full ${bgColor} font-bold`}
       style={{
         width: `${radius * 2}px`,
@@ -63,6 +66,15 @@ const BigCheck: React.FC<BigCheckProps> = ({
           }}
         />
       </div>
+      {/* 鼠标悬停时显示描述 */}
+      {showDescription && (
+        <div
+          className="absolute left-1/2 bottom-full transform -translate-x-1/2 mb-2 p-2 bg-black text-white text-sm rounded shadow-lg"
+          style={{ whiteSpace: "nowrap" }}
+        >
+          {nodeDescription}
+        </div>
+      )}
       {/* 动态添加句柄 */}
       {handles &&
         handles.map(
@@ -91,7 +103,7 @@ const BigCheck: React.FC<BigCheckProps> = ({
             />
           )
         )}
-      <div className="fixed -bottom-6 -right-4 text-[18px] bg-gray-900 rounded-md text-end text-white items-end p-[4px] w-3/5">
+      <div className="fixed top-0 text-[18px] text-center bg-gray-900 rounded-md text-white items-end p-[4px] w-full">
         <div>{nodeName}</div>
       </div>
     </div>

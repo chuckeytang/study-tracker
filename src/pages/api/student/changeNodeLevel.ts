@@ -371,7 +371,20 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       });
     }
 
-    // 当前技能点等级
+    // Check cooldown
+    if (node.coolDown && progress.lastUpgradeTime) {
+      const now = new Date();
+      const lastUpgradeTime = new Date(progress.lastUpgradeTime);
+      const timeSinceLastUpgrade = (now.getTime() - lastUpgradeTime.getTime()) / 1000; // in seconds
+
+      if (timeSinceLastUpgrade < node.coolDown) {
+        return res.status(400).json({
+          error: `Cooldown period not yet passed. Please wait ${node.coolDown - timeSinceLastUpgrade} more seconds.`,
+        });
+      }
+    }
+
+    // Current skill point level
     const currentLevel = progress.level;
     const maxLevel = node.maxLevel;
 
@@ -406,6 +419,7 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       },
       data: {
         level: newLevel,
+        lastUpgradeTime: new Date(), // Update last upgrade time
       },
     });
 

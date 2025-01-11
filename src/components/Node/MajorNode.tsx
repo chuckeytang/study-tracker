@@ -1,5 +1,5 @@
 import { handlerRadius } from "@/types/Values";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Handle, HandleType, Position } from "reactflow";
 
 interface MajorNodeProps {
@@ -19,28 +19,43 @@ const MajorNode: React.FC<MajorNodeProps> = ({
   onContextMenu,
   handleLevelChange,
 }) => {
-  const { nodeName, handles, maxLevel, nodeId, nodeDescription, unlocked } =
-    data;
+  const { nodeName, handles, maxLevel, nodeId, nodeDescription, unlocked, coolDown, lastUpgradeTime } = data;
+  const [showDescription, setShowDescription] = useState(false);
+  const [cooldownProgress, setCooldownProgress] = useState(0);
 
   let bgColor = "bg-gray-700"; // 默认锁定状态灰色
   let imgFilter =
     userRole === "teacher" || unlocked ? "grayscale(0%)" : "grayscale(100%)"; // 默认图片置灰
   let opacity = userRole === "teacher" || unlocked ? 1 : 0.5;
+  useEffect(() => {
+    if (coolDown && lastUpgradeTime) {
+      const interval = setInterval(() => {
+        const now = new Date().getTime();
+        const lastUpgrade = new Date(lastUpgradeTime).getTime();
+        const elapsed = (now - lastUpgrade) / 1000;
+        const progress = Math.min((elapsed / coolDown) * 100, 100);
+        setCooldownProgress(progress);
+      }, 1000);
 
-  // 根据不同状态设置颜色和透明度
-  if (unlocked) {
-    bgColor = "bg-yellow-700"; // 解锁状态
-    if (data.level === data.maxLevel) {
-      bgColor = "bg-green-700"; // 满级状态绿色
+      // 根据不同状态设置颜色和透明度
+      if (unlocked) {
+        bgColor = "bg-yellow-700"; // 解锁状态
+        if (data.level === data.maxLevel) {
+          bgColor = "bg-green-700"; // 满级状态绿色
+        }
+      }
+
+      if (selected) {
+        bgColor = "bg-blue-700"; // 选中状态蓝色
+      }
+      return () => clearInterval(interval);
     }
-  }
-
-  if (selected) {
-    bgColor = "bg-blue-700"; // 选中状态蓝色
-  }
+  }, [coolDown, lastUpgradeTime]);
 
   const handleIncrement = () => {
-    handleLevelChange && handleLevelChange(data.nodeId, +1);
+    if (cooldownProgress === 100) {
+      handleLevelChange && handleLevelChange(data.nodeId, +1);
+    }
   };
 
   const handleDecrement = () => {
@@ -50,6 +65,8 @@ const MajorNode: React.FC<MajorNodeProps> = ({
   return (
     <div
       onContextMenu={(event) => onContextMenu(event, data)}
+      onMouseEnter={() => setShowDescription(true)}
+      onMouseLeave={() => setShowDescription(false)}
       className={`flex items-center justify-center ${bgColor} rounded-full text-white font-semibold`}
       style={{
         width: `${radius * 2}px`,
@@ -67,7 +84,47 @@ const MajorNode: React.FC<MajorNodeProps> = ({
             filter: imgFilter, // 根据状态设置图片灰度
           }}
         />
+        <div className="relative">
+          <svg
+            className="absolute top-0 left-0"
+            width={radius * 2}
+            height={radius * 2}
+          >
+            <circle
+              cx={radius}
+              cy={radius}
+              r={radius - 5}
+              stroke="gray"
+              strokeWidth="5"
+              fill="none"
+            />
+            <circle
+              cx={radius}
+              cy={radius}
+              r={radius - 5}
+              stroke="lime"
+              strokeWidth="5"
+              fill="none"
+              strokeDasharray={`${2 * Math.PI * (radius - 5)}`}
+              strokeDashoffset={`${
+                2 * Math.PI * (radius - 5) * ((100 - cooldownProgress) / 100)
+              }`}
+              transform={`rotate(-90 ${radius} ${radius})`}
+            />
+          </svg>
+          
+        </div>
       </div>
+
+      {/* 鼠标悬停时显示描述 */}
+      {showDescription && (
+        <div
+          className="absolute left-1/2 bottom-full transform -translate-x-1/2 mb-2 p-2 bg-black text-white text-sm rounded shadow-lg"
+          style={{ whiteSpace: "nowrap" }}
+        >
+          {nodeDescription}
+        </div>
+      )}
 
       {/* 添加句柄 */}
       {handles &&
@@ -98,9 +155,7 @@ const MajorNode: React.FC<MajorNodeProps> = ({
           )
         )}
       <div
-        className={`fixed bottom-2 -right-4 text-[12px] bg-gray-900 ${
-          userRole === "teacher" ? "rounded-lg" : "rounded-t-lg"
-        } text-end border-3 border-green-900 rtext-white items-end p-1 pr-2 w-1/2`}
+        className={`fixed top-0 text-[12px] bg-gray-900 rounded-lg text-center border-3 border-green-900 rtext-white items-end p-1 pr-2 w-4/5`}
       >
         <div>{nodeName}</div>
         {userRole === "teacher" && <div>maxlevel:{maxLevel}</div>}

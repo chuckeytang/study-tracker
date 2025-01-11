@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, UnlockType } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -21,7 +21,7 @@ async function main() {
       email: "teacher1@example.com",
       role: "TEACHER", // Enum type TEACHER
       skillPt: 100,
-      password: "$2a$10$Ha1S1eCa1roNLC53amp0U.hX2p.v/r72.E5auJ9FMDyCkQKuRnSRO",
+      password: "$2a$10$Ha1S1eCa1roNLC53amp0U.hX2p.v/r72.E5auJ9FMDyCkQKuRnSRO", //123456
     },
   });
 
@@ -80,7 +80,7 @@ async function main() {
     data: {
       name: "Admin",
       email: "admin@example.com",
-      role: "ADMIN", // Enum type STUDENT
+      role: "ADMIN",
       skillPt: 100,
       password: "$2a$10$Ha1S1eCa1roNLC53amp0U.hX2p.v/r72.E5auJ9FMDyCkQKuRnSRO",
     },
@@ -99,9 +99,16 @@ async function main() {
   });
 
   // Associate students with course
-  const userCourse = await prisma.userCourse.create({
+  const studentCourse = await prisma.userCourse.create({
     data: {
       userId: student1.id, // Student ID
+      courseId: swimmingCourse.id,
+    },
+  });
+
+  const teacherCourse = await prisma.userCourse.create({
+    data: {
+      userId: teacher1.id,
       courseId: swimmingCourse.id,
     },
   });
@@ -114,10 +121,13 @@ async function main() {
         "Helps students adapt to the water environment and learn basic water movements and safety skills",
       nodeType: "BIGCHECK",
       courseId: swimmingCourse.id,
-      unlockDepNodeCount: 1,
       unlockDepClusterTotalSkillPt: 0,
       maxLevel: -1, // BigCheck has no levels
       iconUrl: "/images/node_water_adaption.jpg",
+      coolDown: 0,
+      unlockType: UnlockType.CLUSTER_TOTAL_SKILL_POINT,
+      exp: 0,
+      rewardPt: 0,
     },
   });
 
@@ -131,6 +141,10 @@ async function main() {
       unlockDepNodeCount: 1,
       maxLevel: 3,
       iconUrl: "/images/node_basic_breathing.jpg",
+      coolDown: 10,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 50,
+      rewardPt: 10,
     },
   });
 
@@ -144,6 +158,10 @@ async function main() {
       unlockDepNodeCount: 1,
       maxLevel: 1,
       iconUrl: "/images/node_holding_breath.jpg",
+      coolDown: 10,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 30,
+      rewardPt: 5,
     },
   });
 
@@ -156,6 +174,10 @@ async function main() {
       unlockDepNodeCount: 1,
       maxLevel: 2,
       iconUrl: "/images/node_underwater_breathing.jpg",
+      unlockType: UnlockType.TIME_BASED,
+      unlockDepTimeInterval: 15,
+      exp: 30,
+      rewardPt: 5,
     },
   });
 
@@ -178,6 +200,10 @@ async function main() {
       unlockDepNodeCount: 1,
       maxLevel: 3,
       iconUrl: "/images/node_buoyancy_control.jpg",
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 50,
+      rewardPt: 10,
     },
   });
 
@@ -191,6 +217,10 @@ async function main() {
       unlockDepNodeCount: 1,
       maxLevel: 2,
       iconUrl: "/images/node_floating.jpg",
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 30,
+      rewardPt: 5,
     },
   });
 
@@ -203,6 +233,10 @@ async function main() {
       unlockDepNodeCount: 1,
       maxLevel: 1,
       iconUrl: "/images/node_back_float.jpg",
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 30,
+      rewardPt: 5,
     },
   });
 
@@ -227,6 +261,10 @@ async function main() {
       unlockDepClusterTotalSkillPt: 5,
       maxLevel: -1, // BigCheck has no levels
       iconUrl: "/images/node_basic_swimming_strokes.jpg",
+      coolDown: 0,
+      unlockType: UnlockType.CLUSTER_TOTAL_SKILL_POINT,
+      exp: 0,
+      rewardPt: 0,
     },
   });
 
@@ -240,6 +278,10 @@ async function main() {
       unlockDepNodeCount: 1,
       maxLevel: 3,
       iconUrl: "/images/node_freestyle.jpg",
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 50,
+      rewardPt: 10,
     },
   });
 
@@ -253,6 +295,10 @@ async function main() {
       unlockDepNodeCount: 1,
       maxLevel: 2,
       iconUrl: "/images/node_freestyle_arm_movements.jpg",
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 30,
+      rewardPt: 5,
     },
   });
 
@@ -265,6 +311,10 @@ async function main() {
       unlockDepNodeCount: 1,
       maxLevel: 2,
       iconUrl: "/images/node_freestyle_leg_movements.jpg",
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 30,
+      rewardPt: 5,
     },
   });
 
@@ -286,6 +336,10 @@ async function main() {
       unlockDepNodeCount: 1,
       maxLevel: 3,
       iconUrl: "/images/node_breaststroke.jpg",
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 50,
+      rewardPt: 10,
     },
   });
 
@@ -298,6 +352,10 @@ async function main() {
       unlockDepNodeCount: 1,
       maxLevel: 2,
       iconUrl: "/images/node_breaststroke_arm_movements.jpg",
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 30,
+      rewardPt: 5,
     },
   });
 
@@ -310,6 +368,10 @@ async function main() {
       unlockDepNodeCount: 1,
       maxLevel: 2,
       iconUrl: "/images/node_breaststroke_leg_movements.jpg",
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 30,
+      rewardPt: 5,
     },
   });
 
@@ -331,6 +393,10 @@ async function main() {
       unlockDepNodeCount: 1,
       unlockDepClusterTotalSkillPt: 4,
       maxLevel: -1, // BigCheck has no levels
+      coolDown: 0,
+      unlockType: UnlockType.CLUSTER_TOTAL_SKILL_POINT,
+      exp: 0,
+      rewardPt: 0,
     },
   });
 
@@ -343,6 +409,10 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 3,
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 50,
+      rewardPt: 10,
     },
   });
 
@@ -355,6 +425,10 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 30,
+      rewardPt: 5,
     },
   });
 
@@ -366,6 +440,10 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 30,
+      rewardPt: 5,
     },
   });
 
@@ -387,6 +465,10 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 3,
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 50,
+      rewardPt: 10,
     },
   });
 
@@ -399,6 +481,10 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 30,
+      rewardPt: 5,
     },
   });
 
@@ -410,6 +496,10 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 30,
+      rewardPt: 5,
     },
   });
 
@@ -442,6 +532,10 @@ async function main() {
       unlockDepNodeCount: 1,
       unlockDepClusterTotalSkillPt: 6,
       maxLevel: -1, // BigCheck has no levels
+      coolDown: 0,
+      unlockType: UnlockType.CLUSTER_TOTAL_SKILL_POINT,
+      exp: 0,
+      rewardPt: 0,
     },
   });
 
@@ -454,6 +548,10 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 3,
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 50,
+      rewardPt: 10,
     },
   });
 
@@ -466,6 +564,10 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 30,
+      rewardPt: 5,
     },
   });
 
@@ -477,6 +579,10 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 30,
+      rewardPt: 5,
     },
   });
 
@@ -497,6 +603,10 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 3,
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 50,
+      rewardPt: 10,
     },
   });
 
@@ -509,6 +619,10 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 30,
+      rewardPt: 5,
     },
   });
 
@@ -520,6 +634,10 @@ async function main() {
       courseId: swimmingCourse.id,
       unlockDepNodeCount: 1,
       maxLevel: 2,
+      coolDown: 0,
+      unlockType: UnlockType.SKILL_POINT,
+      exp: 30,
+      rewardPt: 5,
     },
   });
 

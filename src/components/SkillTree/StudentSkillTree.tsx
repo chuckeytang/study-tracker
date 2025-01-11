@@ -81,7 +81,11 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
       const data = await apiRequest(
         `/api/courses/getBigChecks?courseId=${courseId}`
       );
-      const bigChecks = data.data;
+      const bigChecks = data.data.map((node: any) => ({
+        ...node,
+        coolDown: node.coolDown / 3600, // Convert to hours
+        unlockDepTimeInterval: node.unlockDepTimeInterval / 3600, // Convert to hours
+      }));
 
       // Fetch student progress data
       const progressData = await apiRequest(
@@ -280,8 +284,12 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
       // 如果成功，更新可用技能点数
       setAvailableSkillPoints((prev) => prev - delta);
       updateSkillTree();
-    } catch (error) {
+    } catch (error:any) {
       console.error("Error changing node level:", error);
+      // Handle cooldown error
+      if (error.response && error.response.data.error) {
+        alert(error.response.data.error);
+      }
     }
   };
 
