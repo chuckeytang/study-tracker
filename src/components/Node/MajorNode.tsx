@@ -19,7 +19,16 @@ const MajorNode: React.FC<MajorNodeProps> = ({
   onContextMenu,
   handleLevelChange,
 }) => {
-  const { nodeName, handles, maxLevel, nodeId, nodeDescription, unlocked, coolDown, lastUpgradeTime } = data;
+  const {
+    nodeName,
+    handles,
+    maxLevel,
+    nodeId,
+    nodeDescription,
+    unlocked,
+    coolDown,
+    lastUpgradeTime,
+  } = data;
   const [showDescription, setShowDescription] = useState(false);
   const [cooldownProgress, setCooldownProgress] = useState(0);
 
@@ -27,169 +36,199 @@ const MajorNode: React.FC<MajorNodeProps> = ({
   let imgFilter =
     userRole === "teacher" || unlocked ? "grayscale(0%)" : "grayscale(100%)"; // 默认图片置灰
   let opacity = userRole === "teacher" || unlocked ? 1 : 0.5;
-  useEffect(() => {
-    if (coolDown && lastUpgradeTime) {
-      const interval = setInterval(() => {
-        const now = new Date().getTime();
-        const lastUpgrade = new Date(lastUpgradeTime).getTime();
-        const elapsed = (now - lastUpgrade) / 1000;
-        const progress = Math.min((elapsed / coolDown) * 100, 100);
-        setCooldownProgress(progress);
-      }, 1000);
 
-      // 根据不同状态设置颜色和透明度
-      if (unlocked) {
-        bgColor = "bg-yellow-700"; // 解锁状态
-        if (data.level === data.maxLevel) {
-          bgColor = "bg-green-700"; // 满级状态绿色
-        }
-      }
-
-      if (selected) {
-        bgColor = "bg-blue-700"; // 选中状态蓝色
-      }
-      return () => clearInterval(interval);
+  // 根据不同状态设置颜色和透明度
+  if (unlocked) {
+    bgColor = "bg-yellow-700"; // 解锁状态
+    if (data.level === data.maxLevel) {
+      bgColor = "bg-green-700"; // 满级状态绿色
     }
-  }, [coolDown, lastUpgradeTime]);
+  }
+
+  if (selected) {
+    bgColor = "bg-blue-700"; // 选中状态蓝色
+  }
+
+  // 动态计算冷却进度
+  useEffect(() => {
+    const calculateCooldownProgress = () => {
+      if (lastUpgradeTime && coolDown) {
+        const lastUpgradeTimeMs = new Date(lastUpgradeTime).getTime(); // 转换为时间戳
+        const currentTime = Date.now(); // 当前时间戳
+        const elapsedTime = (currentTime - lastUpgradeTimeMs) / 1000; // 转换为秒
+        const progress = Math.max(0, 100 - (elapsedTime / coolDown) * 100); // 冷却进度百分比
+        setCooldownProgress(progress);
+      } else {
+        setCooldownProgress(0); // 没有冷却时，直接设置为 0
+      }
+    };
+  
+    // 初始化计算一次冷却进度
+    calculateCooldownProgress();
+  
+    // 每秒更新冷却进度
+    const interval = setInterval(calculateCooldownProgress, 100);
+  
+    return () => clearInterval(interval); // 清理定时器
+  }, [lastUpgradeTime, coolDown]);
 
   const handleIncrement = () => {
-    if (cooldownProgress === 100) {
+    if (cooldownProgress === 0) {
       handleLevelChange && handleLevelChange(data.nodeId, +1);
     }
   };
 
   const handleDecrement = () => {
-    handleLevelChange && handleLevelChange(data.nodeId, -1);
+    if (cooldownProgress === 0) {
+      handleLevelChange && handleLevelChange(data.nodeId, -1);
+    }
   };
 
+  const r = 50;
+  const strokeWidth = 10;
+  const strokeLinecap = "round"; // 或 'round' 或 'square'
+  const halfStrokeWidth = strokeWidth / 2;
+
+  let scale = (r - halfStrokeWidth) / r;
+
+  if (strokeLinecap === "round") {
+    scale = (r - (halfStrokeWidth * Math.sqrt(2)) / 2) / r;
+  } else if (strokeLinecap === "square") {
+    scale = (r - halfStrokeWidth) / r;
+  }
+
+  const translate = (1 - scale) * r;
+
   return (
-    <div
-      onContextMenu={(event) => onContextMenu(event, data)}
-      onMouseEnter={() => setShowDescription(true)}
-      onMouseLeave={() => setShowDescription(false)}
-      className={`flex items-center justify-center ${bgColor} rounded-full text-white font-semibold`}
-      style={{
-        width: `${radius * 2}px`,
-        height: `${radius * 2}px`,
-        transform: "translate(-50%, -50%)", // 调整节点使其中心与 position 对齐
-        opacity: opacity,
-      }}
-    >
-      <div className="rounded-full bg-white w-11/12 h-11/12 overflow-hidden">
-        <img
-          src={data.picUrl || "/images/majornode_default_icon.jpg"}
-          alt="big check"
-          className="w-full h-full object-cover rounded-full"
-          style={{
-            filter: imgFilter, // 根据状态设置图片灰度
-          }}
-        />
-        <div className="relative">
-          <svg
-            className="absolute top-0 left-0"
-            width={radius * 2}
-            height={radius * 2}
-          >
-            <circle
-              cx={radius}
-              cy={radius}
-              r={radius - 5}
-              stroke="gray"
-              strokeWidth="5"
-              fill="none"
-            />
-            <circle
-              cx={radius}
-              cy={radius}
-              r={radius - 5}
-              stroke="lime"
-              strokeWidth="5"
-              fill="none"
-              strokeDasharray={`${2 * Math.PI * (radius - 5)}`}
-              strokeDashoffset={`${
-                2 * Math.PI * (radius - 5) * ((100 - cooldownProgress) / 100)
-              }`}
-              transform={`rotate(-90 ${radius} ${radius})`}
-            />
-          </svg>
-          
-        </div>
-      </div>
-
-      {/* 鼠标悬停时显示描述 */}
-      {showDescription && (
-        <div
-          className="absolute left-1/2 bottom-full transform -translate-x-1/2 mb-2 p-2 bg-black text-white text-sm rounded shadow-lg"
-          style={{ whiteSpace: "nowrap" }}
-        >
-          {nodeDescription}
-        </div>
-      )}
-
-      {/* 添加句柄 */}
-      {handles &&
-        handles.map(
-          (
-            handle: {
-              type: HandleType;
-              position: { x: number; y: number };
-              id: string;
-            },
-            index: number
-          ) => (
-            <Handle
-              key={index}
-              type={handle.type} // source 或 target
-              position={Position.Left} // 必需的属性，虽然由 style 控制位置
-              style={{
-                top: `${handle.position.y + radius}px`,
-                left: `${handle.position.x + radius}px`,
-                position: "absolute",
-                transform: "translate(-50%, -50%)", // 确保句柄中心点对齐
-                width: `${handlerRadius * 2}px`, // 统一的句柄宽度
-                height: `${handlerRadius * 2}px`, // 统一的句柄高度
-                borderRadius: "50%", // 确保句柄是圆形
-              }}
-              id={handle.id}
-            />
-          )
-        )}
+    <div className="relative">
       <div
-        className={`fixed top-0 text-[12px] bg-gray-900 rounded-lg text-center border-3 border-green-900 rtext-white items-end p-1 pr-2 w-4/5`}
+        onContextMenu={(event) => onContextMenu(event, data)}
+        onMouseEnter={() => setShowDescription(true)}
+        onMouseLeave={() => setShowDescription(false)}
+        className={`flex items-center justify-center ${bgColor} rounded-full text-white font-semibold`}
+        style={{
+          width: `${radius * 2}px`,
+          height: `${radius * 2}px`,
+          transform: "translate(-50%, -50%)", // 调整节点使其中心与 position 对齐
+          opacity: opacity,
+        }}
       >
-        <div>{nodeName}</div>
-        {userRole === "teacher" && <div>maxlevel:{maxLevel}</div>}
+        <div className="rounded-full bg-white w-11/12 h-11/12 overflow-hidden relative">
+          <img
+            src={data.picUrl || "/images/majornode_default_icon.jpg"}
+            alt="big check"
+            className="w-full h-full object-cover rounded-full"
+            style={{
+              filter: imgFilter,
+            }}
+          />
+        </div>
+
+        {/* 鼠标悬停时显示描述 */}
+        {showDescription && (
+          <div
+            className="absolute left-1/2 bottom-full transform -translate-x-1/2 mb-2 p-2 bg-black text-white text-sm rounded shadow-lg"
+            style={{ whiteSpace: "nowrap" }}
+          >
+            {nodeDescription}
+          </div>
+        )}
+
+        {/* 添加句柄 */}
+        {handles &&
+          handles.map(
+            (
+              handle: {
+                type: HandleType;
+                position: { x: number; y: number };
+                id: string;
+              },
+              index: number
+            ) => (
+              <Handle
+                key={index}
+                type={handle.type} // source 或 target
+                position={Position.Left} // 必需的属性，虽然由 style 控制位置
+                style={{
+                  top: `${handle.position.y + radius}px`,
+                  left: `${handle.position.x + radius}px`,
+                  position: "absolute",
+                  transform: "translate(-50%, -50%)", // 确保句柄中心点对齐
+                  width: `${handlerRadius * 2}px`, // 统一的句柄宽度
+                  height: `${handlerRadius * 2}px`, // 统一的句柄高度
+                  borderRadius: "50%", // 确保句柄是圆形
+                }}
+                id={handle.id}
+              />
+            )
+          )}
+        <div
+          className={`fixed top-0 text-[12px] bg-gray-900 rounded-lg text-center border-3 border-green-900 rtext-white items-end p-1 pr-2 w-4/5`}
+        >
+          <div>{nodeName}</div>
+          {userRole === "teacher" && <div>maxlevel:{maxLevel}</div>}
+        </div>
+
+        {userRole === "student" && (
+          <div className="fixed -bottom-6 -right-4 w-1/2 h-8 bg-gray-900 rounded-b-lg flex p-1 space-x-1 items-center justify-center">
+            <button
+              className="w-6 h-6 rounded-md bg-lime-500 font-extrabold"
+              onClick={handleDecrement}
+            >
+              -
+            </button>
+            <span>
+              {data.level}/{data.maxLevel}
+            </span>
+            <button
+              className="w-6 h-6 rounded-md bg-lime-500 font-extrabold"
+              onClick={handleIncrement}
+            >
+              +
+            </button>
+          </div>
+        )}
+
+        {userRole === "otherStudent" && (
+          <div className="fixed -bottom-6 -right-4 w-1/2 h-8 bg-gray-900 rounded-b-lg flex p-1 space-x-1 items-center justify-center">
+            <span>
+              {data.level}/{data.maxLevel}
+            </span>
+          </div>
+        )}
       </div>
 
-      {userRole === "student" && (
-        <div className="fixed -bottom-6 -right-4 w-1/2 h-8 bg-gray-900 rounded-b-lg flex p-1 space-x-1 items-center justify-center">
-          <button
-            className="w-6 h-6 rounded-md bg-lime-500 font-extrabold"
-            onClick={handleDecrement}
-          >
-            -
-          </button>
-          <span>
-            {data.level}/{data.maxLevel}
-          </span>
-          <button
-            className="w-6 h-6 rounded-md bg-lime-500 font-extrabold"
-            onClick={handleIncrement}
-          >
-            +
-          </button>
-        </div>
-      )}
-
-      {userRole === "otherStudent" && (
-        <div className="fixed -bottom-6 -right-4 w-1/2 h-8 bg-gray-900 rounded-b-lg flex p-1 space-x-1 items-center justify-center">
-          <span>
-            {data.level}/{data.maxLevel}
-          </span>
-        </div>
-      )}
+      <div>
+        <svg
+          className="absolute inset-0"
+          style={{
+            width: `${radius * 2}px`,
+            height: `${radius * 2}px`,
+            transform: "translate(-50%, -50%)",
+            opacity: opacity,
+          }}
+          viewBox="0 0 100 100"
+        >
+          <g transform={`scale(${scale}) translate(${translate} ${translate})`}>
+            <circle
+              cx="50"
+              cy="50"
+              r={r}
+              fill={cooldownProgress > 0 ? "rgba(0, 0, 0, 0.5)" : "transparent"}
+              stroke="rgba(224, 71,111, 1)"
+              strokeDasharray={(r * 2 * Math.PI * 3) / 2}
+              strokeDashoffset={
+                ((r * 2 * Math.PI * 3) / 2) * (1 - cooldownProgress / 100)
+              }
+              strokeWidth={strokeWidth}
+              vectorEffect="non-scaling-stroke"
+              transform="rotate(-90 50 50)"
+            />
+          </g>
+        </svg>
+      </div>
     </div>
   );
 };
 
-export default MajorNode;
+export default React.memo(MajorNode);

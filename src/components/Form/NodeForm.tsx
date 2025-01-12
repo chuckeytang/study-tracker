@@ -26,9 +26,9 @@ const NodeForm: React.FC<{
     defaultValue.lockDepNodeCount || null
   );
   const [iconFile, setIconFile] = useState<File | null>(null);
-  const [coolDown, setCoolDown] = useState(defaultValue.coolDown || 0);
+  const [coolDown, setCoolDown] = useState(defaultValue.coolDown / 3600 || 0);
   const [unlockType, setUnlockType] = useState(defaultValue.unlockType || "SKILL_POINT");
-  const [unlockDepTimeInterval, setUnlockDepTimeInterval] = useState(defaultValue.unlockDepTimeInterval || 0);
+  const [unlockDepTimeInterval, setUnlockDepTimeInterval] = useState(defaultValue.unlockDepTimeInterval / 3600 || 0);
   const [exp, setExp] = useState(defaultValue.exp || 0);
   const [rewardPt, setRewardPt] = useState(defaultValue.rewardPt || 0);
 

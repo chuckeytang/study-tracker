@@ -99,12 +99,12 @@ async function main() {
   });
 
   // Associate students with course
-  const studentCourse = await prisma.userCourse.create({
-    data: {
-      userId: student1.id, // Student ID
-      courseId: swimmingCourse.id,
-    },
-  });
+  // const studentCourse = await prisma.userCourse.create({
+  //   data: {
+  //     userId: student1.id, // Student ID
+  //     courseId: swimmingCourse.id,
+  //   },
+  // });
 
   const teacherCourse = await prisma.userCourse.create({
     data: {
@@ -141,8 +141,9 @@ async function main() {
       unlockDepNodeCount: 1,
       maxLevel: 3,
       iconUrl: "/images/node_basic_breathing.jpg",
-      coolDown: 10,
-      unlockType: UnlockType.SKILL_POINT,
+      coolDown: 0,
+      unlockType: UnlockType.TIME_BASED,
+      unlockDepTimeInterval: 300,
       exp: 50,
       rewardPt: 10,
     },
@@ -200,7 +201,7 @@ async function main() {
       unlockDepNodeCount: 1,
       maxLevel: 3,
       iconUrl: "/images/node_buoyancy_control.jpg",
-      coolDown: 0,
+      coolDown: 10,
       unlockType: UnlockType.SKILL_POINT,
       exp: 50,
       rewardPt: 10,

@@ -52,8 +52,8 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
       );
       const bigChecks = data.data.map((node: any) => ({
         ...node,
-        coolDown: node.coolDown / 3600, // Convert to hours
-        unlockDepTimeInterval: node.unlockDepTimeInterval / 3600, // Convert to hours
+        coolDown: node.coolDown,
+        unlockDepTimeInterval: node.unlockDepTimeInterval,
       }));
 
       const clusters: { nodes: Node[]; edges: Edge[] }[] = [];

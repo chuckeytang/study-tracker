@@ -12,10 +12,11 @@ const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();
 router.use(authMiddleware);
 
 router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
+  const { user } = req; // 获取当前用户
   const { nodeId } = req.query;
-
-  if (!nodeId) {
-    return res.status(400).json({ message: "nodeId is required" });
+  const userId = user?.id;
+  if (!nodeId || !userId) {
+    return res.status(400).json({ message: "nodeId and userId are required" });
   }
 
   try {
@@ -29,6 +30,24 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         },
       },
     });
+
+    // 获取每个节点的 lastUpgradeTime
+    const progressData = await prisma.courseProgress.findMany({
+      where: {
+        nodeId: {
+          in: clusterNodes.map((node) => node.id),
+        },
+        userId: Number(userId),
+      },
+      select: {
+        nodeId: true,
+        lastUpgradeTime: true,
+      },
+    });
+
+    const progressMap = new Map(
+      progressData.map((progress) => [progress.nodeId, progress.lastUpgradeTime])
+    );
 
     // 返回数据
     res.status(200).json({
@@ -44,6 +63,7 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         unlockDepTimeInterval: node.unlockDepTimeInterval,
         exp: node.exp,
         rewardPt: node.rewardPt,
+        lastUpgradeTime: progressMap.get(node.id) || null, // Include lastUpgradeTime
       })),
     });
   } catch (error) {
