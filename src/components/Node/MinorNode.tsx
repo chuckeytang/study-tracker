@@ -1,5 +1,5 @@
 import { handlerRadius } from "@/types/Values";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Handle, HandleType, Position } from "reactflow";
 
 interface MinorNodeProps {
@@ -26,9 +26,14 @@ const MinorNode: React.FC<MinorNodeProps> = ({
     unlocked,
     coolDown,
     lastUpgradeTime,
+    unlockType,
+    unlockDepTimeInterval,
   } = data;
   const [showDescription, setShowDescription] = useState(false);
   const [cooldownProgress, setCooldownProgress] = useState(0);
+  const [timeBasedProgress, setTimeBasedProgress] = useState(0);
+  const intervalRef = useRef<number | null>(null); // 使用 useRef 保存定时器 ID
+  const upgradeTimeoutRef = useRef<number | null>(null); // 使用 useRef 保存升级定时器 ID
 
   // 状态颜色和图片滤镜初始化
   let bgColor = "bg-gray-700"; // 默认锁定状态灰色
@@ -63,19 +68,73 @@ const MinorNode: React.FC<MinorNodeProps> = ({
     calculateCooldownProgress();
 
     // 每秒更新冷却进度
-    const interval = setInterval(calculateCooldownProgress, 100);
+    const interval = setInterval(calculateCooldownProgress, Math.max(coolDown * 10, 100));
 
     return () => clearInterval(interval); // 清理定时器
   }, [lastUpgradeTime, coolDown]);
 
+  // 动态计算时间解锁进度
+  useEffect(() => {
+    if (unlockType === "TIME_BASED" && unlockDepTimeInterval && unlocked) {
+      const calculateTimeBasedProgress = () => {
+        if (lastUpgradeTime) {
+          const lastUpgradeTimeMs = new Date(lastUpgradeTime).getTime();
+          const currentTime = Date.now();
+          const elapsedTime = (currentTime - lastUpgradeTimeMs) / 1000;
+          const progress = Math.min(
+            100,
+            (elapsedTime / unlockDepTimeInterval) * 100
+          );
+          setTimeBasedProgress(progress);
+
+          // 自动升级逻辑
+          if (progress >= 100 && data.level < maxLevel) {
+            if (upgradeTimeoutRef.current) {
+              clearTimeout(upgradeTimeoutRef.current);
+              upgradeTimeoutRef.current = null;
+            }
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current); // 清除定时器
+              intervalRef.current = null; // 防止后续调用
+            }
+            upgradeTimeoutRef.current = window.setTimeout(() => {
+              handleLevelChange && handleLevelChange(data.nodeId, +1);
+              setTimeBasedProgress(0); // Reset progress after upgrade
+            }, 1000); // 1-second delay
+          }
+        } else {
+          setTimeBasedProgress(0);
+        }
+      };
+
+      calculateTimeBasedProgress();
+
+      intervalRef.current = window.setInterval(
+        calculateTimeBasedProgress,
+        unlockDepTimeInterval * 10
+      );
+
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        if (upgradeTimeoutRef.current) {
+          clearTimeout(upgradeTimeoutRef.current);
+          upgradeTimeoutRef.current = null;
+        }
+      };
+    }
+  }, [lastUpgradeTime, unlocked]);
+
   const handleIncrement = () => {
-    if (cooldownProgress === 0) {
+    if (cooldownProgress === 0 && data.level < maxLevel) {
       handleLevelChange && handleLevelChange(data.nodeId, +1);
     }
   };
 
   const handleDecrement = () => {
-    if (cooldownProgress === 0) {
+    if (cooldownProgress === 0 && data.level > 0) {
       handleLevelChange && handleLevelChange(data.nodeId, -1);
     }
   };
@@ -97,11 +156,11 @@ const MinorNode: React.FC<MinorNodeProps> = ({
   const translate = (1 - scale) * r;
 
   return (
-    <div className="relative">
-      <div
+    <div className="relative"
         onContextMenu={(event) => onContextMenu(event, data)}
         onMouseEnter={() => setShowDescription(true)}
-        onMouseLeave={() => setShowDescription(false)}
+        onMouseLeave={() => setShowDescription(false)}>
+      <div
         className={`flex items-center justify-center rounded-full text-white font-semibold ${bgColor}`}
         style={{
           width: `${radius * 2}px`,
@@ -169,8 +228,8 @@ const MinorNode: React.FC<MinorNodeProps> = ({
         </div>
 
         {/* 学生的等级调整面板 */}
-        {userRole === "student" && (
-          <div className="fixed -bottom-4 -right-4 w-3/5 h-8 bg-gray-900 rounded-b-lg flex p-1 space-x-1 items-center justify-center">
+        {userRole === "student" && unlockType !== "TIME_BASED" && (
+          <div className="fixed -bottom-4 -right-4 w-3/5 h-8 bg-gray-900 rounded-lg flex p-1 space-x-1 items-center justify-center">
             <button
               className="w-6 h-6 bg-lime-500 text-white rounded-md font-extrabold flex items-center justify-center"
               onClick={handleDecrement}
@@ -189,8 +248,16 @@ const MinorNode: React.FC<MinorNodeProps> = ({
           </div>
         )}
 
+        {userRole === "student" && unlockType === "TIME_BASED" && (
+          <div className="fixed -bottom-4 -right-4 w-3/5 h-8 bg-gray-900 rounded-lg flex p-1 space-x-1 items-center justify-center">
+            <span className="text-white font-bold">
+              {data.level}/{data.maxLevel}
+            </span>
+          </div>
+        )}
+
         {userRole === "otherStudent" && (
-          <div className="fixed -bottom-4 -right-4 w-3/5 h-8 bg-gray-900 rounded-b-lg flex p-1 space-x-1 items-center justify-center">
+          <div className="fixed -bottom-4 -right-4 w-3/5 h-8 bg-gray-900 rounded-lg flex p-1 space-x-1 items-center justify-center">
             <span className="text-white font-bold">
               {data.level}/{data.maxLevel}
             </span>
@@ -226,6 +293,38 @@ const MinorNode: React.FC<MinorNodeProps> = ({
             />
           </g>
         </svg>
+
+        {unlockType === "TIME_BASED" && data.level < maxLevel && (
+          <svg
+            className="absolute inset-0"
+            style={{
+              width: `${radius * 2}px`,
+              height: `${radius * 2}px`,
+              transform: "translate(-50%, -50%)",
+              opacity: opacity,
+            }}
+            viewBox="0 0 100 100"
+          >
+            <g
+              transform={`scale(${scale}) translate(${translate} ${translate})`}
+            >
+              <circle
+                cx="50"
+                cy="50"
+                r={r}
+                fill="transparent"
+                stroke="rgba(71, 224, 111, 1)"
+                strokeDasharray={(r * 2 * Math.PI * 3) / 2}
+                strokeDashoffset={
+                  ((r * 2 * Math.PI * 3) / 2) * (1 - timeBasedProgress / 100)
+                }
+                strokeWidth={strokeWidth}
+                vectorEffect="non-scaling-stroke"
+                transform="rotate(-90 50 50)"
+              />
+            </g>
+          </svg>
+        )}
       </div>
     </div>
   );

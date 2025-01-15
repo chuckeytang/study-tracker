@@ -7,6 +7,7 @@ import { authMiddleware } from "@/utils/auth";
 import { createRouter } from "next-connect";
 
 import prisma from "@/lib/prisma";
+import { calculateUnlockStatus } from "@/utils/unlock";
 
 // 递归计算所有非 BIGCHECK 类型的节点的技能点总和
 async function calculateTotalSkillPoints(
@@ -104,63 +105,6 @@ async function lockAndReleaseSkillPoints(
   }
 
   return { releasedSkillPoints, updatedUnlockStatuses };
-}
-
-// 计算节点的解锁状态和技能点数
-async function calculateUnlockStatus(
-  node: any,
-  progressMap: any,
-  nodesMap: any
-) {
-  let unlocked = false;
-  let totalSkillPoints = 0;
-
-  // 解锁规则
-  if (node.nodeType === "BIGCHECK") {
-    if (node.unlockDependenciesTo.length === 0) {
-      unlocked = true; // 没有前置依赖，直接解锁
-    } else {
-      totalSkillPoints = await Promise.all(
-        node.unlockDependenciesTo.map(async (dep: any) => {
-          return await calculateTotalSkillPoints(
-            dep.fromNodeId,
-            progressMap,
-            nodesMap
-          );
-        })
-      ).then((results) => results.reduce((sum, points) => sum + points, 0)); // 计算总技能点
-
-      if (totalSkillPoints >= (node.unlockDepClusterTotalSkillPt || 0)) {
-        unlocked = true; // 技能点达到要求，解锁
-      } else {
-        unlocked = false;
-      }
-    }
-  } else {
-    // MAJOR_NODE 或 MINOR_NODE 解锁依赖
-    unlocked = node.unlockDependenciesTo.every((dep: any) => {
-      const depProgress = progressMap.get(dep.fromNodeId);
-      return depProgress && depProgress.unlocked && depProgress.level > 0;
-    });
-  }
-
-  // 回写到 progressMap，以更新最新解锁状态，处理连锁解锁的情况
-  // const nodeProgress = progressMap.get(node.id);
-  // if (nodeProgress) {
-  //   nodeProgress.unlocked = unlocked;
-  // }
-
-  // 锁住规则（优先级高于解锁规则）
-  if (node.nodeType !== "BIGCHECK") {
-    node.lockDependenciesFrom.forEach((lockDep: any) => {
-      const depProgress = progressMap.get(lockDep.toNodeId);
-      if (depProgress && depProgress.unlocked && depProgress.level > 0) {
-        unlocked = false; // 如果锁住依赖节点解锁且其level > 0，本节点保持锁住
-      }
-    });
-  }
-
-  return { unlocked, totalSkillPoints };
 }
 
 // 定义节点类型，确保是明确的类型，而不是 any

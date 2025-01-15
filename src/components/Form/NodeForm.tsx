@@ -165,6 +165,26 @@ const NodeForm: React.FC<{
       );
     }
   };
+
+  // Determine unlock type options based on node type
+  const unlockTypeOptions = () => {
+    if (nodeType === "BIGCHECK") {
+      return (
+        <>
+          <option value="TIME_BASED">Time Based</option>
+          <option value="CLUSTER_TOTAL_SKILL_POINT">Cluster Total Skill Point</option>
+        </>
+      );
+    } else {
+      return (
+        <>
+          <option value="SKILL_POINT">Skill Point</option>
+          <option value="TIME_BASED">Time Based</option>
+        </>
+      );
+    }
+  };
+
   return (
     <div className="p-4 bg-white shadow-lg rounded-lg flex flex-col text-gray-800">
       <h2 className="text-lg font-bold mb-4">Node Form</h2>
@@ -249,9 +269,7 @@ const NodeForm: React.FC<{
           onChange={(e) => setUnlockType(e.target.value)}
           className="p-2 border border-gray-300 rounded w-2/3"
         >
-          <option value="SKILL_POINT">Skill Point</option>
-          <option value="TIME_BASED">Time Based</option>
-          <option value="CLUSTER_TOTAL_SKILL_POINT">Cluster Total Skill Point</option>
+          {unlockTypeOptions()}
         </select>
       </div>
 

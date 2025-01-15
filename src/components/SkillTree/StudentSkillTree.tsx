@@ -245,51 +245,34 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
   };
 
   // Handle level changes
-  // 修改后的handleLevelChange函数
   const handleLevelChange = async (nodeId: string, delta: number) => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === nodeId) {
-          const currentLevel = node.data.level || 0;
-          let newLevel = currentLevel + delta;
-
-          // 本地验证，避免无效操作
-          if (newLevel < 0) {
-            newLevel = 0; // 不能降低到 0 以下
-            return node;
-          } else if (newLevel > node.data.maxLevel) {
-            newLevel = node.data.maxLevel; // 不能超过最大等级
-            return node;
-          }
-
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              level: newLevel,
-            },
-          };
-        }
-        return node;
-      })
-    );
-
     try {
-      // 调用后端 API，传递 nodeId、points（可为负数） 和 studentId
       const data = await apiRequest("/api/student/changeNodeLevel", "PUT", {
         nodeId: nodeId,
         points: delta, // delta 可为正或负数
         studentId: userId,
       });
-      // 如果成功，更新可用技能点数
       setAvailableSkillPoints((prev) => prev - delta);
       updateSkillTree();
-    } catch (error:any) {
+    } catch (error: any) {
       console.error("Error changing node level:", error);
-      // Handle cooldown error
       if (error.response && error.response.data.error) {
         alert(error.response.data.error);
       }
+    }
+  };
+
+  // Handle skill tree status update
+  const handleUpdateSkillTreeStatus = async (nodeId?: string) => {
+    try {
+      await apiRequest("/api/student/updateSkillTreeStatus", "POST", {
+        studentId: userId,
+        courseId: courseId,
+        nodeId, // Pass the nodeId if provided
+      });
+      updateSkillTree();
+    } catch (error) {
+      console.error("Error updating skill tree status:", error);
     }
   };
 
@@ -313,6 +296,7 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
           userRole="student"
           handleLevelChange={handleLevelChange}
           onContextMenu={handleNodeContextMenu}
+          handleUpdateSkillTreeStatus={(nodeId) => handleUpdateSkillTreeStatus(nodeId)}
         />
       ),
       MINOR_NODE: (params: any) => (

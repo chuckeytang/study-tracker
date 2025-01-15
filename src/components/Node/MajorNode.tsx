@@ -1,6 +1,7 @@
 import { handlerRadius } from "@/types/Values";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Handle, HandleType, Position } from "reactflow";
+import { apiRequest } from "@/utils/api";
 
 interface MajorNodeProps {
   data: any;
@@ -9,6 +10,7 @@ interface MajorNodeProps {
   userRole: "teacher" | "student" | "otherStudent";
   onContextMenu: (event: React.MouseEvent, nodeData: any) => void;
   handleLevelChange?: (nodeId: string, delta: number) => void;
+  handleUpdateSkillTreeStatus?: (nodeId: string) => void;
 }
 
 const MajorNode: React.FC<MajorNodeProps> = ({
@@ -18,6 +20,7 @@ const MajorNode: React.FC<MajorNodeProps> = ({
   userRole = "teacher",
   onContextMenu,
   handleLevelChange,
+  handleUpdateSkillTreeStatus,
 }) => {
   const {
     nodeName,
@@ -28,9 +31,15 @@ const MajorNode: React.FC<MajorNodeProps> = ({
     unlocked,
     coolDown,
     lastUpgradeTime,
+    unlockType,
+    unlockDepTimeInterval,
+    unlockStartTime,
   } = data;
   const [showDescription, setShowDescription] = useState(false);
   const [cooldownProgress, setCooldownProgress] = useState(0);
+  const [timeBasedProgress, setTimeBasedProgress] = useState(0);
+  const intervalRef = useRef<number | null>(null); // 使用 useRef 保存定时器 ID
+  const updateSkillTreeTimeoutRef = useRef<number | null>(null); // 使用 useRef 保存更新技能树定时器 ID
 
   let bgColor = "bg-gray-700"; // 默认锁定状态灰色
   let imgFilter =
@@ -67,19 +76,74 @@ const MajorNode: React.FC<MajorNodeProps> = ({
     calculateCooldownProgress();
   
     // 每秒更新冷却进度
-    const interval = setInterval(calculateCooldownProgress, 100);
+    const interval = setInterval(calculateCooldownProgress, Math.max(coolDown * 10, 100));
   
     return () => clearInterval(interval); // 清理定时器
   }, [lastUpgradeTime, coolDown]);
 
+  // Use the passed function to update the skill tree status
+  const updateStatus = () => {
+    handleUpdateSkillTreeStatus && handleUpdateSkillTreeStatus(data.nodeId);
+  };
+
+  // 动态计算时间解锁进度
+  useEffect(() => {
+    if (unlockType === "TIME_BASED" && unlockDepTimeInterval && unlockStartTime) {
+      const calculateTimeBasedProgress = () => {
+        const unlockStartTimeMs = new Date(unlockStartTime).getTime();
+        const currentTime = Date.now();
+        const elapsedTime = (currentTime - unlockStartTimeMs) / 1000;
+        const progress = Math.min(
+          100,
+          (elapsedTime / unlockDepTimeInterval) * 100
+        );
+        setTimeBasedProgress(progress);
+
+        // 自动解锁逻辑
+        if (progress >= 100) {
+          if (updateSkillTreeTimeoutRef.current) {
+            clearTimeout(updateSkillTreeTimeoutRef.current);
+            updateSkillTreeTimeoutRef.current = null;
+          }
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current); // 清除定时器
+            intervalRef.current = null; // 防止后续调用
+          }
+          updateSkillTreeTimeoutRef.current = window.setTimeout(() => {
+            updateStatus(); // Call the update function with nodeId
+            setTimeBasedProgress(0); // Reset progress after update
+          }, 1000); // 1-second delay
+        }
+      };
+
+      calculateTimeBasedProgress();
+
+      intervalRef.current = window.setInterval(
+        calculateTimeBasedProgress,
+        unlockDepTimeInterval * 10
+      );
+
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        if (updateSkillTreeTimeoutRef.current) {
+          clearTimeout(updateSkillTreeTimeoutRef.current);
+          updateSkillTreeTimeoutRef.current = null;
+        }
+      };
+    }
+  }, [unlockStartTime, unlocked]);
+
   const handleIncrement = () => {
-    if (cooldownProgress === 0) {
+    if (cooldownProgress === 0 && data.level < maxLevel) {
       handleLevelChange && handleLevelChange(data.nodeId, +1);
     }
   };
 
   const handleDecrement = () => {
-    if (cooldownProgress === 0) {
+    if (cooldownProgress === 0 && data.level > 0) {
       handleLevelChange && handleLevelChange(data.nodeId, -1);
     }
   };
@@ -100,11 +164,11 @@ const MajorNode: React.FC<MajorNodeProps> = ({
   const translate = (1 - scale) * r;
 
   return (
-    <div className="relative">
-      <div
+    <div className="relative"
         onContextMenu={(event) => onContextMenu(event, data)}
         onMouseEnter={() => setShowDescription(true)}
-        onMouseLeave={() => setShowDescription(false)}
+        onMouseLeave={() => setShowDescription(false)}>
+      <div
         className={`flex items-center justify-center ${bgColor} rounded-full text-white font-semibold`}
         style={{
           width: `${radius * 2}px`,
@@ -170,7 +234,7 @@ const MajorNode: React.FC<MajorNodeProps> = ({
         </div>
 
         {userRole === "student" && (
-          <div className="fixed -bottom-6 -right-4 w-1/2 h-8 bg-gray-900 rounded-b-lg flex p-1 space-x-1 items-center justify-center">
+          <div className="fixed -bottom-6 -right-4 w-1/2 h-8 bg-gray-900 rounded-lg flex p-1 space-x-1 items-center justify-center">
             <button
               className="w-6 h-6 rounded-md bg-lime-500 font-extrabold"
               onClick={handleDecrement}
@@ -188,6 +252,14 @@ const MajorNode: React.FC<MajorNodeProps> = ({
             </button>
           </div>
         )}
+
+        {/* {userRole === "student" && unlockType === "TIME_BASED" && (
+          <div className="fixed -bottom-6 -right-4 w-1/2 h-8 bg-gray-900 rounded-lg flex p-1 space-x-1 items-center justify-center">
+            <span>
+              {data.level}/{data.maxLevel}
+            </span>
+          </div>
+        )} */}
 
         {userRole === "otherStudent" && (
           <div className="fixed -bottom-6 -right-4 w-1/2 h-8 bg-gray-900 rounded-b-lg flex p-1 space-x-1 items-center justify-center">
@@ -226,6 +298,38 @@ const MajorNode: React.FC<MajorNodeProps> = ({
             />
           </g>
         </svg>
+
+        {unlockType === "TIME_BASED" && data.level < maxLevel && (
+          <svg
+            className="absolute inset-0"
+            style={{
+              width: `${radius * 2}px`,
+              height: `${radius * 2}px`,
+              transform: "translate(-50%, -50%)",
+              opacity: opacity,
+            }}
+            viewBox="0 0 100 100"
+          >
+            <g
+              transform={`scale(${scale}) translate(${translate} ${translate})`}
+            >
+              <circle
+                cx="50"
+                cy="50"
+                r={r}
+                fill="transparent"
+                stroke="rgba(71, 224, 111, 1)"
+                strokeDasharray={(r * 2 * Math.PI * 3) / 2}
+                strokeDashoffset={
+                  ((r * 2 * Math.PI * 3) / 2) * (1 - timeBasedProgress / 100)
+                }
+                strokeWidth={strokeWidth}
+                vectorEffect="non-scaling-stroke"
+                transform="rotate(-90 50 50)"
+              />
+            </g>
+          </svg>
+        )}
       </div>
     </div>
   );

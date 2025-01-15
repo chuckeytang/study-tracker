@@ -112,6 +112,7 @@ model CourseProgress {
   unlocked        Boolean  // 是否解锁
   clusterSkillPt  Int      // bigcheck所代表的cluster的全部已加skill pt
   lastUpgradeTime DateTime? // 最近一次升级的时间
+  unlockStartTime DateTime? // 开始倒计时解锁时间
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -125,4 +126,16 @@ model UserCourse {
   courseId   Int      // 课程 ID
   course     Course   @relation(fields: [courseId], references: [id])
   createdAt  DateTime @default(now()) // 学生选择课程的时间
+}
+
+model ExperienceConfig {
+  id        Int    @id @default(autoincrement())
+  level     Int    @unique
+  expPoints Int
+}
+
+model RewardConfig {
+  id         Int    @id @default(autoincrement())
+  level      Int    @unique
+  rewardPoints Int
 }
