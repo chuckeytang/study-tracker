@@ -9,64 +9,82 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { studentId, courseId, nodeId } = req.body;
 
-  if (!studentId || !courseId) {
-    return res.status(400).json({ message: "studentId and courseId are required" });
+  if (!studentId || !courseId || !nodeId) {
+    return res.status(400).json({ message: "studentId, courseId, and nodeId are required" });
   }
 
   try {
-    // Fetch nodes and progress for the course
-    const [nodes, courseProgress] = await Promise.all([
-      prisma.node.findMany({
-        where: { courseId: Number(courseId) },
-        include: {
-          unlockDependenciesTo: true,
-          unlockDependenciesFrom: true,
+    // Fetch the specified node and its progress
+    const node = await prisma.node.findUnique({
+      where: { id: Number(nodeId) },
+      include: {
+        unlockDependenciesTo: true, // Get nodes that depend on this node
+      },
+    });
+
+    const nodeProgress = await prisma.courseProgress.findUnique({
+      where: {
+        userId_nodeId: {
+          userId: Number(studentId),
+          nodeId: Number(nodeId),
         },
-      }),
-      prisma.courseProgress.findMany({
-        where: { userId: Number(studentId), courseId: Number(courseId) },
-      }),
-    ]);
+      },
+    });
 
-    const progressMap = new Map(
-      courseProgress.map((progress) => [progress.nodeId, progress])
-    );
-    const nodesMap = new Map(nodes.map((node) => [node.id, node]));
-
-    // Determine which nodes to update
-    const nodesToUpdate = nodeId ? [nodesMap.get(Number(nodeId))] : nodes;
-
-    // Update unlock statuses
-    const unlockStatuses = new Map<number, any>();
-    for (const node of nodesToUpdate) {
-      if (node) {
-        const { unlocked } = await calculateUnlockStatus(node, progressMap, nodesMap);
-        unlockStatuses.set(node.id, { unlocked });
-      }
+    if (!node || !nodeProgress) {
+      return res.status(404).json({ message: "Node or progress not found" });
     }
 
-    // Update course progress with new unlock statuses and unlockStartTime
-    await Promise.all(
-      Array.from(unlockStatuses.entries()).map(([nodeId, status]) => {
-        const nodeProgress = progressMap.get(nodeId);
-        return prisma.courseProgress.update({
+    // Update the status of the specified node
+    const { unlocked } = await calculateUnlockStatus(node, new Map([[nodeId, nodeProgress]]), new Map([[nodeId, node]]));
+    await prisma.courseProgress.update({
+      where: {
+        userId_nodeId: {
+          userId: Number(studentId),
+          nodeId: Number(nodeId),
+        },
+      },
+      data: {
+        unlocked: unlocked,
+        unlockStartTime: unlocked ? new Date() : nodeProgress.unlockStartTime,
+      },
+    });
+
+    // Update the status of dependent child nodes
+    for (const dependency of node.unlockDependenciesTo) {
+      const childNode = await prisma.node.findUnique({
+        where: { id: dependency.toNodeId },
+      });
+
+      const childProgress = await prisma.courseProgress.findUnique({
+        where: {
+          userId_nodeId: {
+            userId: Number(studentId),
+            nodeId: dependency.toNodeId,
+          },
+        },
+      });
+
+      if (childNode && childProgress) {
+        const { unlocked: childUnlocked } = await calculateUnlockStatus(childNode, new Map([[dependency.toNodeId, childProgress]]), new Map([[dependency.toNodeId, childNode]]));
+        await prisma.courseProgress.update({
           where: {
             userId_nodeId: {
               userId: Number(studentId),
-              nodeId: nodeId,
+              nodeId: dependency.toNodeId,
             },
           },
           data: {
-            unlocked: status.unlocked,
-            unlockStartTime: nodeProgress ? nodeProgress.unlockStartTime : null,
+            unlocked: childUnlocked,
+            unlockStartTime: childUnlocked ? new Date() : childProgress.unlockStartTime,
           },
         });
-      })
-    );
+      }
+    }
 
-    res.status(200).json({ message: "Skill tree status updated successfully" });
+    res.status(200).json({ message: "Node and dependent nodes updated successfully" });
   } catch (error) {
-    console.error("Error updating skill tree status:", error);
+    console.error("Error updating node status:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 } 

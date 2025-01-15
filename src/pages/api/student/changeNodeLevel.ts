@@ -45,6 +45,7 @@ interface UnlockStatus {
   unlocked: boolean;
   level: number;
   totalSkillPoints: number;
+  unlockStartTime?: Date | null;
 }
 
 interface LockAndReleaseResult {
@@ -68,25 +69,29 @@ async function lockAndReleaseSkillPoints(
 
   let releasedSkillPoints = 0;
   let level = 0;
-  const updatedUnlockStatuses = new Map<number, UnlockStatus>(); // 使用 Map 存储状态
+  const updatedUnlockStatuses = new Map<number, UnlockStatus>();
 
+  const progress = progressMap.get(nodeId);
   if (node.nodeType === "BIGCHECK") {
     level = 1; // BIGCHECK 节点的级别为1
   } else {
     // 获取当前节点的进度
-    const progress = progressMap.get(nodeId);
     if (progress && progress.level > 0) {
       releasedSkillPoints += progress.level; // 释放的技能点等于当前节点的等级
       level = 0; // 非BIGCHECK节点，锁住后level设为0
     }
   }
 
+  if (nodeId === 480) {
+    console.log("nodeId: ", nodeId, "unlockStartTime: ", progress.unlockStartTime);
+  }
   // 更新 unlockStatuses Map，锁住该节点
   updatedUnlockStatuses.set(nodeId, {
     nodeId: nodeId,
     unlocked: !lockRoot,
     level: level,
     totalSkillPoints: 0,
+    unlockStartTime: lockRoot ? progress.unlockStartTime : null, // Set unlockStartTime to null when locked
   });
 
   // 递归锁住子节点
@@ -165,7 +170,19 @@ async function processNodes(
 
     // 如果节点被锁住并且有子节点，锁住并释放技能点
     const nodeProgress = progressMap.get(node.id);
-    if (!unlocked && nodeProgress) {
+    if ((unlocked && nodeProgress.level === 0) || (!unlocked && nodeProgress.unlockStartTime)) {
+      // 如果节点解锁状态(或待解锁状态)，但等级降为0，需要对其子节点进行lockandrelease
+      const { releasedSkillPoints, updatedUnlockStatuses } =
+        await lockAndReleaseSkillPoints(node.id, progressMap, nodesMap, !unlocked);
+
+      totalReleasedSkillPoints += releasedSkillPoints;
+
+      // 标记所有递归处理的节点，防止重复处理
+      updatedUnlockStatuses.forEach((status, nodeId) => {
+        processedNodes.add(nodeId); // 标记处理过的节点
+        unlockStatuses.set(nodeId, status); // 更新到 unlockStatuses，覆盖旧的状态
+      });
+    }else if (!unlocked && nodeProgress) {
       const { releasedSkillPoints, updatedUnlockStatuses } =
         await lockAndReleaseSkillPoints(node.id, progressMap, nodesMap);
 
@@ -176,19 +193,7 @@ async function processNodes(
         processedNodes.add(nodeId); // 标记处理过的节点
         unlockStatuses.set(nodeId, status); // 更新到 unlockStatuses，覆盖旧的状态
       });
-    } else if (unlocked && nodeProgress.level === 0) {
-      // 如果节点解锁状态，但等级降为0，需要对其子节点进行lockandrelease
-      const { releasedSkillPoints, updatedUnlockStatuses } =
-        await lockAndReleaseSkillPoints(node.id, progressMap, nodesMap, false);
-
-      totalReleasedSkillPoints += releasedSkillPoints;
-
-      // 标记所有递归处理的节点，防止重复处理
-      updatedUnlockStatuses.forEach((status, nodeId) => {
-        processedNodes.add(nodeId); // 标记处理过的节点
-        unlockStatuses.set(nodeId, status); // 更新到 unlockStatuses，覆盖旧的状态
-      });
-    }
+    } 
 
     // 将当前节点状态添加到 unlockStatuses
     unlockStatuses.set(node.id, {
@@ -196,6 +201,7 @@ async function processNodes(
       unlocked,
       totalSkillPoints,
       level: unlockStatuses.get(node.id)?.level || nodeProgress.level, // level值不作处理
+      unlockStartTime: unlockStatuses.get(node.id)?.unlockStartTime || null,
     });
 
     // 标记当前节点为已处理
@@ -248,6 +254,7 @@ async function checkUnlockStatus(courseId: number, studentId: number) {
       nodeProgress.unlocked = status.unlocked;
       nodeProgress.clusterSkillPt = status.totalSkillPoints;
       nodeProgress.level = status.level;
+      nodeProgress.unlockStartTime = status.unlockStartTime;
     }
   });
 
@@ -399,6 +406,7 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
             unlocked: status.unlocked,
             level: status.level,
             clusterSkillPt: status.totalSkillPoints,
+            unlockStartTime: status.unlockStartTime,
           },
         })
       )

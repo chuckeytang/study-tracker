@@ -253,14 +253,6 @@ const MajorNode: React.FC<MajorNodeProps> = ({
           </div>
         )}
 
-        {/* {userRole === "student" && unlockType === "TIME_BASED" && (
-          <div className="fixed -bottom-6 -right-4 w-1/2 h-8 bg-gray-900 rounded-lg flex p-1 space-x-1 items-center justify-center">
-            <span>
-              {data.level}/{data.maxLevel}
-            </span>
-          </div>
-        )} */}
-
         {userRole === "otherStudent" && (
           <div className="fixed -bottom-6 -right-4 w-1/2 h-8 bg-gray-900 rounded-b-lg flex p-1 space-x-1 items-center justify-center">
             <span>

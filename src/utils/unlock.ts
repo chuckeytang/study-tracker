@@ -37,7 +37,11 @@ export async function calculateUnlockStatus(
         unlocked = false;       // 依赖节点未解锁，需要等待倒计时结束才能解锁
         // Set unlockStartTime if not already set
         const nodeProgress = progressMap.get(node.id);
-        if (nodeProgress && !nodeProgress.unlockStartTime) {
+        if (nodeProgress.unlocked) {
+          // 如果已经解锁，则不需要做什么了
+          unlocked = true;
+        }
+        else if (nodeProgress && !nodeProgress.unlockStartTime) {
           nodeProgress.unlockStartTime = new Date();
         }
         else {
@@ -72,7 +76,7 @@ export async function calculateUnlockStatus(
       const allDependenciesUnlocked = node.unlockDependenciesTo.every(
         (dep: any) => {
           const depProgress = progressMap.get(dep.fromNodeId);
-          return depProgress && depProgress.unlocked;
+          return depProgress && depProgress.unlocked && depProgress.level > 0;
         }
       );
 
@@ -80,14 +84,18 @@ export async function calculateUnlockStatus(
         unlocked = false;       // 依赖节点未解锁，需要等待倒计时结束才能解锁
         // Set unlockStartTime if not already set
         const nodeProgress = progressMap.get(node.id);
-        if (nodeProgress && !nodeProgress.unlockStartTime) {
+        if (nodeProgress.unlocked) {
+          // 如果已经解锁，则不需要做什么了
+          unlocked = true;
+        }
+        else if (nodeProgress && !nodeProgress.unlockStartTime) {
           nodeProgress.unlockStartTime = new Date();
         }
         else {
           const unlockDepTimeInterval = node.unlockDepTimeInterval || 0;
           const now = new Date();
           if (nodeProgress && nodeProgress.unlockStartTime) {
-            const unlockEndTime = new Date(nodeProgress.unlockStartTime.getTime() + unlockDepTimeInterval);
+            const unlockEndTime = new Date(nodeProgress.unlockStartTime.getTime() + unlockDepTimeInterval*1000);
             if (now >= unlockEndTime) {
               unlocked = true; // Unlock the node if the time interval has passed
               nodeProgress.unlockStartTime = null; // Reset unlockStartTime
