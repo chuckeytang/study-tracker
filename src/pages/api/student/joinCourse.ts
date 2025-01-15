@@ -66,30 +66,32 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       // 判断是否有前置依赖节点
       const hasDependencies = node.unlockDependenciesTo.length > 0;
 
-      // 检查当前节点依赖的是否只有 bigcheck 且已解锁
+      // 检查当前节点依赖的是否只有 bigcheck 且该bigcheck已解锁
       let unlocked = !hasDependencies; // 如果没有依赖，则默认为解锁
-      if (hasDependencies && !isBigCheck) {
+      let unlockStartTime = null;
+      if (hasDependencies) {
         const onlyDependsOnUnlockedBigCheck = node.unlockDependenciesTo.every(
           (dependency: any) =>
             dependency.fromNode.nodeType === "BIGCHECK" &&
             unlockedBigCheckIds.includes(dependency.fromNodeId)
         );
-        unlocked = onlyDependsOnUnlockedBigCheck; // 如果依赖的都是已解锁的 bigcheck，则解锁本节点
-      }
 
-      // 如果节点是 TIME_BASED 类型且未解锁，检查其依赖节点
-      let unlockStartTime = null;
-      if (unlocked && node.unlockType === "TIME_BASED") {
-        unlocked=false;
-        const allDependenciesUnlocked = node.unlockDependenciesTo.every(
-          (dependency: any) => {
-            
-            return dependency
+        if (isBigCheck) {
+          unlocked = false;
+          // 如果依赖的是 bigcheck，又是TIME_BASED，则设置开始unlock的时间
+          if (node.unlockType === "TIME_BASED") {
+            unlockStartTime = onlyDependsOnUnlockedBigCheck ? new Date() : null;
           }
-        );
-
-        if (allDependenciesUnlocked) {
-          unlockStartTime = new Date(); // 设置解锁开始时间
+        }
+        else {
+          
+          if (node.unlockType === "TIME_BASED") {
+            unlocked = false;
+            unlockStartTime = onlyDependsOnUnlockedBigCheck ? new Date() : null;
+          }
+          else {
+            unlocked = onlyDependsOnUnlockedBigCheck; // 如果依赖的都是已解锁的 bigcheck，则解锁本节点
+          }
         }
       }
 

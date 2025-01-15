@@ -77,9 +77,9 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
 
       fetchOtherStudents();
 
-      // Fetch course data
+      // Fetch course data with studentId
       const data = await apiRequest(
-        `/api/courses/getBigChecks?courseId=${courseId}`
+        `/api/courses/getBigChecks?courseId=${courseId}&studentId=${userId}`
       );
       const bigChecks = data.data.map((node: any) => ({
         ...node,
@@ -286,6 +286,7 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
           userRole="student"
           handleLevelChange={handleLevelChange}
           onContextMenu={handleNodeContextMenu}
+          handleUpdateSkillTreeStatus={(nodeId) => handleUpdateSkillTreeStatus(nodeId)}
         />
       ),
       MAJOR_NODE: (params: any) => (
@@ -307,6 +308,7 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
           userRole="student"
           handleLevelChange={handleLevelChange}
           onContextMenu={handleNodeContextMenu}
+          handleUpdateSkillTreeStatus={(nodeId) => handleUpdateSkillTreeStatus(nodeId)}
         />
       ),
     }),

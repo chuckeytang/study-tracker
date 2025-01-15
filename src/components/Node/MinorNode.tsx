@@ -276,7 +276,7 @@ const MinorNode: React.FC<MinorNodeProps> = ({
           </g>
         </svg>
 
-        {unlockType === "TIME_BASED" && data.level < maxLevel && (
+        {unlockType === "TIME_BASED" && !unlocked && (
           <svg
             className="absolute inset-0"
             style={{
@@ -296,9 +296,9 @@ const MinorNode: React.FC<MinorNodeProps> = ({
                 r={r}
                 fill="transparent"
                 stroke="rgba(71, 224, 111, 1)"
-                strokeDasharray={(r * 2 * Math.PI * 3) / 2}
+                strokeDasharray={(r * 2 * Math.PI * 2.27) / 2}
                 strokeDashoffset={
-                  ((r * 2 * Math.PI * 3) / 2) * (1 - timeBasedProgress / 100)
+                  ((r * 2 * Math.PI * 2.27) / 2) * (1 - timeBasedProgress / 100)
                 }
                 strokeWidth={strokeWidth}
                 vectorEffect="non-scaling-stroke"

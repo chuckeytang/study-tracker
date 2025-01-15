@@ -30,9 +30,9 @@ const OtherStudentSkillTree = ({ courseName }: { courseName: string }) => {
   // Fetch and update the skill tree along with student progress
   const updateSkillTree = async () => {
     try {
-      // Fetch course data
+      // Fetch course data with studentId
       const data = await apiRequest(
-        `/api/courses/getBigChecks?courseId=${courseId}`
+        `/api/courses/getBigChecks?courseId=${courseId}&studentId=${userId}`
       );
       const bigChecks = data.data.map((node: any) => ({
         ...node,

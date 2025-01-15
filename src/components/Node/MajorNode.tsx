@@ -291,7 +291,7 @@ const MajorNode: React.FC<MajorNodeProps> = ({
           </g>
         </svg>
 
-        {unlockType === "TIME_BASED" && data.level < maxLevel && (
+        {unlockType === "TIME_BASED" && !unlocked  && (
           <svg
             className="absolute inset-0"
             style={{

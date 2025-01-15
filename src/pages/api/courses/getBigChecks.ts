@@ -12,7 +12,7 @@ const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();
 router.use(authMiddleware);
 
 router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
-  const { courseId } = req.query;
+  const { courseId, studentId } = req.query;
 
   if (!courseId) {
     return res.status(400).json({ message: "courseId is required" });
@@ -34,6 +34,21 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       },
     });
 
+    let progressMap = new Map();
+
+    if (studentId) {
+      // 查询学生的课程进度
+      const courseProgress = await prisma.courseProgress.findMany({
+        where: {
+          courseId: Number(courseId),
+          userId: Number(studentId),
+        },
+      });
+
+      // 创建一个 map 来快速查找进度
+      progressMap = new Map(courseProgress.map((progress) => [progress.nodeId, progress]));
+    }
+
     // 查询所有与这些 bigcheck 节点相关的依赖关系
     const dependencies = await prisma.unlockDependency.findMany({
       where: {
@@ -54,6 +69,7 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
 
     // 将所有节点存入 nodeMap 中，并保留 unlockDependencies 信息
     bigCheckNodes.forEach((node) => {
+      const progress = progressMap.get(node.id);
       nodeMap[node.id] = {
         nodeId: node.id,
         nodeName: node.name,
@@ -67,20 +83,25 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         coolDown: node.coolDown,
         unlockType: node.unlockType,
         unlockDepTimeInterval: node.unlockDepTimeInterval,
+        unlockStartTime: progress ? progress.unlockStartTime : null,
         exp: node.exp,
         rewardPt: node.rewardPt,
-        unlockDependencies: node.unlockDependenciesTo.map((dep) => ({
-          nodeId: dep.fromNode.id,
-          nodeName: dep.fromNode.name,
-          nodeDescription: dep.fromNode.description,
-          nodeType: dep.fromNode.nodeType,
-          maxLevel: dep.fromNode.maxLevel,
-          coolDown: dep.fromNode.coolDown,
-          unlockType: dep.fromNode.unlockType,
-          unlockDepTimeInterval: dep.fromNode.unlockDepTimeInterval,
-          exp: dep.fromNode.exp,
-          rewardPt: dep.fromNode.rewardPt,
-        })),
+        unlockDependencies: node.unlockDependenciesTo.map((dep) => {
+          const depProgress = progressMap.get(dep.fromNode.id);
+          return {
+            nodeId: dep.fromNode.id,
+            nodeName: dep.fromNode.name,
+            nodeDescription: dep.fromNode.description,
+            nodeType: dep.fromNode.nodeType,
+            maxLevel: dep.fromNode.maxLevel,
+            coolDown: dep.fromNode.coolDown,
+            unlockType: dep.fromNode.unlockType,
+            unlockDepTimeInterval: dep.fromNode.unlockDepTimeInterval,
+            unlockStartTime: depProgress ? depProgress.unlockStartTime : null,
+            exp: dep.fromNode.exp,
+            rewardPt: dep.fromNode.rewardPt,
+          };
+        }),
       };
     });
 

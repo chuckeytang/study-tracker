@@ -40,23 +40,20 @@ export async function calculateUnlockStatus(
         if (nodeProgress.unlocked) {
           // 如果已经解锁，则不需要做什么了
           unlocked = true;
-        }
-        else if (nodeProgress && !nodeProgress.unlockStartTime) {
+        } else if (nodeProgress && !nodeProgress.unlockStartTime) {
           nodeProgress.unlockStartTime = new Date();
-        }
-        else {
+        } else {
           const unlockDepTimeInterval = node.unlockDepTimeInterval || 0;
           const now = new Date();
           if (nodeProgress && nodeProgress.unlockStartTime) {
-            const unlockEndTime = new Date(nodeProgress.unlockStartTime.getTime() + unlockDepTimeInterval);
+            const unlockEndTime = new Date(nodeProgress.unlockStartTime.getTime() + unlockDepTimeInterval * 1000);
             if (now >= unlockEndTime) {
               unlocked = true; // Unlock the node if the time interval has passed
               nodeProgress.unlockStartTime = null; // Reset unlockStartTime
             }
           }
         }
-      }
-      else {
+      } else {
         unlocked = false;
         const nodeProgress = progressMap.get(node.id);
         if (nodeProgress) {
@@ -71,14 +68,14 @@ export async function calculateUnlockStatus(
         const depProgress = progressMap.get(dep.fromNodeId);
         return depProgress && depProgress.unlocked && depProgress.level > 0;
       });
-    }
-    else if (node.unlockType === "TIME_BASED") {
-      const allDependenciesUnlocked = node.unlockDependenciesTo.every(
-        (dep: any) => {
-          const depProgress = progressMap.get(dep.fromNodeId);
-          return depProgress && depProgress.unlocked && depProgress.level > 0;
-        }
-      );
+    } else if (node.unlockType === "TIME_BASED") {
+      if (node.id === 1605) {
+        console.log(node.unlockDependenciesTo);
+      }
+      const allDependenciesUnlocked = node.unlockDependenciesTo.every((dep: any) => {
+        const depProgress = progressMap.get(dep.fromNodeId);
+        return depProgress && depProgress.unlocked && (dep.fromNode.nodeType === "BIGCHECK" || depProgress.level > 0);
+      });
 
       if (allDependenciesUnlocked) {
         unlocked = false;       // 依赖节点未解锁，需要等待倒计时结束才能解锁
@@ -87,23 +84,20 @@ export async function calculateUnlockStatus(
         if (nodeProgress.unlocked) {
           // 如果已经解锁，则不需要做什么了
           unlocked = true;
-        }
-        else if (nodeProgress && !nodeProgress.unlockStartTime) {
+        } else if (nodeProgress && !nodeProgress.unlockStartTime) {
           nodeProgress.unlockStartTime = new Date();
-        }
-        else {
+        } else {
           const unlockDepTimeInterval = node.unlockDepTimeInterval || 0;
           const now = new Date();
           if (nodeProgress && nodeProgress.unlockStartTime) {
-            const unlockEndTime = new Date(nodeProgress.unlockStartTime.getTime() + unlockDepTimeInterval*1000);
+            const unlockEndTime = new Date(nodeProgress.unlockStartTime.getTime() + unlockDepTimeInterval * 1000);
             if (now >= unlockEndTime) {
               unlocked = true; // Unlock the node if the time interval has passed
               nodeProgress.unlockStartTime = null; // Reset unlockStartTime
             }
           }
         }
-      }
-      else {
+      } else {
         unlocked = false;
         const nodeProgress = progressMap.get(node.id);
         if (nodeProgress) {
@@ -111,6 +105,12 @@ export async function calculateUnlockStatus(
         }
       }
     }
+  }
+
+  // Update the progressMap with the new unlock status
+  const nodeProgress = progressMap.get(node.id);
+  if (nodeProgress) {
+    nodeProgress.unlocked = unlocked;
   }
 
   return { unlocked, totalSkillPoints };
@@ -140,4 +140,4 @@ async function calculateTotalSkillPoints(
   }
 
   return totalSkillPoints;
-} 
+}
