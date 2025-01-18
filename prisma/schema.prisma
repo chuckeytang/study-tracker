@@ -19,6 +19,7 @@ model User {
   experience      Int              @default(0) // 用户的经验值
   experienceLevel Int              @default(1) // 用户的经验等级
   rewardPoints    Int              @default(0) // 用户的奖励点数
+  rewardLevel     Int              @default(1) // 用户的奖励等级
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   progress        CourseProgress[] // 学生的学习进度

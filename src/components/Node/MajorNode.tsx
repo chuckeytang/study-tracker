@@ -61,25 +61,23 @@ const MajorNode: React.FC<MajorNodeProps> = ({
   // 动态计算冷却进度
   useEffect(() => {
     const calculateCooldownProgress = () => {
-      if (lastUpgradeTime && coolDown) {
-        const lastUpgradeTimeMs = new Date(lastUpgradeTime).getTime(); // 转换为时间戳
-        const currentTime = Date.now(); // 当前时间戳
-        const elapsedTime = (currentTime - lastUpgradeTimeMs) / 1000; // 转换为秒
-        const progress = Math.max(0, 100 - (elapsedTime / coolDown) * 100); // 冷却进度百分比
+      if (data.level < maxLevel && lastUpgradeTime && coolDown) {
+        const lastUpgradeTimeMs = new Date(lastUpgradeTime).getTime();
+        const currentTime = Date.now();
+        const elapsedTime = (currentTime - lastUpgradeTimeMs) / 1000;
+        const progress = Math.max(0, 100 - (elapsedTime / coolDown) * 100);
         setCooldownProgress(progress);
       } else {
-        setCooldownProgress(0); // 没有冷却时，直接设置为 0
+        setCooldownProgress(0);
       }
     };
-  
-    // 初始化计算一次冷却进度
+
     calculateCooldownProgress();
-  
-    // 每秒更新冷却进度
+
     const interval = setInterval(calculateCooldownProgress, Math.max(coolDown * 10, 100));
-  
-    return () => clearInterval(interval); // 清理定时器
-  }, [lastUpgradeTime, coolDown]);
+
+    return () => clearInterval(interval);
+  }, [lastUpgradeTime, coolDown, data.level]);
 
   // Use the passed function to update the skill tree status
   const updateStatus = () => {

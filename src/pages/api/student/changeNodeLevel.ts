@@ -292,12 +292,39 @@ async function calculateUserLevel(currentExp: number) {
   let newLevel = 1;
   for (const config of configs) {
     if (currentExp >= config.expPoints) {
-      newLevel = config.level;
+      currentExp -= config.expPoints;
+      newLevel = config.level + 1;
     } else {
       break;
     }
   }
+  
+  const maxLevel = configs[configs.length - 1].level;
+  if (newLevel > maxLevel) {
+    newLevel = maxLevel;
+  }
+  return newLevel;
+}
 
+async function calculateUserRewardLevel(currentReward: number) {
+  const configs = await prisma.rewardConfig.findMany({
+    orderBy: { level: "asc" },
+  });
+
+  let newLevel = 1;
+  for (const config of configs) {
+    if (currentReward >= config.rewardPoints) {
+      currentReward -= config.rewardPoints;
+      newLevel = config.level + 1;
+    } else {
+      break;
+    }
+  }
+  
+  const maxLevel = configs[configs.length - 1].level;
+  if (newLevel > maxLevel) {
+    newLevel = maxLevel;
+  }
   return newLevel;
 }
 
@@ -371,20 +398,20 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     }
 
     // Current skill point level
-    const currentLevel = progress.level;
-    const maxLevel = node.maxLevel;
+    const currentNodeLevel = progress.level;
+    const maxNodeLevel = node.maxLevel;
 
     // 计算新的等级
-    const newLevel = currentLevel + points;
+    const newNodeLevel = currentNodeLevel + points;
 
     // 检查新等级是否合法
-    if (newLevel < 0) {
+    if (newNodeLevel < 0) {
       return res.status(400).json({
         error: "Cannot reduce skill points. Level cannot be below 0.",
       });
-    } else if (newLevel > maxLevel) {
+    } else if (newNodeLevel > maxNodeLevel) {
       return res.status(400).json({
-        error: `Cannot add skill points. Max level of ${maxLevel} reached.`,
+        error: `Cannot add skill points. Max level of ${maxNodeLevel} reached.`,
       });
     }
 
@@ -394,6 +421,18 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         .status(400)
         .json({ message: "Not enough skill points to add to this node." });
     }
+
+    // 如果没有历史记录，则增加经验值和奖励点数
+    let expGained = 0;
+    let rewardGained = 0;
+    expGained = node.exp || 0;
+    rewardGained = node.rewardPt || 0;
+
+    // 更新用户的经验值和奖励点数
+    const newExp = user.experience + expGained;
+    const newLevel = await calculateUserLevel(newExp);
+    const newRewardPoint = user.rewardPoints + rewardGained;
+    const newRewardLevel = await calculateUserRewardLevel(newRewardPoint);
 
     // 检查是否已经记录过升级历史
     const upgradeHistory = await prisma.nodeUpgradeHistory.findUnique({
@@ -406,17 +445,7 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       },
     });
 
-    // 如果没有历史记录，则增加经验值和奖励点数
-    let expGained = 0;
-    let rewardGained = 0;
     if (!upgradeHistory && points > 0) {
-      expGained = node.exp || 0;
-      rewardGained = node.rewardPt || 0;
-
-      // 更新用户的经验值和奖励点数
-      const newExp = user.experience + expGained;
-      const newLevel = await calculateUserLevel(newExp);
-
       // 插入升级历史
       await prisma.nodeUpgradeHistory.create({
         data: {
@@ -431,9 +460,8 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         data: {
           experience: newExp,
           experienceLevel: newLevel,
-          rewardPoints: {
-            increment: rewardGained,
-          },
+          rewardPoints: newRewardPoint,
+          rewardLevel: newRewardLevel,
         },
       });
     }
@@ -447,7 +475,7 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         },
       },
       data: {
-        level: newLevel,
+        level: newNodeLevel,
         lastUpgradeTime: new Date(), // Update last upgrade time
       },
     });

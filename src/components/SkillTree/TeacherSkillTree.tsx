@@ -24,8 +24,6 @@ import { calculateHandlePosition } from "@/utils/utils";
 import { apiRequest } from "@/utils/api";
 import { FaHome } from "react-icons/fa";
 import { toast } from "react-toastify";
-import ExpLevelUpConfigForm from "../Form/ExpLevelUpConfigForm";
-import RewardLevelUpConfigForm from "../Form/RewardLevelUpConfigForm";
 
 const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -37,8 +35,6 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
   const [formType, setFormType] = useState<"create" | "edit" | null>(null);
   const [formData, setFormData] = useState<any>({});
   const [bigCheckFormVisible, setBigCheckFormVisible] = useState(false);
-  const [expConfigFormVisible, setExpConfigFormVisible] = useState(false);
-  const [rewardConfigFormVisible, setRewardConfigFormVisible] = useState(false);
 
   const router = useRouter();
   const { userId, courseId } = router.query;
@@ -46,16 +42,6 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
   // 处理"Connect to other BigCheck"点击，弹出 BigCheckForm
   const handleConnectToBigCheck = () => {
     setBigCheckFormVisible(true); // 显示 BigCheckForm
-  };
-
-  // Function to handle configuration of ExperienceBar
-  const handleConfigExperienceBar = () => {
-    setExpConfigFormVisible(true);
-  };
-
-  // Function to handle configuration of RewardBar
-  const handleConfigRewardBar = () => {
-    setRewardConfigFormVisible(true);
   };
 
   // Handle Experience configuration submission
@@ -562,18 +548,6 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
                 >
                   Create BigCheck
                 </li>
-                <li
-                  className="p-2 hover:bg-orange-400 text-gray-800"
-                  onClick={handleConfigExperienceBar}
-                >
-                  Config ExperienceBar
-                </li>
-                <li
-                  className="p-2 hover:bg-orange-400 text-gray-800"
-                  onClick={handleConfigRewardBar}
-                >
-                  Config RewardBar
-                </li>
               </>
             )}
           </div>
@@ -610,22 +584,6 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
             onClose={() => setBigCheckFormVisible(false)}
             onSubmit={handleBigcheckFormSubmit}
             courseId={Array.isArray(courseId) ? courseId[0] : courseId || ""}
-          />
-        )}
-
-        {/* ExpLevelUpConfigForm */}
-        {expConfigFormVisible && (
-          <ExpLevelUpConfigForm
-            onClose={() => setExpConfigFormVisible(false)}
-            onSubmit={handleExpConfigSubmit}
-          />
-        )}
-
-        {/* RewardLevelUpConfigForm */}
-        {rewardConfigFormVisible && (
-          <RewardLevelUpConfigForm
-            onClose={() => setRewardConfigFormVisible(false)}
-            onSubmit={handleRewardConfigSubmit}
           />
         )}
       </div>

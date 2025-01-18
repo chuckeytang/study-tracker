@@ -53,7 +53,7 @@ const MinorNode: React.FC<MinorNodeProps> = ({
 
   useEffect(() => {
     const calculateCooldownProgress = () => {
-      if (lastUpgradeTime && coolDown) {
+      if (data.level < maxLevel && lastUpgradeTime && coolDown) {
         const lastUpgradeTimeMs = new Date(lastUpgradeTime).getTime();
         const currentTime = Date.now();
         const elapsedTime = (currentTime - lastUpgradeTimeMs) / 1000;
@@ -69,7 +69,7 @@ const MinorNode: React.FC<MinorNodeProps> = ({
     const interval = setInterval(calculateCooldownProgress, Math.max(coolDown * 10, 100));
 
     return () => clearInterval(interval);
-  }, [lastUpgradeTime, coolDown]);
+  }, [lastUpgradeTime, coolDown, data.level]);
 
   const updateStatus = () => {
     handleUpdateSkillTreeStatus && handleUpdateSkillTreeStatus(data.nodeId);

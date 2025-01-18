@@ -1,4 +1,3 @@
-import { useRouter } from "next/router";
 import { apiRequest } from "@/utils/api";
 const fetchUserDetails = async (token: string) => {
   try {
@@ -20,6 +19,7 @@ class WebUser {
   private userData: any = null; // 存储用户数据
   private expired: boolean = false; // 过期标记
   private readonly userKey: string = "user";
+  private readonly animationKey: string = "giftAnimationPlayed";
 
   private constructor() {
     this.loadUserFromStorage();
@@ -65,15 +65,22 @@ class WebUser {
         null,
         false
       );
-      localStorage.setItem("user", JSON.stringify(userDetails));
+      localStorage.setItem(this.userKey, JSON.stringify(userDetails));
 
       this.userData = userDetails;
-      localStorage.setItem(this.userKey, JSON.stringify(this.userData));
       this.expired = false; // 重置过期标记
       return userDetails;
     } catch (error) {
       console.error("Failed to fetch user details:", error);
     }
+  }
+
+  public hasPlayedGiftAnimation(): boolean {
+    return localStorage.getItem(this.animationKey) === "true";
+  }
+
+  public setGiftAnimationPlayed() {
+    localStorage.setItem(this.animationKey, "true");
   }
 }
 

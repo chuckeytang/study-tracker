@@ -46,18 +46,6 @@ const SkillTree = (props: any) => {
     return <div>Loading...</div>;
   }
 
-  const calculateProgress = (
-    current: number,
-    level: number,
-    config: number[]
-  ) => {
-    if (level <= 1) return current / config[0];
-    const previousLevelTotal = config
-      .slice(0, level - 1)
-      .reduce((a, b) => a + b, 0);
-    return (current - previousLevelTotal) / config[level - 1];
-  };
-
   return (
     <>
       {userRole === "TEACHER" ? (

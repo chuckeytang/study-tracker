@@ -21,6 +21,7 @@ import {
 import { calculateHandlePosition } from "@/utils/utils";
 import { apiRequest } from "@/utils/api";
 import { FaHome } from "react-icons/fa";
+import WebUser from "@/utils/user";
 
 // Define options for the course selection dropdown
 const options = [
@@ -36,8 +37,10 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
   const [experience, setExperience] = useState<number>(0);
   const [experienceLevel, setExperienceLevel] = useState<number>(1);
   const [rewardPoints, setRewardPoints] = useState<number>(0);
+  const [rewardLevel, setRewardLevel] = useState<number>(1);
   const [experienceConfig, setExperienceConfig] = useState<number[]>([]);
   const [rewardConfig, setRewardConfig] = useState<number[]>([]);
+  const [showGift, setShowGift] = useState(false);
 
   const router = useRouter();
   const { userId, courseId } = router.query;
@@ -79,6 +82,10 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
     try {
       const userData = await apiRequest(`/api/users/getOne?id=${userId}`);
       setAvailableSkillPoints(userData.skillPt || 0);
+      setExperience(userData.experience || 0);
+      setExperienceLevel(userData.experienceLevel || 1);
+      setRewardPoints(userData.rewardPoints || 0);
+      setRewardLevel(userData.rewardLevel || 1);
 
       fetchOtherStudents();
 
@@ -212,7 +219,7 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
       setNodes(allNodes);
       setEdges(allEdges);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error updating skill tree:", error);
     }
   };
 
@@ -223,13 +230,37 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
       try {
         const data = await apiRequest(`/api/users/getOne?id=${userId}`);
         setAvailableSkillPoints(data.skillPt || 0); // 设置技能点数
+        setExperience(data.experience || 0);
+        setExperienceLevel(data.experienceLevel || 1);
+        setRewardPoints(data.rewardPoints || 0);
+        setRewardLevel(data.rewardLevel || 1);
       } catch (error) {
         console.error("Error fetching user info:", error);
       }
     };
 
+    const fetchExperienceConfig = async () => {
+      try {
+        const data = await apiRequest("/api/experienceConfig/search");
+        setExperienceConfig(data.data.map((item: any) => item.expPoints));
+      } catch (error) {
+        console.error("Error fetching experience configuration:", error);
+      }
+    };
+
+    const fetchRewardConfig = async () => {
+      try {
+        const data = await apiRequest("/api/rewardConfig/search");
+        setRewardConfig(data.data.map((item: any) => item.rewardPoints));
+      } catch (error) {
+        console.error("Error fetching reward configuration:", error);
+      }
+    };
+
     fetchUserInfo();
     fetchCourses();
+    fetchExperienceConfig();
+    fetchRewardConfig();
   }, [router.isReady, userId]);
 
   useEffect(() => {
@@ -291,7 +322,9 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
           userRole="student"
           handleLevelChange={handleLevelChange}
           onContextMenu={handleNodeContextMenu}
-          handleUpdateSkillTreeStatus={(nodeId) => handleUpdateSkillTreeStatus(nodeId)}
+          handleUpdateSkillTreeStatus={(nodeId) =>
+            handleUpdateSkillTreeStatus(nodeId)
+          }
         />
       ),
       MAJOR_NODE: (params: any) => (
@@ -302,7 +335,9 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
           userRole="student"
           handleLevelChange={handleLevelChange}
           onContextMenu={handleNodeContextMenu}
-          handleUpdateSkillTreeStatus={(nodeId) => handleUpdateSkillTreeStatus(nodeId)}
+          handleUpdateSkillTreeStatus={(nodeId) =>
+            handleUpdateSkillTreeStatus(nodeId)
+          }
         />
       ),
       MINOR_NODE: (params: any) => (
@@ -313,7 +348,9 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
           userRole="student"
           handleLevelChange={handleLevelChange}
           onContextMenu={handleNodeContextMenu}
-          handleUpdateSkillTreeStatus={(nodeId) => handleUpdateSkillTreeStatus(nodeId)}
+          handleUpdateSkillTreeStatus={(nodeId) =>
+            handleUpdateSkillTreeStatus(nodeId)
+          }
         />
       ),
     }),
@@ -334,12 +371,25 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
     level: number,
     config: number[]
   ) => {
-    if (level <= 1) return current / config[0];
+    if (level <= 1) return Math.min(current / config[0], 1);
     const previousLevelTotal = config
       .slice(0, level - 1)
       .reduce((a, b) => a + b, 0);
-    return (current - previousLevelTotal) / config[level - 1];
+    const progress = (current - previousLevelTotal) / config[level - 1];
+    return Math.min(progress, 1);
   };
+
+  useEffect(() => {
+    const webUser = WebUser.getInstance();
+    if (
+      rewardPoints >= rewardConfig[rewardLevel - 1] &&
+      !webUser.hasPlayedGiftAnimation()
+    ) {
+      setShowGift(true);
+      webUser.setGiftAnimationPlayed();
+      setTimeout(() => setShowGift(false), 5000); // Hide after 5 seconds
+    }
+  }, [rewardPoints, rewardLevel, rewardConfig]);
 
   return (
     <div
@@ -418,10 +468,15 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
       </div>
 
       <div className="fixed bottom-0 left-0 w-full p-4 bg-white">
-        <div className="w-4/5 mx-auto">
+        <div className="w-full mx-auto">
           <div className="mb-2 flex justify-between">
-            <div className="text-sm font-bold mr-4">Experience</div>
-            <div className="w-full bg-gray-200 rounded-full h-4">
+            <div className="text-center mr-2 text-sm font-bold w-28 text-purple-600">
+              Exp Level: {experienceLevel}
+            </div>
+            <div className="text-sm font-bold mr-4 text-gray-700">
+              Experience
+            </div>
+            <div className="w-5/6 bg-gray-200 rounded-full h-4">
               <div
                 className="bg-purple-600 h-4 rounded-full"
                 style={{
@@ -437,17 +492,17 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
             </div>
           </div>
           <div className="flex justify-between">
-            <div className="text-sm font-bold mr-10">Reward</div>
-            <div className="w-full bg-gray-200 rounded-full h-4">
+            <div className="text-center mr-2 text-sm font-bold w-28 text-amber-600">
+              Reward Level: {rewardLevel}
+            </div>
+            <div className="text-sm font-bold mr-10 text-gray-700">Reward</div>
+            <div className="w-5/6 bg-gray-200 rounded-full h-4">
               <div
                 className="bg-amber-500 h-4 rounded-full"
                 style={{
                   width: `${
-                    calculateProgress(
-                      rewardPoints,
-                      experienceLevel,
-                      rewardConfig
-                    ) * 100
+                    calculateProgress(rewardPoints, rewardLevel, rewardConfig) *
+                    100
                   }%`,
                 }}
               ></div>
@@ -455,6 +510,66 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
           </div>
         </div>
       </div>
+
+      {showGift && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <img
+            src="/images/pic_present.png"
+            alt="Gift"
+            className="animate-bounce"
+            style={{
+              width: "100px",
+              animation:
+                "dropBounce 1s ease-out, bounceUp 1.5s 1s ease-out, scaleUp 1s 2.5s ease-in-out, fadeOut 1s 3.5s forwards",
+            }}
+          />
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes dropBounce {
+          0% {
+            transform: translateY(-100vh) scale(0.5);
+          }
+          70% {
+            transform: translateY(0) scale(1.2);
+          }
+          100% {
+            transform: translateY(-100px) scale(1);
+          }
+        }
+
+        @keyframes bounceUp {
+          0% {
+            transform: translateY(-100px) scale(1);
+          }
+          50% {
+            transform: translateY(0) scale(1.1);
+          }
+          100% {
+            transform: translateY(-100px) scale(1);
+          }
+        }
+
+        @keyframes scaleUp {
+          from {
+            transform: translateY(-100px) scale(1);
+          }
+          to {
+            transform: translateY(-100px) scale(3);
+          }
+        }
+        @keyframes fadeOut {
+          from {
+            transform: translateY(-100px) scale(3);
+            opacity: 1;
+          }
+          to {
+            transform: translateY(-100px) scale(3);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 };
