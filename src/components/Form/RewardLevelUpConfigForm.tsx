@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { apiRequest } from "@/utils/api";
 
 interface RewardLevelUpConfigFormProps {
   onClose: () => void;
@@ -10,6 +11,23 @@ const RewardLevelUpConfigForm: React.FC<RewardLevelUpConfigFormProps> = ({
   onSubmit,
 }) => {
   const [rewardConfig, setRewardConfig] = useState<number[]>(Array(7).fill(0));
+
+  useEffect(() => {
+    const fetchRewardConfig = async () => {
+      try {
+        const data = await apiRequest("/api/teacher/config/getReward");
+        const config = data.map((item: any) => item.rewardPoints);
+        
+        // Ensure the config array is exactly 7 levels long
+        const filledConfig = Array(7).fill(0).map((_, index) => config[index] || 0);
+        setRewardConfig(filledConfig);
+      } catch (error) {
+        console.error("Error fetching reward configuration:", error);
+      }
+    };
+
+    fetchRewardConfig();
+  }, []);
 
   const handleChange = (index: number, value: string) => {
     const newConfig = [...rewardConfig];
@@ -36,7 +54,7 @@ const RewardLevelUpConfigForm: React.FC<RewardLevelUpConfigFormProps> = ({
               min="0"
               value={value}
               onChange={(e) => handleChange(index, e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2"
             />
           </div>
         ))}

@@ -61,7 +61,9 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
   // Handle Experience configuration submission
   const handleExpConfigSubmit = async (config: number[]) => {
     try {
-      await apiRequest("/api/teacher/config/experience", "POST", { config });
+      await apiRequest("/api/teacher/config/updateExperience", "POST", {
+        config,
+      });
       console.log("Experience configuration submitted:", config);
     } catch (error) {
       console.error("Error submitting experience configuration:", error);
@@ -71,7 +73,7 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
   // Handle Reward configuration submission
   const handleRewardConfigSubmit = async (config: number[]) => {
     try {
-      await apiRequest("/api/teacher/config/reward", "POST", { config });
+      await apiRequest("/api/teacher/config/updateReward", "POST", { config });
       console.log("Reward configuration submitted:", config);
     } catch (error) {
       console.error("Error submitting reward configuration:", error);
@@ -404,7 +406,10 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
     formData.append("coolDown", nodeData.coolDown.toString());
     formData.append("unlockType", nodeData.unlockType);
     if (nodeData.unlockDepTimeInterval !== undefined) {
-      formData.append("unlockDepTimeInterval", nodeData.unlockDepTimeInterval.toString());
+      formData.append(
+        "unlockDepTimeInterval",
+        nodeData.unlockDepTimeInterval.toString()
+      );
     }
     formData.append("exp", nodeData.exp.toString());
     formData.append("rewardPt", nodeData.rewardPt.toString());

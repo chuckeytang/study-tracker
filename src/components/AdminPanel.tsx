@@ -11,6 +11,11 @@ import {
   AdministratorEdit,
   AdministratorList,
 } from "./AdministratorAdmin";
+import {
+  ExperienceConfigList,
+  ExperienceConfigEdit,
+} from "./ExperienceConfigAdmin";
+import { RewardConfigList, RewardConfigEdit } from "./RewardConfigAdmin";
 
 const AdminPanel = () => {
   const [role, setRole] = useState<string | null>(null);
@@ -75,6 +80,22 @@ const AdminPanel = () => {
                   create={TeacherCreate}
                   edit={TeacherEdit}
                   options={{ label: "Teachers" }} // 左侧菜单名称为 'Teachers'
+                />
+              )}
+              {role === "ADMIN" && (
+                <Resource
+                  name="experienceConfig"
+                  list={ExperienceConfigList}
+                  edit={ExperienceConfigEdit}
+                  options={{ label: "Experience Config" }}
+                />
+              )}
+              {role === "ADMIN" && (
+                <Resource
+                  name="rewardConfig"
+                  list={RewardConfigList}
+                  edit={RewardConfigEdit}
+                  options={{ label: "Reward Config" }}
                 />
               )}
             </Admin>

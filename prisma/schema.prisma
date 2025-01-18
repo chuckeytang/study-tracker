@@ -15,11 +15,16 @@ model User {
   avartarPicUrl   String?          // 用户头像，可选
   email           String           @unique
   role            Role             // 使用枚举类型来定义用户角色
-  skillPt         Int?            // 学生的技能点
+  skillPt         Int?             // 学生的技能点
+  experience      Int              @default(0) // 用户的经验值
+  experienceLevel Int              @default(1) // 用户的经验等级
+  rewardPoints    Int              @default(0) // 用户的奖励点数
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   progress        CourseProgress[] // 学生的学习进度
-  selectedCourses UserCourse[]    // 学生选择的或者老师教授的课程列表
+  selectedCourses UserCourse[]     // 学生选择的或者老师教授的课程列表
+
+  NodeUpgradeHistory NodeUpgradeHistory[]
 }
 
 enum Role {
@@ -71,6 +76,8 @@ model Node {
 
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
+
+  NodeUpgradeHistory NodeUpgradeHistory[]
 }
 
 enum UnlockType {
@@ -138,4 +145,16 @@ model RewardConfig {
   id         Int    @id @default(autoincrement())
   level      Int    @unique
   rewardPoints Int
+}
+
+model NodeUpgradeHistory {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  nodeId    Int
+  level     Int
+  user      User     @relation(fields: [userId], references: [id])
+  node      Node     @relation(fields: [nodeId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, nodeId, level]) // Ensure a user can only have one record per node level
 }

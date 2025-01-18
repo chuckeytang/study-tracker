@@ -83,7 +83,12 @@ async function lockAndReleaseSkillPoints(
   }
 
   if (nodeId === 480) {
-    console.log("nodeId: ", nodeId, "unlockStartTime: ", progress.unlockStartTime);
+    console.log(
+      "nodeId: ",
+      nodeId,
+      "unlockStartTime: ",
+      progress.unlockStartTime
+    );
   }
   // 更新 unlockStatuses Map，锁住该节点
   updatedUnlockStatuses.set(nodeId, {
@@ -170,10 +175,18 @@ async function processNodes(
 
     // 如果节点被锁住并且有子节点，锁住并释放技能点
     const nodeProgress = progressMap.get(node.id);
-    if ((unlocked && nodeProgress.level === 0) || (!unlocked && nodeProgress.unlockStartTime)) {
+    if (
+      (unlocked && nodeProgress.level === 0) ||
+      (!unlocked && nodeProgress.unlockStartTime)
+    ) {
       // 如果节点解锁状态(或待解锁状态)，但等级降为0，需要对其子节点进行lockandrelease
       const { releasedSkillPoints, updatedUnlockStatuses } =
-        await lockAndReleaseSkillPoints(node.id, progressMap, nodesMap, !unlocked);
+        await lockAndReleaseSkillPoints(
+          node.id,
+          progressMap,
+          nodesMap,
+          !unlocked
+        );
 
       totalReleasedSkillPoints += releasedSkillPoints;
 
@@ -182,7 +195,7 @@ async function processNodes(
         processedNodes.add(nodeId); // 标记处理过的节点
         unlockStatuses.set(nodeId, status); // 更新到 unlockStatuses，覆盖旧的状态
       });
-    }else if (!unlocked && nodeProgress) {
+    } else if (!unlocked && nodeProgress) {
       const { releasedSkillPoints, updatedUnlockStatuses } =
         await lockAndReleaseSkillPoints(node.id, progressMap, nodesMap);
 
@@ -193,7 +206,7 @@ async function processNodes(
         processedNodes.add(nodeId); // 标记处理过的节点
         unlockStatuses.set(nodeId, status); // 更新到 unlockStatuses，覆盖旧的状态
       });
-    } 
+    }
 
     // 将当前节点状态添加到 unlockStatuses
     unlockStatuses.set(node.id, {
@@ -269,6 +282,25 @@ async function checkUnlockStatus(courseId: number, studentId: number) {
   return { unlockStatuses, totalReleasedSkillPoints };
 }
 
+async function calculateUserLevel(currentExp: number) {
+  // 获取所有经验等级配置
+  const configs = await prisma.experienceConfig.findMany({
+    orderBy: { level: "asc" },
+  });
+
+  // 找到符合当前经验值的最高等级
+  let newLevel = 1;
+  for (const config of configs) {
+    if (currentExp >= config.expPoints) {
+      newLevel = config.level;
+    } else {
+      break;
+    }
+  }
+
+  return newLevel;
+}
+
 // 创建 API 路由
 const router = createRouter<ExtendedNextApiRequest, NextApiResponse>();
 
@@ -326,11 +358,14 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     if (node.coolDown && progress.lastUpgradeTime) {
       const now = new Date();
       const lastUpgradeTime = new Date(progress.lastUpgradeTime);
-      const timeSinceLastUpgrade = (now.getTime() - lastUpgradeTime.getTime()) / 1000; // in seconds
+      const timeSinceLastUpgrade =
+        (now.getTime() - lastUpgradeTime.getTime()) / 1000; // in seconds
 
       if (timeSinceLastUpgrade < node.coolDown) {
         return res.status(400).json({
-          error: `Cooldown period not yet passed. Please wait ${node.coolDown - timeSinceLastUpgrade} more seconds.`,
+          error: `Cooldown period not yet passed. Please wait ${
+            node.coolDown - timeSinceLastUpgrade
+          } more seconds.`,
         });
       }
     }
@@ -358,6 +393,49 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       return res
         .status(400)
         .json({ message: "Not enough skill points to add to this node." });
+    }
+
+    // 检查是否已经记录过升级历史
+    const upgradeHistory = await prisma.nodeUpgradeHistory.findUnique({
+      where: {
+        userId_nodeId_level: {
+          userId: Number(studentId),
+          nodeId: Number(nodeId),
+          level: newLevel,
+        },
+      },
+    });
+
+    // 如果没有历史记录，则增加经验值和奖励点数
+    let expGained = 0;
+    let rewardGained = 0;
+    if (!upgradeHistory && points > 0) {
+      expGained = node.exp || 0;
+      rewardGained = node.rewardPt || 0;
+
+      // 更新用户的经验值和奖励点数
+      const newExp = user.experience + expGained;
+      const newLevel = await calculateUserLevel(newExp);
+
+      // 插入升级历史
+      await prisma.nodeUpgradeHistory.create({
+        data: {
+          userId: Number(studentId),
+          nodeId: Number(nodeId),
+          level: newLevel,
+        },
+      });
+
+      await prisma.user.update({
+        where: { id: Number(studentId) },
+        data: {
+          experience: newExp,
+          experienceLevel: newLevel,
+          rewardPoints: {
+            increment: rewardGained,
+          },
+        },
+      });
     }
 
     // 更新节点的进度

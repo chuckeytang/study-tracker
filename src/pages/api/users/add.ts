@@ -21,7 +21,7 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     // 手动运行 multer 中间件以处理文件上传
     await runMiddleware(req, res, upload.single("avartar"));
 
-    const { name, email, role, password, skillPt } = req.body;
+    const { name, email, role, password, skillPt, experience, experienceLevel, rewardPoints } = req.body;
     const file = req.file;
 
     const host = req.headers.host || process.env.NEXT_PUBLIC_BASE_URL;
@@ -44,6 +44,9 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         role,
         password: hashedPassword,
         skillPt: Number(skillPt) || 0,
+        experience: Number(experience) || 0,
+        experienceLevel: Number(experienceLevel) || 1,
+        rewardPoints: Number(rewardPoints) || 0,
         ...(avartarPicUrl && { avartarPicUrl }), // 如果有上传文件，保存头像 URL
       },
     });

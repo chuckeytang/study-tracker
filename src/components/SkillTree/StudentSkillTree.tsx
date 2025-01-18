@@ -33,6 +33,11 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [availableSkillPoints, setAvailableSkillPoints] = useState(0);
+  const [experience, setExperience] = useState<number>(0);
+  const [experienceLevel, setExperienceLevel] = useState<number>(1);
+  const [rewardPoints, setRewardPoints] = useState<number>(0);
+  const [experienceConfig, setExperienceConfig] = useState<number[]>([]);
+  const [rewardConfig, setRewardConfig] = useState<number[]>([]);
 
   const router = useRouter();
   const { userId, courseId } = router.query;
@@ -324,6 +329,18 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
     []
   );
 
+  const calculateProgress = (
+    current: number,
+    level: number,
+    config: number[]
+  ) => {
+    if (level <= 1) return current / config[0];
+    const previousLevelTotal = config
+      .slice(0, level - 1)
+      .reduce((a, b) => a + b, 0);
+    return (current - previousLevelTotal) / config[level - 1];
+  };
+
   return (
     <div
       className="flex items-center justify-center bg-[url('/images/bg_student.jpg')] h-screen w-screen bg-cover"
@@ -398,6 +415,45 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
             style={{}}
           />
         </ReactFlowProvider>
+      </div>
+
+      <div className="fixed bottom-0 left-0 w-full p-4 bg-white">
+        <div className="w-4/5 mx-auto">
+          <div className="mb-2 flex justify-between">
+            <div className="text-sm font-bold mr-4">Experience</div>
+            <div className="w-full bg-gray-200 rounded-full h-4">
+              <div
+                className="bg-purple-600 h-4 rounded-full"
+                style={{
+                  width: `${
+                    calculateProgress(
+                      experience,
+                      experienceLevel,
+                      experienceConfig
+                    ) * 100
+                  }%`,
+                }}
+              ></div>
+            </div>
+          </div>
+          <div className="flex justify-between">
+            <div className="text-sm font-bold mr-10">Reward</div>
+            <div className="w-full bg-gray-200 rounded-full h-4">
+              <div
+                className="bg-amber-500 h-4 rounded-full"
+                style={{
+                  width: `${
+                    calculateProgress(
+                      rewardPoints,
+                      experienceLevel,
+                      rewardConfig
+                    ) * 100
+                  }%`,
+                }}
+              ></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

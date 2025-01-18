@@ -11,8 +11,39 @@ async function main() {
   await prisma.node.deleteMany();
   await prisma.course.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.experienceConfig.deleteMany();
+  await prisma.rewardConfig.deleteMany();
+  await prisma.nodeUpgradeHistory.deleteMany();
 
   console.log("Tables cleared!");
+
+  // Initialize ExperienceConfig
+  await prisma.experienceConfig.createMany({
+    data: [
+      { level: 1, expPoints: 100 },
+      { level: 2, expPoints: 200 },
+      { level: 3, expPoints: 300 },
+      { level: 4, expPoints: 400 },
+      { level: 5, expPoints: 500 },
+      { level: 6, expPoints: 600 },
+      { level: 7, expPoints: 700 },
+    ],
+  });
+
+  // Initialize RewardConfig
+  await prisma.rewardConfig.createMany({
+    data: [
+      { level: 1, rewardPoints: 100 },
+      { level: 2, rewardPoints: 200 },
+      { level: 3, rewardPoints: 300 },
+      { level: 4, rewardPoints: 400 },
+      { level: 5, rewardPoints: 500 },
+      { level: 6, rewardPoints: 600 },
+      { level: 7, rewardPoints: 700 },
+    ],
+  });
+
+  console.log("ExperienceConfig and RewardConfig initialized!");
 
   // Insert two teachers
   const teacher1 = await prisma.user.create({
