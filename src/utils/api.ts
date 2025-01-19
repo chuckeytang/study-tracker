@@ -4,11 +4,13 @@ const getAuthToken = () => {
   // 从 localStorage 获取存储的 Bearer 令牌
   return localStorage.getItem("token");
 };
+
 export const apiRequest = async (
   endpoint: string,
   method: string = "GET",
   body: any = null,
-  notoken: boolean = false
+  notoken: boolean = false,
+  setLoading?: (loading: boolean) => void
 ) => {
   const token = getAuthToken(); // 获取 Bearer 令牌
   const headers: Record<string, string> = {};
@@ -34,14 +36,19 @@ export const apiRequest = async (
     }
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
+  try {
+    if (setLoading) setLoading(true); // Start loading
+    const response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
 
-  if (response.ok) {
-    const data = await response.json();
-    return data;
-  } else {
-    // 抛出异常，并包含状态码和错误信息
-    const errorData = await response.json();
-    throw new Error(`Error: ${response.status} - ${errorData.message}`);
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    } else {
+      // 抛出异常，并包含状态码和错误信息
+      const errorData = await response.json();
+      throw new Error(`Error: ${response.status} - ${errorData.message}`);
+    }
+  } finally {
+    if (setLoading) setLoading(false); // End loading
   }
 };

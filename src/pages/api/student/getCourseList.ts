@@ -22,6 +22,7 @@ router.get(async (req: NextApiRequest, res: NextApiResponse) => {
 
     // 获取所有课程以及选修这些课程的用户
     const courses = await prisma.course.findMany({
+      where: { published: true },
       include: {
         enrolledUsers: {
           select: {

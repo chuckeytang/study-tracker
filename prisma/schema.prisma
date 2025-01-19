@@ -10,11 +10,12 @@ datasource db {
 
 model User {
   id              Int              @id @default(autoincrement())
-  name            String
-  password        String
+  name            String?
+  password        String?
   avartarPicUrl   String?          // 用户头像，可选
-  email           String           @unique
+  email           String?           @unique
   role            Role             // 使用枚举类型来定义用户角色
+  isTemporary     Boolean          @default(false) // 标记是否为临时用户
   skillPt         Int?             // 学生的技能点
   experience      Int              @default(0) // 用户的经验值
   experienceLevel Int              @default(1) // 用户的经验等级
@@ -39,6 +40,7 @@ model Course {
   name            String
   description     String
   iconUrl         String?          // 课程图标的存储地址，可选字段
+  published       Boolean          @default(false)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   nodes           Node[]       // 课程下的所有 nodes

@@ -32,12 +32,10 @@ export default function LoginPage(props: any) {
       );
 
       if (data.token) {
-        const token = data.token;
-        localStorage.setItem("token", token); // 将 token 存储到 localStorage
-        setErrorMessage(""); // 清空错误信息
+        localStorage.setItem("token", data.token);
+        setErrorMessage("");
         WebUser.getInstance().markAsExpired();
         let userDetails = await WebUser.getInstance().getUserData();
-        // 根据用户角色跳转
         if (userDetails.role === "ADMIN") {
           router.push("/admin");
         } else {
@@ -51,6 +49,33 @@ export default function LoginPage(props: any) {
     }
   };
 
+  const handleTryNow = async () => {
+    try {
+      // 获取现有用户 ID（如果已经有存储的临时用户信息）
+      const existingUserId = localStorage.getItem("tempUserId");
+
+      const response = await apiRequest(
+        "/api/system/tempUserRegister",
+        "POST",
+        {
+          existingUserId: existingUserId ? Number(existingUserId) : null,
+        }
+      );
+
+      if (response.token) {
+        localStorage.setItem("token", response.token); // 保存 Token
+        if (!existingUserId || existingUserId==='undefined') {
+          localStorage.setItem("tempUserId", response.userId); // 保存临时用户 ID
+        }
+        WebUser.getInstance().markAsExpired();
+        router.push(`/myCourses`);
+      }
+    } catch (error) {
+      console.error("Error during Try Now:", error);
+      setErrorMessage("Unable to start trial, please try again.");
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md space-y-6">
@@ -58,10 +83,8 @@ export default function LoginPage(props: any) {
           Course Tracker
         </h2>
 
-        {/* 显示错误信息 */}
         {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
 
-        {/* 邮箱和密码登录表单 */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -98,14 +121,14 @@ export default function LoginPage(props: any) {
           </WidgetButton>
         </form>
 
-        {/* 注册按钮 */}
+        {/* Try Now 按钮 */}
         <p className="mt-4 text-center text-gray-400">
-          Don't have an account?{" "}
+          Or{" "}
           <button
-            onClick={() => router.push("/register")}
+            onClick={handleTryNow}
             className="text-blue-500 hover:underline"
           >
-            Register
+            Try NOW
           </button>
         </p>
       </div>

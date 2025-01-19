@@ -17,7 +17,7 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
   const { userId } = req.query; // 从查询参数中获取 userId
   const { user } = req; // 从请求中获取本用户ID参数
   const meId = user?.id;
-  const teacherId = userId;
+  const teacherId = Number(userId);
 
   try {
     if (!teacherId) {
@@ -27,9 +27,10 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     // 获取所有课程以及选修这些课程的用户
     const courses = await prisma.course.findMany({
       where: {
+        ...(meId !== teacherId && { published: true }),
         enrolledUsers: {
           some: {
-            userId: Number(teacherId),
+            userId: teacherId,
           },
         },
       },
@@ -47,7 +48,7 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       const isLearning = course.enrolledUsers.some(
         (enrollment) =>
           enrollment.userId ===
-          (meId !== Number(teacherId) ? meId : Number(teacherId))
+          (meId !== teacherId ? meId : teacherId)
       );
       return {
         id: course.id,

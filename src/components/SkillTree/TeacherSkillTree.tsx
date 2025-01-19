@@ -24,6 +24,7 @@ import { calculateHandlePosition } from "@/utils/utils";
 import { apiRequest } from "@/utils/api";
 import { FaHome } from "react-icons/fa";
 import { toast } from "react-toastify";
+import { Dialog } from "@headlessui/react";
 
 const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -35,6 +36,8 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
   const [formType, setFormType] = useState<"create" | "edit" | null>(null);
   const [formData, setFormData] = useState<any>({});
   const [bigCheckFormVisible, setBigCheckFormVisible] = useState(false);
+  const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+  const [isPublished, setIsPublished] = useState(false);
 
   const router = useRouter();
   const { userId, courseId } = router.query;
@@ -450,6 +453,19 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
     fetchCourses();
   }, [router.isReady, userId]);
 
+  const handlePublishCourse = async () => {
+    try {
+      await apiRequest(`/api/teacher/publishCourse`, "POST", { courseId });
+      setIsPublished(true);
+      alert("Course published successfully!");
+    } catch (error) {
+      console.error("Error publishing course:", error);
+    }
+  };
+
+  const openPublishDialog = () => setIsPublishDialogOpen(true);
+  const closePublishDialog = () => setIsPublishDialogOpen(false);
+
   return (
     <div
       className="flex items-center justify-center bg-[url('/images/bg_teacher.jpg')] h-screen w-screen bg-cover"
@@ -490,10 +506,65 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitView
+            minZoom={0.1}
+            maxZoom={2}
             className="bg-stone-50"
             style={{}}
           />
         </ReactFlowProvider>
+
+        {/* Publish Button or Published Text */}
+        <div className="fixed bottom-4 right-4 px-4">
+          {isPublished ? (
+            <span className="text-green-600 font-bold">Published</span>
+          ) : (
+            <button
+              onClick={openPublishDialog}
+              className="bg-purple-600 text-white p-2 rounded px-4"
+            >
+              Publish
+            </button>
+          )}
+        </div>
+
+        {/* Publish Confirmation Dialog */}
+        <Dialog
+          open={isPublishDialogOpen}
+          onClose={closePublishDialog}
+          className="fixed inset-0 z-50 flex items-center justify-center"
+        >
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50"
+            aria-hidden="true"
+          />
+          <div className="relative bg-white p-6 rounded-xl shadow-lg text-center w-1/2 h-1/3">
+            <Dialog.Panel>
+              <Dialog.Title>
+                <h2 className="text-2xl font-bold text-gray-800">Publish Course</h2>
+              </Dialog.Title>
+              <div className="mt-6 text-gray-800 mb-10">
+                <p>Are you sure you want to publish this course?</p>
+              </div>
+              <div className="mt-4 flex justify-around">
+                <button
+                  onClick={() => {
+                    handlePublishCourse();
+                    closePublishDialog();
+                  }}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                >
+                  Publish
+                </button>
+                <button
+                  onClick={closePublishDialog}
+                  className="bg-red-500 text-white px-4 py-2 rounded-md"
+                >
+                  Cancel
+                </button>
+              </div>
+            </Dialog.Panel>
+          </div>
+        </Dialog>
 
         {/* Context Menu */}
         {menuVisible && (

@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+const JWT_SECRET = process.env.JWT_SECRET || "TrackHabitsSecret";
 
 export default async function loginHandler(
   req: NextApiRequest,
@@ -25,7 +25,7 @@ export default async function loginHandler(
     }
 
     // 验证密码
-    const passwordMatch = await bcrypt.compare(password, user.password);
+    const passwordMatch = await bcrypt.compare(password, user.password!);
     if (!passwordMatch) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
