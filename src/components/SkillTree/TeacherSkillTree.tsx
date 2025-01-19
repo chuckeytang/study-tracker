@@ -506,7 +506,7 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitView
-            minZoom={0.1}
+            minZoom={0.2}
             maxZoom={2}
             className="bg-stone-50"
             style={{}}
@@ -540,7 +540,9 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
           <div className="relative bg-white p-6 rounded-xl shadow-lg text-center w-1/2 h-1/3">
             <Dialog.Panel>
               <Dialog.Title>
-                <h2 className="text-2xl font-bold text-gray-800">Publish Course</h2>
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Publish Course
+                </h2>
               </Dialog.Title>
               <div className="mt-6 text-gray-800 mb-10">
                 <p>Are you sure you want to publish this course?</p>

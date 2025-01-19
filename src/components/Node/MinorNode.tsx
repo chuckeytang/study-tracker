@@ -262,7 +262,7 @@ const MinorNode: React.FC<MinorNodeProps> = ({
           <div className="absolute -bottom-2 -left-4 w-1/2 h-8 bg-gray-900 rounded-lg flex p-1 space-x-1 items-center justify-center">
             <span className="text-white font-bold text-sm">Exp: {exp}</span>
           </div>
-        )} 
+        )}
 
         {userRole === "student" && (
           <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-2/3 h-8 bg-gray-900 rounded-lg flex p-1 space-x-1 items-center justify-center">

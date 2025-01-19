@@ -24,6 +24,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     include: {
       // 本node所依赖的目标node
       unlockDependenciesTo: { include: { fromNode: true } },
+      // 依赖本node的所有其他node
+      unlockDependenciesFrom: { include: { toNode: true } },
     },
   });
   const progressMap = new Map(

@@ -118,6 +118,7 @@ async function main() {
       description:
         "Learn from water adaptation to mastering various swimming styles",
       iconUrl: "/images/course_default_icon.png",
+      published: true,
     },
   });
 
@@ -285,6 +286,7 @@ async function main() {
       iconUrl: "/images/node_basic_swimming_strokes.jpg",
       coolDown: 0,
       unlockType: UnlockType.CLUSTER_TOTAL_SKILL_POINT,
+      // unlockDepTimeInterval: 5,
       exp: 0,
       rewardPt: 0,
     },

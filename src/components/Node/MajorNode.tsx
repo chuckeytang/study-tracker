@@ -258,7 +258,7 @@ const MajorNode: React.FC<MajorNodeProps> = ({
               onClick={handleIncrement}
             >
               +
-            </button> 
+            </button>
           </div>
         )}
 

@@ -461,7 +461,7 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitView
-            minZoom={0.1}
+            minZoom={0.2}
             maxZoom={2}
             className="bg-stone-50"
             style={{}}
