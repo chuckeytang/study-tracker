@@ -32,7 +32,7 @@ async function main() {
 
   // Initialize RewardConfig
   await prisma.rewardConfig.createMany({
-    data: [{ level: 1, rewardPoints: 10 }],
+    data: [{ level: 1, rewardPoints: 50 }],
   });
 
   console.log("ExperienceConfig and RewardConfig initialized!");
