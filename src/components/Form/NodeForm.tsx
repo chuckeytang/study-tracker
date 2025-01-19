@@ -26,11 +26,12 @@ const NodeForm: React.FC<{
     defaultValue.lockDepNodeCount || null
   );
   const [iconFile, setIconFile] = useState<File | null>(null);
-  const [coolDown, setCoolDown] = useState(defaultValue.coolDown / 3600 || 0);
+  const [coolDown, setCoolDown] = useState(defaultValue.coolDown / 60 || 0);
   const [unlockType, setUnlockType] = useState(defaultValue.unlockType || "SKILL_POINT");
-  const [unlockDepTimeInterval, setUnlockDepTimeInterval] = useState(defaultValue.unlockDepTimeInterval / 3600 || 0);
+  const [unlockDepTimeInterval, setUnlockDepTimeInterval] = useState(defaultValue.unlockDepTimeInterval / 60 || 0);
   const [exp, setExp] = useState(defaultValue.exp || 0);
   const [rewardPt, setRewardPt] = useState(defaultValue.rewardPt || 0);
+  const [unlockDepClusterTotalSkillPt, setUnlockDepClusterTotalSkillPt] = useState(defaultValue.unlockDepClusterTotalSkillPt || 0);
 
   const [unlockDepNodes, setUnlockDepNodes] = useState<any[]>([]); // 解锁依赖节点列表
   const [selectedUnlockNodes, setSelectedUnlockNodes] = useState<string[]>([]); // 解锁依赖节点选择
@@ -137,11 +138,12 @@ const NodeForm: React.FC<{
       lockDepNodeCount,
       selectedUnlockNodes,
       selectedLockNodes,
-      coolDown: coolDown * 3600,
+      coolDown: coolDown * 60,
       unlockType,
-      unlockDepTimeInterval: unlockType === "TIME_BASED" ? unlockDepTimeInterval * 3600 : undefined,
+      unlockDepTimeInterval: unlockType === "TIME_BASED" ? unlockDepTimeInterval * 60 : undefined,
       exp,
       rewardPt,
+      unlockDepClusterTotalSkillPt,
     };
     onSubmit(formType, nodeData);
   };
@@ -184,6 +186,9 @@ const NodeForm: React.FC<{
       );
     }
   };
+
+  // Check if the node is the first node (BIGCHECK with no dependencies)
+  const isFirstNode = nodeType === "BIGCHECK" && (!defaultValue.unlockDependencies || defaultValue.unlockDependencies.length === 0);
 
   return (
     <div className="p-4 bg-white shadow-lg rounded-lg flex flex-col text-gray-800">
@@ -251,62 +256,85 @@ const NodeForm: React.FC<{
         />
       </div>
 
-      <div className="flex items-center mb-2">
-        <label className="w-1/3 font-semibold">Cooldown (hours):</label>
-        <input
-          type="number"
-          placeholder="Cooldown in hours"
-          value={coolDown}
-          onChange={(e) => setCoolDown(Number(e.target.value))}
-          className="p-2 border border-gray-300 rounded w-2/3"
-        />
-      </div>
+      {nodeType !== "BIGCHECK" && (
+        <>
+          <div className="flex items-center mb-2">
+            <label className="w-1/3 font-semibold">Experience Points (EXP):</label>
+            <input
+              type="number"
+              placeholder="Experience Points"
+              value={exp}
+              onChange={(e) => setExp(Number(e.target.value))}
+              className="p-2 border border-gray-300 rounded w-2/3"
+            />
+          </div>
 
-      <div className="flex items-center mb-2">
-        <label className="w-1/3 font-semibold">Unlock Type:</label>
-        <select
-          value={unlockType}
-          onChange={(e) => setUnlockType(e.target.value)}
-          className="p-2 border border-gray-300 rounded w-2/3"
-        >
-          {unlockTypeOptions()}
-        </select>
-      </div>
+          <div className="flex items-center mb-2">
+            <label className="w-1/3 font-semibold">Reward Points:</label>
+            <input
+              type="number"
+              placeholder="Reward Points"
+              value={rewardPt}
+              onChange={(e) => setRewardPt(Number(e.target.value))}
+              className="p-2 border border-gray-300 rounded w-2/3"
+            />
+          </div>
+        </>
+      )}
 
-      {unlockType === "TIME_BASED" && (
+      {!isFirstNode && (
+        <>
+          <div className="flex items-center mb-2">
+            <label className="w-1/3 font-semibold">Unlock Type:</label>
+            <select
+              value={unlockType}
+              onChange={(e) => setUnlockType(e.target.value)}
+              className="p-2 border border-gray-300 rounded w-2/3"
+            >
+              {unlockTypeOptions()}
+            </select>
+          </div>
+
+          {unlockType === "TIME_BASED" && (
+            <div className="flex items-center mb-2">
+              <label className="w-1/3 font-semibold">Unlock Time Interval (mins):</label>
+              <input
+                type="number"
+                placeholder="Unlock Time Interval in mins"
+                value={unlockDepTimeInterval}
+                onChange={(e) => setUnlockDepTimeInterval(Number(e.target.value))}
+                className="p-2 border border-gray-300 rounded w-2/3"
+              />
+            </div>
+          )}
+        </>
+      )}
+
+      {nodeType !== "BIGCHECK" && unlockType === "SKILL_POINT" && (
         <div className="flex items-center mb-2">
-          <label className="w-1/3 font-semibold">Unlock Time Interval (hours):</label>
+          <label className="w-1/3 font-semibold">Cooldown (mins):</label>
           <input
             type="number"
-            placeholder="Unlock Time Interval in hours"
-            value={unlockDepTimeInterval}
-            onChange={(e) => setUnlockDepTimeInterval(Number(e.target.value))}
+            placeholder="Cooldown in mins"
+            value={coolDown}
+            onChange={(e) => setCoolDown(Number(e.target.value))}
             className="p-2 border border-gray-300 rounded w-2/3"
           />
         </div>
       )}
 
-      <div className="flex items-center mb-2">
-        <label className="w-1/3 font-semibold">Experience Points (EXP):</label>
-        <input
-          type="number"
-          placeholder="Experience Points"
-          value={exp}
-          onChange={(e) => setExp(Number(e.target.value))}
-          className="p-2 border border-gray-300 rounded w-2/3"
-        />
-      </div>
-
-      <div className="flex items-center mb-2">
-        <label className="w-1/3 font-semibold">Reward Points:</label>
-        <input
-          type="number"
-          placeholder="Reward Points"
-          value={rewardPt}
-          onChange={(e) => setRewardPt(Number(e.target.value))}
-          className="p-2 border border-gray-300 rounded w-2/3"
-        />
-      </div>
+      {unlockType === "CLUSTER_TOTAL_SKILL_POINT" && (
+        <div className="flex items-center mb-2">
+          <label className="w-1/3 font-semibold">Cluster Total Skill Points:</label>
+          <input
+            type="number"
+            placeholder="Cluster Total Skill Points"
+            value={unlockDepClusterTotalSkillPt}
+            onChange={(e) => setUnlockDepClusterTotalSkillPt(Number(e.target.value))}
+            className="p-2 border border-gray-300 rounded w-2/3"
+          />
+        </div>
+      )}
 
       {formType === "create" && nodeType !== "BIGCHECK" && (
         <div>
@@ -346,7 +374,6 @@ const NodeForm: React.FC<{
         </div>
       )}
 
-      {/* 编辑模式下的锁定依赖选择 */}
       {formType === "edit" && nodeType !== "BIGCHECK" && (
         <div className="flex items-center mb-2">
           <label className="w-1/3 font-semibold">Lock Dependencies:</label>
@@ -360,7 +387,7 @@ const NodeForm: React.FC<{
               )
             }
           >
-            {mergedLockDepNodes.map((node: any) => (
+            {lockDepNodes.map((node: any) => (
               <option key={node.id} value={node.id}>
                 {node.name}
               </option>
@@ -369,7 +396,6 @@ const NodeForm: React.FC<{
         </div>
       )}
 
-      {/* 提交按钮 */}
       <div className="flex justify-end mt-4">
         <button
           onClick={handleSubmit}

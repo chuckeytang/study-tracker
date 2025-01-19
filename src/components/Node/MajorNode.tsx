@@ -76,7 +76,10 @@ const MajorNode: React.FC<MajorNodeProps> = ({
 
     calculateCooldownProgress();
 
-    const interval = setInterval(calculateCooldownProgress, Math.max(coolDown * 10, 100));
+    const interval = setInterval(
+      calculateCooldownProgress,
+      Math.max(coolDown * 10, 100)
+    );
 
     return () => clearInterval(interval);
   }, [lastUpgradeTime, coolDown, data.level]);
@@ -88,7 +91,11 @@ const MajorNode: React.FC<MajorNodeProps> = ({
 
   // 动态计算时间解锁进度
   useEffect(() => {
-    if (unlockType === "TIME_BASED" && unlockDepTimeInterval && unlockStartTime) {
+    if (
+      unlockType === "TIME_BASED" &&
+      unlockDepTimeInterval &&
+      unlockStartTime
+    ) {
       const calculateTimeBasedProgress = () => {
         const unlockStartTimeMs = new Date(unlockStartTime).getTime();
         const currentTime = Date.now();
@@ -164,10 +171,12 @@ const MajorNode: React.FC<MajorNodeProps> = ({
   const translate = (1 - scale) * r;
 
   return (
-    <div className="relative"
-        onContextMenu={(event) => onContextMenu(event, data)}
-        onMouseEnter={() => setShowDescription(true)}
-        onMouseLeave={() => setShowDescription(false)}>
+    <div
+      className="relative"
+      onContextMenu={(event) => onContextMenu(event, data)}
+      onMouseEnter={() => setShowDescription(true)}
+      onMouseLeave={() => setShowDescription(false)}
+    >
       <div
         className={`flex items-center justify-center ${bgColor} rounded-full text-white font-semibold`}
         style={{
@@ -249,7 +258,7 @@ const MajorNode: React.FC<MajorNodeProps> = ({
               onClick={handleIncrement}
             >
               +
-            </button>
+            </button> 
           </div>
         )}
 
@@ -261,19 +270,17 @@ const MajorNode: React.FC<MajorNodeProps> = ({
           </div>
         )}
 
-        {/* Display Experience at 8 o'clock position */}
-        <div className="absolute -bottom-2 -left-4 w-1/2 h-8 bg-gray-900 rounded-lg flex p-1 space-x-1 items-center justify-center">
-          <span className="text-white font-bold">
-            Exp: {exp}
-          </span>
-        </div>
+        {userRole === "student" && (
+          <div className="absolute -bottom-2 -left-4 w-1/2 h-8 bg-gray-900 rounded-lg flex p-1 space-x-1 items-center justify-center">
+            <span className="text-white font-bold">Exp: {exp}</span>
+          </div>
+        )}
 
-        {/* Display Reward Points at 6 o'clock position */}
-        <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-2/3 h-8 bg-gray-900 rounded-lg flex p-1 space-x-1 items-center justify-center">
-          <span className="text-white font-bold">
-            Reward: {rewardPt}
-          </span>
-        </div>
+        {userRole === "student" && (
+          <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-2/3 h-8 bg-gray-900 rounded-lg flex p-1 space-x-1 items-center justify-center">
+            <span className="text-white font-bold">Reward: {rewardPt}</span>
+          </div>
+        )}
       </div>
 
       <div>
@@ -305,7 +312,7 @@ const MajorNode: React.FC<MajorNodeProps> = ({
           </g>
         </svg>
 
-        {unlockType === "TIME_BASED" && !unlocked  && (
+        {unlockType === "TIME_BASED" && !unlocked && (
           <svg
             className="absolute inset-0"
             style={{
