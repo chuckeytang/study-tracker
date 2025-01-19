@@ -31,6 +31,8 @@ const MinorNode: React.FC<MinorNodeProps> = ({
     unlockType,
     unlockDepTimeInterval,
     unlockStartTime,
+    exp,
+    rewardPt,
   } = data;
   const [showDescription, setShowDescription] = useState(false);
   const [cooldownProgress, setCooldownProgress] = useState(0);
@@ -175,7 +177,7 @@ const MinorNode: React.FC<MinorNodeProps> = ({
 
         {showDescription && (
           <div
-            className="absolute left-1/2 bottom-full transform -translate-x-1/2 mb-2 p-2 bg-black text-white text-sm rounded shadow-lg"
+            className="absolute left-1/2 bottom-full transform -translate-x-1/2 mb-2 p-2 bg-black text-white text-base rounded shadow-lg"
             style={{ whiteSpace: "nowrap" }}
           >
             {nodeDescription}
@@ -220,7 +222,7 @@ const MinorNode: React.FC<MinorNodeProps> = ({
         </div>
 
         {userRole === "student"  && (
-          <div className="fixed -bottom-4 -right-4 w-3/5 h-8 bg-gray-900 rounded-lg flex p-1 space-x-1 items-center justify-center">
+          <div className="fixed -bottom-2 -right-4 w-3/5 h-8 bg-gray-900 rounded-lg flex p-1 space-x-1 items-center justify-center">
             <button
               className="w-6 h-6 bg-lime-500 text-white rounded-md font-extrabold flex items-center justify-center"
               onClick={handleDecrement}
@@ -246,6 +248,20 @@ const MinorNode: React.FC<MinorNodeProps> = ({
             </span>
           </div>
         )}
+
+        {/* Display Experience at 8 o'clock position */}
+        <div className="absolute -bottom-2 -left-4 w-1/2 h-8 bg-gray-900 rounded-lg flex p-1 space-x-1 items-center justify-center">
+          <span className="text-white font-bold text-sm">
+            Exp: {exp}
+          </span>
+        </div>
+
+        {/* Display Reward Points at 6 o'clock position */}
+        <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-2/3 h-8 bg-gray-900 rounded-lg flex p-1 space-x-1 items-center justify-center">
+          <span className="text-white font-bold text-sm">
+            Reward: {rewardPt}
+          </span>
+        </div>
       </div>
       <div>
         <svg

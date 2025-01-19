@@ -143,7 +143,7 @@ const BigCheck: React.FC<BigCheckProps> = ({
         {/* 鼠标悬停时显示描述 */}
         {showDescription && (
           <div
-            className="absolute left-1/2 bottom-full transform -translate-x-1/2 mb-2 p-2 bg-black text-white text-sm rounded shadow-lg"
+            className="absolute left-1/2 bottom-full transform -translate-x-1/2 mb-2 p-2 bg-black text-white text-base rounded shadow-lg"
             style={{ whiteSpace: "nowrap" }}
           >
             {nodeDescription}
