@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import ReactFlow, { Node, Edge, ReactFlowProvider } from "reactflow";
 import "reactflow/dist/style.css";
-import WidgetButton from "@/components/Widget/WidgetButton";
 import WidgetSelect from "@/components/Widget/WidgetSelect";
 import { useRouter } from "next/router";
 import Cluster from "@/components/Node/Cluster";
@@ -38,6 +37,8 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
   const [bigCheckFormVisible, setBigCheckFormVisible] = useState(false);
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
+  const [courses, setCourses] = useState([]);
+
 
   const router = useRouter();
   const { userId, courseId } = router.query;
@@ -45,28 +46,6 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
   // 处理"Connect to other BigCheck"点击，弹出 BigCheckForm
   const handleConnectToBigCheck = () => {
     setBigCheckFormVisible(true); // 显示 BigCheckForm
-  };
-
-  // Handle Experience configuration submission
-  const handleExpConfigSubmit = async (config: number[]) => {
-    try {
-      await apiRequest("/api/teacher/config/updateExperience", "POST", {
-        config,
-      });
-      console.log("Experience configuration submitted:", config);
-    } catch (error) {
-      console.error("Error submitting experience configuration:", error);
-    }
-  };
-
-  // Handle Reward configuration submission
-  const handleRewardConfigSubmit = async (config: number[]) => {
-    try {
-      await apiRequest("/api/teacher/config/updateReward", "POST", { config });
-      console.log("Reward configuration submitted:", config);
-    } catch (error) {
-      console.error("Error submitting reward configuration:", error);
-    }
   };
 
   // Fetch and update the skill tree
@@ -428,30 +407,33 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
     }
   };
 
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  // 根据用户角色获取课程列表
   const fetchCourses = async () => {
     try {
       const apiUrl = `/api/teacher/getCourseList?userId=${userId}`;
-
       const data = await apiRequest(apiUrl);
       const filteredCourses = data.courses.filter(
         (course: any) => course.isLearning
       );
 
       setCourses(filteredCourses);
+
+      // Set isPublished based on the selected course's published status
+      const selectedCourse = filteredCourses.find(
+        (course: any) => course.id === Number(courseId)
+      );
+      if (selectedCourse) {
+        setIsPublished(selectedCourse.published);
+      }
     } catch (error) {
       console.error("Error fetching course list:", error);
     } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
     if (!router.isReady) return;
     fetchCourses();
-  }, [router.isReady, userId]);
+  }, [router.isReady, userId, courseId]);
 
   const handlePublishCourse = async () => {
     try {

@@ -56,6 +56,7 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         description: course.description,
         iconUrl: course.iconUrl,
         isLearning: isLearning, // 如果 userId 存在于 enrolledUsers 列表中，设置为 true
+        published: course.published,
       };
     });
 
