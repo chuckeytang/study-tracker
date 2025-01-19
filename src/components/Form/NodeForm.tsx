@@ -27,11 +27,16 @@ const NodeForm: React.FC<{
   );
   const [iconFile, setIconFile] = useState<File | null>(null);
   const [coolDown, setCoolDown] = useState(defaultValue.coolDown / 60 || 0);
-  const [unlockType, setUnlockType] = useState(defaultValue.unlockType || "SKILL_POINT");
-  const [unlockDepTimeInterval, setUnlockDepTimeInterval] = useState(defaultValue.unlockDepTimeInterval / 60 || 0);
+  const [unlockType, setUnlockType] = useState(
+    defaultValue.unlockType || "SKILL_POINT"
+  );
+  const [unlockDepTimeInterval, setUnlockDepTimeInterval] = useState(
+    defaultValue.unlockDepTimeInterval / 60 || 0
+  );
   const [exp, setExp] = useState(defaultValue.exp || 0);
   const [rewardPt, setRewardPt] = useState(defaultValue.rewardPt || 0);
-  const [unlockDepClusterTotalSkillPt, setUnlockDepClusterTotalSkillPt] = useState(defaultValue.unlockDepClusterTotalSkillPt || 0);
+  const [unlockDepClusterTotalSkillPt, setUnlockDepClusterTotalSkillPt] =
+    useState(defaultValue.unlockDepClusterTotalSkillPt || 0);
 
   const [unlockDepNodes, setUnlockDepNodes] = useState<any[]>([]); // 解锁依赖节点列表
   const [selectedUnlockNodes, setSelectedUnlockNodes] = useState<string[]>([]); // 解锁依赖节点选择
@@ -140,7 +145,8 @@ const NodeForm: React.FC<{
       selectedLockNodes,
       coolDown: coolDown * 60,
       unlockType,
-      unlockDepTimeInterval: unlockType === "TIME_BASED" ? unlockDepTimeInterval * 60 : undefined,
+      unlockDepTimeInterval:
+        unlockType === "TIME_BASED" ? unlockDepTimeInterval * 60 : undefined,
       exp,
       rewardPt,
       unlockDepClusterTotalSkillPt,
@@ -174,7 +180,9 @@ const NodeForm: React.FC<{
       return (
         <>
           <option value="TIME_BASED">Time Based</option>
-          <option value="CLUSTER_TOTAL_SKILL_POINT">Cluster Total Skill Point</option>
+          <option value="CLUSTER_TOTAL_SKILL_POINT">
+            Cluster Total Skill Point
+          </option>
         </>
       );
     } else {
@@ -188,7 +196,10 @@ const NodeForm: React.FC<{
   };
 
   // Check if the node is the first node (BIGCHECK with no dependencies)
-  const isFirstNode = nodeType === "BIGCHECK" && (!defaultValue.unlockDependencies || defaultValue.unlockDependencies.length === 0);
+  const isFirstNode =
+    nodeType === "BIGCHECK" &&
+    (!defaultValue.unlockDependencies ||
+      defaultValue.unlockDependencies.length === 0);
 
   return (
     <div className="p-4 bg-white shadow-lg rounded-lg flex flex-col text-gray-800">
@@ -259,7 +270,9 @@ const NodeForm: React.FC<{
       {nodeType !== "BIGCHECK" && (
         <>
           <div className="flex items-center mb-2">
-            <label className="w-1/3 font-semibold">Experience Points (EXP):</label>
+            <label className="w-1/3 font-semibold">
+              Experience Points (EXP):
+            </label>
             <input
               type="number"
               placeholder="Experience Points"
@@ -297,12 +310,33 @@ const NodeForm: React.FC<{
 
           {unlockType === "TIME_BASED" && (
             <div className="flex items-center mb-2">
-              <label className="w-1/3 font-semibold">Unlock Time Interval (mins):</label>
+              <label className="w-1/3 font-semibold">
+                Unlock Time Interval (mins):
+              </label>
               <input
                 type="number"
                 placeholder="Unlock Time Interval in mins"
                 value={unlockDepTimeInterval}
-                onChange={(e) => setUnlockDepTimeInterval(Number(e.target.value))}
+                onChange={(e) =>
+                  setUnlockDepTimeInterval(Number(e.target.value))
+                }
+                className="p-2 border border-gray-300 rounded w-2/3"
+              />
+            </div>
+          )}
+
+          {unlockType === "CLUSTER_TOTAL_SKILL_POINT" && (
+            <div className="flex items-center mb-2">
+              <label className="w-1/3 font-semibold">
+                Cluster Total Skill Points:
+              </label>
+              <input
+                type="number"
+                placeholder="Cluster Total Skill Points"
+                value={unlockDepClusterTotalSkillPt}
+                onChange={(e) =>
+                  setUnlockDepClusterTotalSkillPt(Number(e.target.value))
+                }
                 className="p-2 border border-gray-300 rounded w-2/3"
               />
             </div>
@@ -318,19 +352,6 @@ const NodeForm: React.FC<{
             placeholder="Cooldown in mins"
             value={coolDown}
             onChange={(e) => setCoolDown(Number(e.target.value))}
-            className="p-2 border border-gray-300 rounded w-2/3"
-          />
-        </div>
-      )}
-
-      {unlockType === "CLUSTER_TOTAL_SKILL_POINT" && (
-        <div className="flex items-center mb-2">
-          <label className="w-1/3 font-semibold">Cluster Total Skill Points:</label>
-          <input
-            type="number"
-            placeholder="Cluster Total Skill Points"
-            value={unlockDepClusterTotalSkillPt}
-            onChange={(e) => setUnlockDepClusterTotalSkillPt(Number(e.target.value))}
             className="p-2 border border-gray-300 rounded w-2/3"
           />
         </div>
