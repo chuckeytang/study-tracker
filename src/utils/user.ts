@@ -19,9 +19,10 @@ class WebUser {
   private userData: any = null; // 存储用户数据
   private expired: boolean = false; // 过期标记
   private readonly userKey: string = "user";
-  private readonly animationKey: string = "giftAnimationPlayed";
+  private animationKey: string;
 
   private constructor() {
+    this.animationKey = "giftAnimationPlayed";
     this.loadUserFromStorage();
   }
 
@@ -75,12 +76,14 @@ class WebUser {
     }
   }
 
-  public hasPlayedGiftAnimation(): boolean {
-    return localStorage.getItem(this.animationKey) === "true";
+  public hasPlayedGiftAnimation(userId: string): boolean {
+    const key = `${this.animationKey}_${userId}`;
+    return localStorage.getItem(key) === "true";
   }
 
-  public setGiftAnimationPlayed() {
-    localStorage.setItem(this.animationKey, "true");
+  public setGiftAnimationPlayed(userId: string) {
+    const key = `${this.animationKey}_${userId}`;
+    localStorage.setItem(key, "true");
   }
 }
 

@@ -383,13 +383,14 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
     const webUser = WebUser.getInstance();
     if (
       rewardPoints >= rewardConfig[rewardLevel - 1] &&
-      !webUser.hasPlayedGiftAnimation()
+      userId &&
+      !webUser.hasPlayedGiftAnimation(userId as string)
     ) {
       setShowGift(true);
-      webUser.setGiftAnimationPlayed();
+      webUser.setGiftAnimationPlayed(userId as string);
       setTimeout(() => setShowGift(false), 5000); // Hide after 5 seconds
     }
-  }, [rewardPoints, rewardLevel, rewardConfig]);
+  }, [rewardPoints, rewardLevel, rewardConfig, userId]);
 
   return (
     <div

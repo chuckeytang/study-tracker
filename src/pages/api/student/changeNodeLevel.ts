@@ -440,7 +440,7 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         userId_nodeId_level: {
           userId: Number(studentId),
           nodeId: Number(nodeId),
-          level: newLevel,
+          level: newNodeLevel,
         },
       },
     });
@@ -451,7 +451,7 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         data: {
           userId: Number(studentId),
           nodeId: Number(nodeId),
-          level: newLevel,
+          level: newNodeLevel,
         },
       });
 
