@@ -1,6 +1,6 @@
 import { Admin, Resource } from "react-admin";
 import { CourseList, CourseCreate, CourseEdit } from "./CourseAdmin";
-import dataProvider from "@/utils/dataProvider";
+import dataProvider from "../utils/dataProvider";
 import { StudentCreate, StudentEdit, StudentList } from "./StudentAdmin";
 import { TeacherCreate, TeacherEdit, TeacherList } from "./TeacherAdmin";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
