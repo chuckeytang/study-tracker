@@ -74,7 +74,11 @@ const NodeForm: React.FC<{
   }, [nodeId, parentNodeId]);
 
   useEffect(() => {
-    if (unlockDepNodes.length > 0 && selectedUnlockNodes.length === 0) {
+    if (
+      formType === "create" &&
+      unlockDepNodes.length > 0 &&
+      selectedUnlockNodes.length === 0
+    ) {
       setSelectedUnlockNodes([unlockDepNodes[0].id]); // 默认选择第一个
     }
   }, [unlockDepNodes]);

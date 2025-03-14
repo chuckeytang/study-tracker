@@ -39,7 +39,6 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
   const [isPublished, setIsPublished] = useState(false);
   const [courses, setCourses] = useState([]);
 
-
   const router = useRouter();
   const { userId, courseId } = router.query;
 
