@@ -82,14 +82,11 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
           if (node.unlockType === "TIME_BASED") {
             unlockStartTime = onlyDependsOnUnlockedBigCheck ? new Date() : null;
           }
-        }
-        else {
-          
+        } else {
           if (node.unlockType === "TIME_BASED") {
             unlocked = false;
             unlockStartTime = onlyDependsOnUnlockedBigCheck ? new Date() : null;
-          }
-          else {
+          } else {
             unlocked = onlyDependsOnUnlockedBigCheck; // 如果依赖的都是已解锁的 bigcheck，则解锁本节点
           }
         }

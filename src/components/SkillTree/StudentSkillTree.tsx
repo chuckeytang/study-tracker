@@ -30,7 +30,20 @@ const options = [
   { label: "Cycling", icon: null },
 ];
 
-const StudentSkillTree = ({ courseName }: { courseName: string }) => {
+interface StudentSkillTreeProps {
+  courseName: string;
+  previewMode?: boolean;
+  overrideUserId?: string;
+  overrideCourseId?: string;
+  onPreviewExit?: () => void;
+}
+
+const StudentSkillTree = ({
+  courseName,
+  previewMode = false,
+  onPreviewExit,
+  ...props
+}: StudentSkillTreeProps) => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [availableSkillPoints, setAvailableSkillPoints] = useState(0);
@@ -46,6 +59,32 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
   const { userId, courseId } = router.query;
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [previewDirty, setPreviewDirty] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+
+  // 处理退出预览
+  const handleExitPreview = async () => {
+    setIsExiting(true);
+    try {
+      await apiRequest("/api/student/destroyCourseProgress", "DELETE", {
+        studentId: props.overrideUserId || router.query.userId,
+        courseId: props.overrideCourseId || router.query.courseId,
+      });
+      onPreviewExit?.();
+    } finally {
+      setIsExiting(false);
+    }
+  };
+
+  // 操作拦截提示
+  const withPreviewWarning = (fn: Function) => {
+    return (...args: any[]) => {
+      if (!previewMode) return fn(...args);
+
+      setPreviewDirty(true);
+      return fn(...args);
+    };
+  };
 
   const fetchCourses = async () => {
     try {
@@ -397,6 +436,20 @@ const StudentSkillTree = ({ courseName }: { courseName: string }) => {
       className="flex items-center justify-center bg-[url('/images/bg_student.jpg')] h-screen w-screen bg-cover"
       onContextMenu={handleBlankContextMenu}
     >
+      {previewMode && (
+        <div className="fixed top-0 left-0 right-0 bg-yellow-100 p-2 text-center z-50 flex justify-between items-center">
+          <span className="text-yellow-800 flex-1">
+            🕶️ Preview Mode - All operations will be reset upon exit
+          </span>
+          <button
+            onClick={handleExitPreview}
+            className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 mr-4"
+            disabled={isExiting}
+          >
+            {isExiting ? "Exiting..." : "Exit Preview"}
+          </button>
+        </div>
+      )}
       <div className="rounded-2xl bg-stone-50 w-full m-10 h-[90vh] flex justify-center items-start">
         {/* Top navigation and course selection */}
         <div className="flex flex-col justify-center items-center">

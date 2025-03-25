@@ -24,6 +24,7 @@ import { apiRequest } from "@/utils/api";
 import { FaHome } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { Dialog } from "@headlessui/react";
+import StudentSkillTree from "./StudentSkillTree";
 
 const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -444,8 +445,43 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
     }
   };
 
+  const handlePreview = async () => {
+    try {
+      setIsPreviewLoading(true);
+
+      // 以教师身份加入课程（标记为预览）
+      await apiRequest("/api/student/joinCourse", "POST", {
+        studentId: userId, // 直接使用教师ID
+        courseId: courseId,
+        isPreview: true, // 添加预览标记
+      });
+
+      setShowPreview(true);
+    } catch (error) {
+      console.error("Preview initialization failed:", error);
+      toast.error("Failed to start preview mode");
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  };
+
+  // 修改后的关闭预览处理
+  const handleClosePreview = async () => {
+    try {
+      setIsPreviewLoading(true);
+      setShowPreview(false);
+    } catch (error) {
+      console.error("Preview data cleanup failed:", error);
+      toast.error("Could not exit preview mode");
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  };
+
   const openPublishDialog = () => setIsPublishDialogOpen(true);
   const closePublishDialog = () => setIsPublishDialogOpen(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
 
   return (
     <div
@@ -494,8 +530,44 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
           />
         </ReactFlowProvider>
 
+        {showPreview && (
+          <div className="fixed inset-0 z-[100] bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white rounded-xl p-6 w-[95%] h-[90%] relative">
+              <div className="h-full">
+                <StudentSkillTree
+                  courseName={courseName}
+                  previewMode
+                  overrideUserId={String(userId)} // 强制使用教师ID
+                  overrideCourseId={String(courseId)}
+                  onPreviewExit={handleClosePreview} // 添加退出回调
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Publish Button or Published Text */}
-        <div className="fixed bottom-4 right-4 px-4">
+        <div className="fixed bottom-4 right-4 px-4 flex gap-2">
+          <button
+            onClick={handlePreview}
+            disabled={isPreviewLoading}
+            className="bg-blue-500 text-white p-2 rounded px-4 hover:bg-blue-600 
+               disabled:bg-gray-400 transition-colors flex items-center"
+          >
+            {isPreviewLoading ? (
+              <>
+                <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                  <path
+                    fill="currentColor"
+                    d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"
+                  />
+                </svg>
+                Loading Preview ...
+              </>
+            ) : (
+              "Preview"
+            )}
+          </button>
           {isPublished ? (
             <span className="text-green-600 font-bold">Published</span>
           ) : (
