@@ -47,16 +47,30 @@ const Cluster = async (
     );
 
     // Calculate the position of the current node
+    // 判断是否使用数据库中保存的位置
+    const hasSavedPosition =
+      currentNode.positionX !== undefined &&
+      currentNode.positionX !== null &&
+      currentNode.positionX !== -1 &&
+      currentNode.positionY !== undefined &&
+      currentNode.positionY !== null &&
+      currentNode.positionY !== -1;
+
     let position: { x: number; y: number };
-    if (parentPos) {
-      // Non-root node
+
+    if (hasSavedPosition) {
+      position = {
+        x: currentNode.positionX,
+        y: currentNode.positionY,
+      };
+    } else if (parentPos) {
       const angleRad = (incomingAngle * Math.PI) / 180;
       position = {
         x: parentPos.x + distance * Math.cos(angleRad),
         y: parentPos.y + distance * Math.sin(angleRad),
       };
     } else {
-      // Root node
+      // fallback root position
       position = currentNode.position || { x: 0, y: 0 };
     }
 
@@ -164,11 +178,12 @@ const Cluster = async (
       const depData = await apiRequest(
         `/api/courses/getDepNodes?nodeId=${currentNode.nodeId}`
       );
-      const depNodes = depData.data.map((node: any) => ({
-        ...node,
-        coolDown: node.coolDown,
-        unlockDepTimeInterval: node.unlockDepTimeInterval,
-      })) || [];
+      const depNodes =
+        depData.data.map((node: any) => ({
+          ...node,
+          coolDown: node.coolDown,
+          unlockDepTimeInterval: node.unlockDepTimeInterval,
+        })) || [];
 
       const numChildren = depNodes.length;
 

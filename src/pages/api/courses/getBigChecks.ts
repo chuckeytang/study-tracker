@@ -46,7 +46,9 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       });
 
       // 创建一个 map 来快速查找进度
-      progressMap = new Map(courseProgress.map((progress) => [progress.nodeId, progress]));
+      progressMap = new Map(
+        courseProgress.map((progress) => [progress.nodeId, progress])
+      );
     }
 
     // 查询所有与这些 bigcheck 节点相关的依赖关系
@@ -77,6 +79,8 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         maxLevel: node.maxLevel,
         nodeType: node.nodeType,
         picUrl: node.iconUrl,
+        positionX: node.positionX,
+        positionY: node.positionY,
         lockDepNodeCount: node.lockDepNodeCount,
         unlockDepNodeCount: node.unlockDepNodeCount,
         unlockDepClusterTotalSkillPt: node.unlockDepClusterTotalSkillPt,

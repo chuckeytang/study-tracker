@@ -35,7 +35,9 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       exp,
       rewardPt,
       unlockType,
-      unlockDepTimeInterval
+      unlockDepTimeInterval,
+      positionX, // 获取前端传递的 positionX
+      positionY, // 获取前端传递的 positionY
     } = req.body;
 
     // 解析 unlockDepNodes 和 lockDepNodes 字段
@@ -58,8 +60,10 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     }
 
     // 验证基本参数
-    if (!id || !name || !nodeType || !courseId || maxLevel === undefined) {
-      return res.status(400).json({ message: "Missing required fields" });
+    if (!id || !courseId) {
+      return res
+        .status(400)
+        .json({ message: "Missing required 'id' or 'courseId'" });
     }
 
     // 默认解锁和锁住依赖的节点数处理
@@ -72,27 +76,39 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     const computedLockDepNodeCount =
       lockDepNodeCount !== undefined ? lockDepNodeCount : 0;
 
-    // 更新节点
+    // 构造部分更新的 data 对象
+    const updateData: any = {
+      courseId: Number(courseId),
+    };
+
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (nodeType !== undefined) updateData.nodeType = nodeType as NodeType;
+    if (maxLevel !== undefined) updateData.maxLevel = Number(maxLevel);
+    if (iconUrl) updateData.iconUrl = iconUrl;
+    if (unlockDepNodeCount !== undefined)
+      updateData.unlockDepNodeCount = Number(unlockDepNodeCount);
+    if (unlockDepClusterTotalSkillPt !== undefined)
+      updateData.unlockDepClusterTotalSkillPt = Number(
+        unlockDepClusterTotalSkillPt
+      );
+    if (lockDepNodeCount !== undefined)
+      updateData.lockDepNodeCount = Number(lockDepNodeCount);
+    if (coolDown !== undefined) updateData.coolDown = Number(coolDown);
+    if (exp !== undefined) updateData.exp = Number(exp);
+    if (rewardPt !== undefined) updateData.rewardPt = Number(rewardPt);
+    if (unlockType !== undefined)
+      updateData.unlockType = unlockType as UnlockType;
+    if (unlockDepTimeInterval !== undefined)
+      updateData.unlockDepTimeInterval =
+        unlockType === "TIME_BASED" ? Number(unlockDepTimeInterval) : null;
+    if (positionX !== undefined) updateData.positionX = Number(positionX);
+    if (positionY !== undefined) updateData.positionY = Number(positionY);
+
+    // 更新节点主表
     const updatedNode = await prisma.node.update({
       where: { id: Number(id) },
-      data: {
-        name,
-        description,
-        nodeType: nodeType as NodeType,
-        courseId: Number(courseId),
-        maxLevel: Number(maxLevel),
-        iconUrl: iconUrl || undefined, // 如果有上传文件则更新 iconUrl
-        unlockDepNodeCount: Number(computedUnlockDepNodeCount),
-        unlockDepClusterTotalSkillPt: Number(
-          computedUnlockDepClusterTotalSkillPt
-        ),
-        lockDepNodeCount: Number(computedLockDepNodeCount),
-        coolDown: Number(coolDown),
-        exp: Number(exp),
-        rewardPt: Number(rewardPt),
-        unlockType: unlockType as UnlockType,
-        unlockDepTimeInterval: unlockType === "TIME_BASED" ? Number(unlockDepTimeInterval) : null
-      },
+      data: updateData,
     });
 
     // 更新解锁依赖节点关系

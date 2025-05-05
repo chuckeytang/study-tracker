@@ -47,7 +47,13 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     });
 
     const progressMap = new Map(
-      progressData.map((progress) => [progress.nodeId, { lastUpgradeTime: progress.lastUpgradeTime, unlockStartTime: progress.unlockStartTime }])
+      progressData.map((progress) => [
+        progress.nodeId,
+        {
+          lastUpgradeTime: progress.lastUpgradeTime,
+          unlockStartTime: progress.unlockStartTime,
+        },
+      ])
     );
 
     // 返回数据
@@ -64,6 +70,8 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         unlockDepTimeInterval: node.unlockDepTimeInterval,
         exp: node.exp,
         rewardPt: node.rewardPt,
+        positionX: node.positionX,
+        positionY: node.positionY,
         lastUpgradeTime: progressMap.get(node.id)?.lastUpgradeTime || null, // Include lastUpgradeTime
         unlockStartTime: progressMap.get(node.id)?.unlockStartTime || null,
       })),

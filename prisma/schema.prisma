@@ -65,6 +65,9 @@ model Node {
   lockDepNodeCount   Int?            // 锁住依赖的节点中需要解锁的最小节点数，若为-1则所有依赖节点都需解锁才能实现该节点锁住
   coolDown           Int?            // 冷却时间，单位秒
 
+  positionX                 Float          @default(-1)  // 新增位置X字段
+  positionY                 Float          @default(-1)  // 新增位置Y字段
+
   // 解锁依赖节点作为根节点，所代表的cluster整体中，增加的技能点数总合。即技能点数总合添加达到该值，本节点可解锁
   unlockDepClusterTotalSkillPt  Int?
 

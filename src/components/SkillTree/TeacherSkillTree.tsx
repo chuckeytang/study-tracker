@@ -1,5 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
-import ReactFlow, { Node, Edge, ReactFlowProvider } from "reactflow";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import ReactFlow, {
+  Node,
+  Edge,
+  ReactFlowProvider,
+  applyNodeChanges,
+  applyEdgeChanges,
+} from "reactflow";
 import "reactflow/dist/style.css";
 import WidgetSelect from "@/components/Widget/WidgetSelect";
 import { useRouter } from "next/router";
@@ -48,8 +54,17 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
     setBigCheckFormVisible(true); // 显示 BigCheckForm
   };
 
+  // Context menu handlers
+  const handleNodeContextMenu = useCallback((event: any, nodeData: any) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setMenuPosition({ x: event.pageX, y: event.pageY });
+    setSelectedNode(nodeData);
+    setMenuVisible(true);
+  }, []);
+
   // Fetch and update the skill tree
-  const updateSkillTree = async () => {
+  const updateSkillTree = useCallback(async () => {
     try {
       const data = await apiRequest(
         `/api/courses/getBigChecks?courseId=${courseId}`
@@ -59,6 +74,7 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
         coolDown: node.coolDown,
         unlockDepTimeInterval: node.unlockDepTimeInterval,
       }));
+      console.log(data);
 
       const clusters: { nodes: Node[]; edges: Edge[] }[] = [];
 
@@ -66,9 +82,22 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
       for (let i = 0; i < bigChecks.length; i++) {
         const bigCheckNode = bigChecks[i];
 
-        // Set the position of the BigCheck node
-        const x = i * bigCheckSpacingX;
-        const y = bigCheckBaseY + (i % 2) * bigCheckYOffset;
+        // 判断是否有持久化位置（即数据库中保存过的位置）
+        const hasSavedPosition =
+          bigCheckNode.positionX !== undefined &&
+          bigCheckNode.positionX !== null &&
+          bigCheckNode.positionX !== -1 &&
+          bigCheckNode.positionY !== undefined &&
+          bigCheckNode.positionY !== null &&
+          bigCheckNode.positionY !== -1;
+
+        const x = hasSavedPosition
+          ? bigCheckNode.positionX
+          : i * bigCheckSpacingX;
+
+        const y = hasSavedPosition
+          ? bigCheckNode.positionY
+          : bigCheckBaseY + (i % 2) * bigCheckYOffset;
 
         bigCheckNode.position = { x, y };
 
@@ -150,7 +179,7 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
     } catch (error) {
       console.error("Error fetching data:", error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -186,7 +215,7 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
         />
       ),
     }),
-    [updateSkillTree]
+    [updateSkillTree, handleNodeContextMenu]
   );
 
   const edgeTypes = useMemo(
@@ -211,15 +240,6 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
       document.removeEventListener("click", handleClickOutside);
     };
   }, [menuVisible]);
-
-  // Context menu handlers
-  const handleNodeContextMenu = (event: React.MouseEvent, nodeData: any) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setMenuPosition({ x: event.pageX, y: event.pageY });
-    setSelectedNode(nodeData);
-    setMenuVisible(true);
-  };
 
   const handleBlankContextMenu = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -478,6 +498,142 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
     }
   };
 
+  const handleNodeDragStop = useCallback(
+    async (_: any, draggedNode: Node) => {
+      setNodes((prev) =>
+        prev.map((node) =>
+          node.id === draggedNode.id
+            ? { ...node, position: draggedNode.position }
+            : node
+        )
+      );
+
+      // 保存节点位置到数据库
+      await saveNodePositionToDatabase(draggedNode);
+
+      // setTimeout(() => {
+      //   refreshNodeHandlesAndEdges(edges);
+      // }, 0);
+    },
+    [edges]
+  );
+
+  const saveNodePositionToDatabase = async (draggedNode: Node) => {
+    const { position } = draggedNode;
+    const formData = new FormData();
+
+    formData.append("id", draggedNode.id);
+    formData.append("courseId", courseId!.toString());
+    formData.append("positionX", position.x.toString());
+    formData.append("positionY", position.y.toString());
+
+    try {
+      const response = await apiRequest(
+        `/api/teacher/updateNode?nodeId=${draggedNode.id}`,
+        "PUT",
+        formData
+      );
+      console.log("Node position saved:", response.data);
+    } catch (error) {
+      console.error("Failed to save node position:", error);
+    }
+  };
+
+  const refreshNodeHandlesAndEdges = (currentEdges: Edge[]) => {
+    setNodes((prevNodes) => {
+      const updatedNodes = prevNodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          handles: [], // 清空旧句柄
+        },
+      }));
+
+      const updatedEdges: Edge[] = [];
+
+      // 更新每条边
+      currentEdges.forEach((edge) => {
+        const sourceNode = updatedNodes.find((n) => n.id === edge.source);
+        const targetNode = updatedNodes.find((n) => n.id === edge.target);
+
+        if (!sourceNode || !targetNode) return;
+
+        const sourceRadius = getRadiusByNodeType(sourceNode.type!);
+        const targetRadius = getRadiusByNodeType(targetNode.type!);
+
+        const sourceHandlePos = calculateHandlePosition(
+          sourceNode.position,
+          targetNode.position,
+          sourceRadius
+        );
+        const targetHandlePos = calculateHandlePosition(
+          targetNode.position,
+          sourceNode.position,
+          targetRadius
+        );
+
+        const sourceHandleId = `handle-${sourceNode.id}-source-${sourceHandlePos.x}-${sourceHandlePos.y}`;
+        const targetHandleId = `handle-${targetNode.id}-target-${targetHandlePos.x}-${targetHandlePos.y}`;
+        console.log(
+          "sourceHandleId:",
+          sourceHandleId,
+          "\ntargetHandleId:",
+          targetHandleId
+        );
+
+        // 更新句柄
+        sourceNode.data.handles = [
+          ...(sourceNode.data.handles || []),
+          {
+            type: "source",
+            position: sourceHandlePos,
+            id: sourceHandleId,
+          },
+        ];
+        targetNode.data.handles = [
+          ...(targetNode.data.handles || []),
+          {
+            type: "target",
+            position: targetHandlePos,
+            id: targetHandleId,
+          },
+        ];
+        console.log(
+          "sourceNode handlers:",
+          sourceNode.data.handles,
+          "targetNode handlers:",
+          targetNode.data.handles
+        );
+
+        updatedEdges.push({
+          ...edge,
+          sourceHandle: sourceHandleId,
+          targetHandle: targetHandleId,
+        });
+      });
+
+      setEdges(currentEdges);
+
+      return updatedNodes;
+    });
+  };
+
+  function getRadiusByNodeType(type: string) {
+    if (type === "BIGCHECK") return bigCheckRadius;
+    if (type === "MAJOR_NODE") return majornodeRadius;
+    return minornodeRadius;
+  }
+
+  const onNodesChange = useCallback(
+    (changes: any) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    []
+  );
+
+  const onEdgesChange = useCallback(
+    (changes: any) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    []
+  );
+
   const openPublishDialog = () => setIsPublishDialogOpen(true);
   const closePublishDialog = () => setIsPublishDialogOpen(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -525,6 +681,9 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
             fitView
             minZoom={0.2}
             maxZoom={2}
+            onNodesChange={onNodesChange} // 用于节点位置状态更新
+            onEdgesChange={onEdgesChange} // 如果需要支持边的交互（可选）
+            onNodeDragStop={handleNodeDragStop} // 拖拽结束后触发布局更新
             className="bg-stone-50"
             style={{}}
           />
