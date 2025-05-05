@@ -25,7 +25,7 @@ import {
   majornodeRadius,
   minornodeRadius,
 } from "@/types/Values";
-import { calculateHandlePosition } from "@/utils/utils";
+import { calculateHandlePosition, getRestoredPosition } from "@/utils/utils";
 import { apiRequest } from "@/utils/api";
 import { FaHome } from "react-icons/fa";
 import { toast } from "react-toastify";
@@ -83,23 +83,10 @@ const TeacherSkillTree = ({ courseName }: { courseName: string }) => {
         const bigCheckNode = bigChecks[i];
 
         // 判断是否有持久化位置（即数据库中保存过的位置）
-        const hasSavedPosition =
-          bigCheckNode.positionX !== undefined &&
-          bigCheckNode.positionX !== null &&
-          bigCheckNode.positionX !== -1 &&
-          bigCheckNode.positionY !== undefined &&
-          bigCheckNode.positionY !== null &&
-          bigCheckNode.positionY !== -1;
-
-        const x = hasSavedPosition
-          ? bigCheckNode.positionX
-          : i * bigCheckSpacingX;
-
-        const y = hasSavedPosition
-          ? bigCheckNode.positionY
-          : bigCheckBaseY + (i % 2) * bigCheckYOffset;
-
-        bigCheckNode.position = { x, y };
+        bigCheckNode.position = getRestoredPosition(bigCheckNode, {
+          x: i * bigCheckSpacingX,
+          y: bigCheckBaseY + (i % 2) * bigCheckYOffset,
+        });
 
         // Get the cluster nodes and edges
         const clusterResult = await Cluster(bigCheckNode);

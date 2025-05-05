@@ -15,6 +15,7 @@ import {
   useEditController,
 } from "react-admin";
 import { useEffect, useState } from "react";
+import CopyCourseButton from "./CopyCourseButton";
 
 const ListActions = ({ role, resource }: any) => (
   <TopToolbar>
@@ -43,6 +44,7 @@ export const CourseList = (props: any) => {
         <ImageField source="iconUrl" label="Icon" />
 
         {/* 只有 TEACHER 角色才能看到 Edit 和 Delete 按钮 */}
+        {role === "TEACHER" && <CopyCourseButton />}
         {role === "TEACHER" && <EditButton />}
         {(role === "TEACHER" || role === "ADMIN") && (
           <DeleteButton mutationMode="pessimistic" />

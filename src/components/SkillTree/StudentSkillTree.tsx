@@ -18,7 +18,7 @@ import {
   majornodeRadius,
   minornodeRadius,
 } from "@/types/Values";
-import { calculateHandlePosition } from "@/utils/utils";
+import { calculateHandlePosition, getRestoredPosition } from "@/utils/utils";
 import { apiRequest } from "@/utils/api";
 import { FaHome } from "react-icons/fa";
 import WebUser from "@/utils/user";
@@ -163,10 +163,10 @@ const StudentSkillTree = ({
         const bigCheckNode = bigChecks[i];
 
         // Set the position of the BigCheck node
-        const x = i * bigCheckSpacingX;
-        const y = bigCheckBaseY + (i % 2) * bigCheckYOffset;
-
-        bigCheckNode.position = { x, y };
+        bigCheckNode.position = getRestoredPosition(bigCheckNode, {
+          x: i * bigCheckSpacingX,
+          y: bigCheckBaseY + (i % 2) * bigCheckYOffset,
+        });
 
         // Merge progress data
         if (studentProgress[bigCheckNode.nodeId]) {
