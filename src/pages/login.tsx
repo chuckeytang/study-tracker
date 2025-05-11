@@ -64,7 +64,7 @@ export default function LoginPage(props: any) {
 
       if (response.token) {
         localStorage.setItem("token", response.token); // 保存 Token
-        if (!existingUserId || existingUserId==='undefined') {
+        if (!existingUserId || existingUserId === "undefined") {
           localStorage.setItem("tempUserId", response.userId); // 保存临时用户 ID
         }
         WebUser.getInstance().markAsExpired();

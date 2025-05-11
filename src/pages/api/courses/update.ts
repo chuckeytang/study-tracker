@@ -19,7 +19,7 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     // 手动运行 multer 中间件以处理文件上传
     await runMiddleware(req, res, upload.single("icon"));
 
-    const { id, name, description } = req.body; // 移除 teacherId
+    const { id, name, description, inHomePage } = req.body; // 移除 teacherId
     const file = req.file;
 
     const host = req.headers.host || process.env.NEXT_PUBLIC_BASE_URL;
@@ -37,6 +37,7 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
       data: {
         name,
         description,
+        inHomePage: inHomePage === "true",
         ...(iconUrl && { iconUrl }), // 如果有上传文件，更新iconUrl
       },
     });

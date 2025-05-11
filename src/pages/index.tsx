@@ -7,7 +7,7 @@ export default function Home(props: any) {
 
   useEffect(() => {
     const to = setTimeout(() => {
-      router.push("/login");
+      router.push("/home");
     }, 1000);
 
     return () => clearTimeout(to);

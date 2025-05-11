@@ -41,6 +41,7 @@ model Course {
   description     String
   iconUrl         String?          // 课程图标的存储地址，可选字段
   published       Boolean          @default(false)
+  inHomePage      Boolean          @default(false)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   nodes           Node[]       // 课程下的所有 nodes

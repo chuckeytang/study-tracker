@@ -38,7 +38,7 @@ const CopyCourseButton = () => {
       size="small"
       color="primary"
     >
-      Copy From
+      Copy
     </Button>
   );
 };

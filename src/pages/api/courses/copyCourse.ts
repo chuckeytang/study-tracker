@@ -55,6 +55,7 @@ export default async function handler(
         description: course.description,
         iconUrl: course.iconUrl,
         published: false,
+        inHomePage: false, // 复制课程默认为false
       },
     });
 

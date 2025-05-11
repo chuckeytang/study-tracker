@@ -20,7 +20,7 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     // 手动运行 multer 中间件
     await runMiddleware(req, res, upload.single("icon"));
 
-    const { name, description } = req.body;
+    const { name, description, inHomePage } = req.body;
     const file = req.file;
     const { user } = req; // 获取经过身份验证的用户信息
 
@@ -39,6 +39,7 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
         name,
         description,
         iconUrl, // 保存上传的图片URL
+        inHomePage: ["true", true, 1, "1"].includes(inHomePage),
       },
     });
 

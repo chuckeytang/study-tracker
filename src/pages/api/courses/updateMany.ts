@@ -19,6 +19,11 @@ router.put(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
   const { ids, ...data } = req.body; // 从请求体中获取批量更新的IDs和更新数据
 
   try {
+    // 转换 inHomePage 字段为布尔值（仅当该字段存在）
+    if ("inHomePage" in data) {
+      data.inHomePage = data.inHomePage === "true" || data.inHomePage === true;
+    }
+
     // 使用 Prisma 批量更新多个课程记录
     const updatedCourses = await prisma.course.updateMany({
       where: { id: { in: ids.map((id: number) => Number(id)) } }, // 批量更新ID
