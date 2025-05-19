@@ -81,7 +81,7 @@ const CourseHome = () => {
         </div>
         <button
           onClick={() => router.push("/login")}
-          className="px-4 py-2 border border-gray-400 rounded-full hover:bg-gray-100 transition"
+          className="px-4 py-2 border text-black border-gray-400 rounded-full hover:bg-gray-100 transition"
         >
           Log in
         </button>
