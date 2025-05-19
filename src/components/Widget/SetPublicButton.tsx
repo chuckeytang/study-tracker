@@ -20,11 +20,11 @@ const SetPublicButton = () => {
         courseId: record.id,
       });
 
-      notify("课程已设为首页展示", { type: "success" });
+      notify("The course has been set as a public course", { type: "success" });
       refresh();
     } catch (error: any) {
       console.error("Set public course error:", error);
-      notify("设置失败：" + error.message, { type: "error" });
+      notify("Course set failed：" + error.message, { type: "error" });
     }
   };
 
