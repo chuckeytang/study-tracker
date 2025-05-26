@@ -120,17 +120,6 @@ export default function LoginPage(props: any) {
             Log In
           </WidgetButton>
         </form>
-
-        {/* Try Now 按钮 */}
-        <p className="mt-4 text-center text-gray-400">
-          Or{" "}
-          <button
-            onClick={handleTryNow}
-            className="text-blue-500 hover:underline"
-          >
-            Try NOW
-          </button>
-        </p>
       </div>
     </div>
   );

@@ -47,7 +47,7 @@ export const CourseList = (props: any) => {
         {/* 只有 TEACHER 角色才能看到 Edit 和 Delete 按钮 */}
         {role === "TEACHER" && <CopyCourseButton />}
         {role === "TEACHER" && <EditButton />}
-        {role === "TEACHER" && <SetPublicButton />}
+        {role === "ADMIN" && <SetPublicButton />}
         {(role === "TEACHER" || role === "ADMIN") && (
           <DeleteButton mutationMode="pessimistic" />
         )}
