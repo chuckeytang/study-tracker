@@ -31,6 +31,7 @@ router.get(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
     if (user.role === "ADMIN") {
       // ADMIN 返回所有课程
       courses = await prisma.course.findMany({
+        where: { published: true },
         skip: skip,
         take: take,
         orderBy: {

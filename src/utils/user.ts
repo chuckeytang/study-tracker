@@ -36,6 +36,7 @@ class WebUser {
 
   // 从 localStorage 加载用户数据
   private loadUserFromStorage() {
+    console.log("loadUserFromStorage", this.userKey);
     const storedUser = localStorage.getItem(this.userKey);
     if (storedUser) {
       this.userData = JSON.parse(storedUser);

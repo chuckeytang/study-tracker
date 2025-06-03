@@ -46,7 +46,12 @@ export const apiRequest = async (
     } else {
       // 抛出异常，并包含状态码和错误信息
       const errorData = await response.json();
-      throw new Error(`Error: ${response.status} - ${errorData.message}`);
+
+      // 自定义错误结构，便于前端识别
+      const error = new Error(errorData.error || "Request failed");
+      (error as any).data = errorData;
+      (error as any).status = response.status;
+      throw error;
     }
   } finally {
     if (setLoading) setLoading(false); // End loading

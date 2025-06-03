@@ -25,7 +25,7 @@ const AdminCustomAppBar = (props: any) => {
 
   const handleLogout = () => {
     logout();
-    window.location.href = "/login";
+    window.location.href = "/home";
   };
 
   return (

@@ -32,6 +32,7 @@ const BareStudentSkillTree: React.FC<Props> = ({ userId, courseId }) => {
   const [rewardLevel, setRewardLevel] = useState(1);
   const [experienceConfig, setExperienceConfig] = useState<number[]>([]);
   const [rewardConfig, setRewardConfig] = useState<number[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleLevelChange = async (nodeId: string, delta: number) => {
     try {
@@ -43,9 +44,13 @@ const BareStudentSkillTree: React.FC<Props> = ({ userId, courseId }) => {
       updateSkillTree();
     } catch (error: any) {
       console.error("Error changing node level:", error);
-      if (error.response?.data?.error) {
-        alert(error.response.data.error);
-      }
+      // ✅ 错误来源：可能是 Fetch API 的自定义封装，error.response 不存在
+      const errMsg =
+        error?.response?.data?.error || // Axios 风格
+        error?.data?.error || // 自定义 fetch 封装返回
+        error?.message || // JS 错误
+        "An unknown error occurred."; // 兜底
+      setErrorMessage(errMsg);
     }
   };
 
@@ -217,6 +222,21 @@ const BareStudentSkillTree: React.FC<Props> = ({ userId, courseId }) => {
 
   return (
     <div className="w-full h-[90vh] relative">
+      {/* 🧩 插入错误提示框 */}
+      {errorMessage && (
+        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded shadow z-50 max-w-[80%]">
+          <div className="flex justify-between items-center space-x-4">
+            <span>{errorMessage}</span>
+            <button
+              className="text-red-700 font-bold"
+              onClick={() => setErrorMessage(null)}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       <ReactFlowProvider>
         <ReactFlow
           nodes={nodes}

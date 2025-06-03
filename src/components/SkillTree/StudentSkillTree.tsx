@@ -53,6 +53,7 @@ const StudentSkillTree = ({
   const [rewardLevel, setRewardLevel] = useState<number>(1);
   const [experienceConfig, setExperienceConfig] = useState<number[]>([]);
   const [rewardConfig, setRewardConfig] = useState<number[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showGift, setShowGift] = useState(false);
 
   const router = useRouter();
@@ -331,9 +332,11 @@ const StudentSkillTree = ({
       updateSkillTree();
     } catch (error: any) {
       console.error("Error changing node level:", error);
-      if (error.response && error.response.data.error) {
-        alert(error.response.data.error);
-      }
+      const msg =
+        error?.response?.data?.error ||
+        error?.message ||
+        "Failed to change node level";
+      setErrorMessage(msg);
     }
   };
 
@@ -450,6 +453,22 @@ const StudentSkillTree = ({
           </button>
         </div>
       )}
+
+      {/* 🧩 插入错误提示框 */}
+      {errorMessage && (
+        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded shadow z-50 max-w-[80%]">
+          <div className="flex justify-between items-center space-x-4">
+            <span>{errorMessage}</span>
+            <button
+              className="text-red-700 font-bold"
+              onClick={() => setErrorMessage(null)}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="rounded-2xl bg-stone-50 w-full m-10 h-[90vh] flex justify-center items-start">
         {/* Top navigation and course selection */}
         <div className="flex flex-col justify-center items-center">

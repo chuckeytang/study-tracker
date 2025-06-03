@@ -20,6 +20,21 @@ router.post(async (req: ExtendedNextApiRequest, res: NextApiResponse) => {
   }
 
   try {
+    // 检查课程是否已发布
+    const course = await prisma.course.findUnique({
+      where: { id: Number(courseId) },
+      select: { published: true },
+    });
+
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    if (!course.published) {
+      return res.status(400).json({ message: "Course is not published" });
+    }
+
+    // 更新事务：取消所有首页标记 + 设置新课程为首页展示
     await prisma.$transaction([
       prisma.course.updateMany({
         data: { inHomePage: false },

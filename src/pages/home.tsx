@@ -12,33 +12,58 @@ const CourseHome = () => {
   const [error, setError] = useState<string>("");
   const router = useRouter();
 
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const registerTempUserAndJoinCourse = async () => {
+    const existingUserId = localStorage.getItem("tempUserId");
+    const res = await apiRequest("/api/system/tempUserRegister", "POST", {
+      existingUserId: existingUserId ? Number(existingUserId) : null,
+    });
+    console.log("registerTempUserAndJoinCourse:", res);
+
+    if (!res.token) throw new Error("No token returned from tempUserRegister");
+
+    localStorage.setItem("token", res.token);
+    if (!existingUserId || existingUserId === "undefined") {
+      localStorage.setItem("tempUserId", res.userId);
+    }
+
+    WebUser.getInstance().markAsExpired();
+    setUserId(res.userId);
+    return res.userId;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return setError("Both fields are required");
+
+    try {
+      const res = await apiRequest(
+        "/api/system/login",
+        "POST",
+        { email, password },
+        true
+      );
+
+      if (!res.token) return setError("Invalid credentials");
+
+      localStorage.setItem("token", res.token);
+      WebUser.getInstance().markAsExpired();
+
+      const user = await WebUser.getInstance().getUserData();
+      router.push(user.role === "ADMIN" ? "/admin" : "/myCourses");
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("Login failed. Please check your credentials.");
+    }
+  };
+
   useEffect(() => {
     const init = async () => {
       setLoading(true);
       try {
-        const existingUserId = localStorage.getItem("tempUserId");
-
-        const tempUserRes = await apiRequest(
-          "/api/system/tempUserRegister",
-          "POST",
-          {
-            existingUserId: existingUserId ? Number(existingUserId) : null,
-          }
-        );
-
-        if (tempUserRes.token) {
-          localStorage.setItem("token", tempUserRes.token);
-          const tempUserId = tempUserRes.userId;
-
-          if (!existingUserId || existingUserId === "undefined") {
-            localStorage.setItem("tempUserId", tempUserId);
-          }
-
-          WebUser.getInstance().markAsExpired();
-          setUserId(tempUserId);
-        } else {
-          throw new Error("No token in temp user response");
-        }
+        const tempUserId = await registerTempUserAndJoinCourse();
 
         const homepageCourse = await apiRequest(
           "/api/courses/getHomePageCourse"
@@ -47,16 +72,19 @@ const CourseHome = () => {
         setCourseId(homepageCourse.id);
 
         const courseListRes = await apiRequest(
-          `/api/student/getCourseList?userId=${tempUserRes.userId}`
+          `/api/student/getCourseList?userId=${tempUserId}`
         );
+        console.log("courseListRes", courseListRes);
 
         const hasJoined = courseListRes.courses.some(
           (c: any) => c.id === homepageCourse.id && c.isLearning
         );
 
+        console.log("hasJoined", hasJoined);
+
         if (!hasJoined) {
           await apiRequest("/api/student/joinCourse", "POST", {
-            studentId: tempUserRes.userId,
+            studentId: tempUserId,
             courseId: homepageCourse.id,
           });
         }
@@ -79,40 +107,45 @@ const CourseHome = () => {
           <img src="/images/logo.png" alt="Logo" className="h-8 w-auto" />
           <img src="/images/title.png" alt="Title" className="h-8 w-auto" />
         </div>
-        <button
-          onClick={() => router.push("/login")}
-          className="px-4 py-2 border text-black border-gray-400 rounded-full hover:bg-gray-100 transition"
-        >
-          Log in
-        </button>
+        <form onSubmit={handleSubmit} className="flex items-center space-x-2">
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="px-3 py-1 border rounded-md text-sm w-44"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="px-3 py-1 border rounded-md text-sm w-44"
+          />
+          <button
+            type="submit"
+            className="px-4 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+          >
+            Log in
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push("/register")}
+            className="text-blue-500 hover:underline text-sm ml-2"
+          >
+            Register
+          </button>
+        </form>
       </header>
-
-      {/* Hero 区域 */}
-      <section
-        className="w-full py-24 text-white text-center bg-[#090f26]"
-        style={{
-          backgroundImage: "url('/images/bg_student.jpg')",
-          backgroundSize: "cover",
-          backgroundBlendMode: "multiply",
-        }}
-      >
-        <h1 className="text-4xl font-bold mb-4">
-          Join learners building better habits
-        </h1>
-        <p className="text-lg opacity-80">
-          Track your skills. Visualize your progress. Build better habits—one
-          step at a time.
-        </p>
-      </section>
 
       {/* 错误信息 */}
       {error && <p className="text-red-500 text-center mt-6">{error}</p>}
 
       {/* 试用课程 */}
       <section className="w-full py-16 bg-white text-center">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-          Sample Course Preview
-        </h2>
+        、
         <div className="mx-auto">
           {loading ? (
             <p className="text-gray-500">Loading preview course...</p>
