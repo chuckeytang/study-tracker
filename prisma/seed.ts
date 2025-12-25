@@ -3,6 +3,8 @@ import { PrismaClient, UnlockType } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  await prisma.expense.deleteMany();
+  await prisma.expenseCategory.deleteMany();
   // Clear tables in the order of dependencies
   await prisma.unlockDependency.deleteMany();
   await prisma.lockDependency.deleteMany();
@@ -99,7 +101,7 @@ async function main() {
     },
   });
 
-  const admin1 = await prisma.user.create({
+  const admin = await prisma.user.create({
     data: {
       name: "Admin",
       email: "admin@example.com",
@@ -110,6 +112,69 @@ async function main() {
   });
 
   console.log("2 teachers and 5 students created successfully!");
+
+  // --- 4. [V2 新增] 初始化财务分类 (ExpenseCategory) ---
+  const categoriesData = [
+    { name: "Housing", iconUrl: "/images/icons/housing.png" },
+    { name: "Transportation", iconUrl: "/images/icons/transportation.png" },
+    { name: "Personal Care", iconUrl: "/images/icons/personal_care.png" },
+    { name: "Utilities", iconUrl: "/images/icons/utilities.png" },
+    { name: "Loans", iconUrl: "/images/icons/loans.png" },
+    { name: "Discretionary", iconUrl: "/images/icons/discretionary.png" },
+  ];
+
+  await prisma.expenseCategory.createMany({ data: categoriesData });
+  const allCategories = await prisma.expenseCategory.findMany();
+
+  // 辅助函数：根据名称获取分类ID
+  const getCatId = (name: string) =>
+    allCategories.find((c) => c.name === name)?.id || 0;
+
+  console.log("Expense categories created!");
+
+  // --- 5. [V2 新增] 初始化支出记录 (Expense) ---
+  // 模拟图片中的数据
+  await prisma.expense.createMany({
+    data: [
+      {
+        userId: student1.id,
+        amount: 1500.0,
+        categoryId: getCatId("Housing"),
+        note: "Rent/mortgage",
+        incurredAt: new Date("2025-10-25T22:04:00"),
+      },
+      {
+        userId: student1.id,
+        amount: 305.0,
+        categoryId: getCatId("Transportation"),
+        note: "Car payment",
+        incurredAt: new Date("2025-10-25T22:04:00"),
+      },
+      {
+        userId: student1.id,
+        amount: 305.0,
+        categoryId: getCatId("Personal Care"),
+        note: "Gym Membership",
+        incurredAt: new Date("2025-10-25T22:04:00"),
+      },
+      {
+        userId: student1.id,
+        amount: 305.0,
+        categoryId: getCatId("Loans"),
+        note: "Education",
+        incurredAt: new Date("2025-10-23T22:04:00"),
+      },
+      {
+        userId: student1.id,
+        amount: 305.0,
+        categoryId: getCatId("Discretionary"),
+        note: "Subscriptions & Services",
+        incurredAt: new Date("2025-10-23T22:04:00"),
+      },
+    ],
+  });
+
+  console.log("Sample expenses created!");
 
   // Create swimming course
   const swimmingCourse = await prisma.course.create({

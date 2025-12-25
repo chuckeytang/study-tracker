@@ -8,6 +8,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+model ExpenseCategory {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique // 例如：Housing, Transportation
+  iconUrl   String?   // 图标地址
+  expenses  Expense[]
+  createdAt DateTime  @default(now())
+}
+
+model Expense {
+  id                Int             @id @default(autoincrement())
+  amount            Float           // 支出金额
+  note              String?         // 备注 (对应 UI 中的 Rent/mortgage 等)
+  
+  // 分类关联
+  categoryId        Int
+  category          ExpenseCategory @relation(fields: [categoryId], references: [id])
+  
+  // 用户关联
+  userId            Int
+  user              User            @relation(fields: [userId], references: [id])
+  
+  // 业务时间 (对应 UI 的日期筛选)
+  incurredAt        DateTime        @default(now()) 
+  
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([incurredAt])
+}
+
 model User {
   id              Int              @id @default(autoincrement())
   name            String?
@@ -25,6 +57,8 @@ model User {
   updatedAt       DateTime         @updatedAt
   progress        CourseProgress[] // 学生的学习进度
   selectedCourses UserCourse[]     // 学生选择的或者老师教授的课程列表
+
+  expenses        Expense[]
 
   NodeUpgradeHistory NodeUpgradeHistory[]
 }
