@@ -13,6 +13,10 @@ export default async function loginHandler(
   }
 
   const { email, password } = req.body;
+  console.log('前端传来的邮箱:', email);
+  console.log('前端传来的密码:', `[${password}]`);
+  const correctHash = await bcrypt.hash(password, 10);
+  console.log("✅ 请把数据库里的密码改成这串字符串:", correctHash);
 
   try {
     // 使用 Prisma 查询数据库中的用户
@@ -38,7 +42,16 @@ export default async function loginHandler(
     );
 
     // 返回 token
-    res.status(200).json({ token });
+    res.status(200).json({ 
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatarPicUrl: user.avartarPicUrl
+      }
+     });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }

@@ -23,8 +23,10 @@ router.post(async (req, res) => {
       include: { category: true },
     });
 
+    //res.setHeader('Access-Control-Allow-Origin', '*');
     res.status(201).json(newExpense);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: `Failed to create expense: ${error}` });
   }
 });
