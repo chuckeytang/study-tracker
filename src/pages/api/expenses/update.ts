@@ -36,5 +36,5 @@ router.post(async (req, res) => {
 });
 
 export default router.handler({
-  onNoMatch: (req, res) => res.status(405).end(),
+  onNoMatch: (req, res) => { res.status(405).end(); },
 });
