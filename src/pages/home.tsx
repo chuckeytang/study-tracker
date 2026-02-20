@@ -145,7 +145,6 @@ const CourseHome = () => {
 
       {/* 试用课程 */}
       <section className="w-full py-16 bg-white text-center">
-        、
         <div className="mx-auto">
           {loading ? (
             <p className="text-gray-500">Loading preview course...</p>
