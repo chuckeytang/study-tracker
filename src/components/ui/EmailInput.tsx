@@ -4,13 +4,12 @@ import Input from "./Input";
 
 const COMMON_EMAIL_DOMAINS = ["gmail.com", "outlook.com", "yahoo.com", "qq.com", "163.com"];
 
-// [*] 修改 补充 error 相关属性
-interface EmailInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+interface EmailInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'>{
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value:string) => void;
   hasClearButton?: boolean;
-  isError?: boolean;     // [+] 新增 接收外部的错误状态
-  errorMessage?: string; // [+] 新增 接收错误文案
+  isError?: boolean;
+  errorMessage?: string;
 }
 
 export default function EmailInput({ 

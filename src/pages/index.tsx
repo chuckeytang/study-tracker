@@ -15,7 +15,27 @@ export default function Home() {
     saveCredentials 
   } = useRememberMe();
 
+  const [ emailError,setEmailError ] = useState("");
+
+  const validateEmail = (val: string) => {
+    if (!val){
+      setEmailError("");
+      return false;
+    }
+    const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+    if (!isValid) {
+      setEmailError("Please enter a valid email address");
+    }else{
+      setEmailError("");
+    }
+  };
+
   const handleLogin = () => {
+    validateEmail(email);
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      console.log("验证未通过，不执行登录");
+      return;
+    }
     saveCredentials();
     console.log("执行登录, Email:", email);
   };
