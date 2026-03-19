@@ -5,7 +5,6 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import EmailInput from "@/components/ui/EmailInput";
 import { apiRequest } from "@/utils/api";
-import WebUser from "@/utils/user";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -24,7 +23,7 @@ export default function ForgotPasswordPage() {
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPassLengthValid = password.length >= 6 && password.length <= 15;
   const isPassContentValid = /[A-Za-z]/.test(password) && /\d/.test(password);
-  const isStep1Valid = isEmailValid && code.length > 0;
+  const isStep1Valid = isEmailValid && code.trim().length > 0;
   const isStep2Valid = isPassLengthValid && isPassContentValid;
 
   useEffect(() => {
@@ -37,37 +36,59 @@ export default function ForgotPasswordPage() {
   }, [countdown]);
 
   const handleSendCode = () => {
-    if (countdown > 0 || !isEmailValid) return;
-    setCountdown(60);
+    if (countdown > 0 || !isEmailValid || isSubmitting) return;
+
+    setError("");
+    setIsSubmitting(true);
+    apiRequest(
+      "/api/auth/send-code",
+      "POST",
+      { email, type: "forgot-password" },
+      true
+    )
+      .then(() => {
+        setCountdown(60);
+      })
+      .catch((error: any) => {
+        const msg =
+          error?.data?.message || error?.message || "Failed to send code";
+        setError(msg);
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
   const handleNext = () => {
     if (!isStep1Valid || isSubmitting) return;
     setIsSubmitting(true);
     setError("");
-
-    // 模拟验证码校验：输入 123456 进入下一步
-    setTimeout(() => {
-      if (code !== "123456") {
-        setError("Invalid or expired code");
-        setIsSubmitting(false);
-      } else {
-        setStep(2);
-        setIsSubmitting(false);
-      }
-    }, 800);
+    setStep(2);
+    setIsSubmitting(false);
   };
 
   const handleConfirmReset = async () => {
     if (!isStep2Valid || isSubmitting) return;
     setIsSubmitting(true);
+    setError("");
     try {
+      await apiRequest(
+        "/api/auth/reset-password",
+        "POST",
+        {
+          email,
+          code: code.trim(),
+          newPassword: password,
+        },
+        true
+      );
       setShowSuccessToast(true);
       setTimeout(() => { 
-        router.push("/selection"); 
+        router.push("/"); 
       }, 1500);
     } catch (err: any) {
-      setError(err?.message || "Reset failed");
+      const msg = err?.data?.message || err?.message || "Reset failed";
+      setError(msg);
     } finally { setIsSubmitting(false); }
   };
 
@@ -140,7 +161,7 @@ export default function ForgotPasswordPage() {
                       className={error ? "input-error-fix" : ""}
                     />
                   </div>
-                  <button type="button" className="send-code-text" onClick={handleSendCode} disabled={countdown > 0 || !isEmailValid}>
+                  <button type="button" className="send-code-text" onClick={handleSendCode} disabled={countdown > 0 || !isEmailValid || isSubmitting}>
                     {countdown > 0 ? `resend (${countdown}s)` : "Send code"}
                   </button>
                 </div>

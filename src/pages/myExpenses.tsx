@@ -1,10 +1,12 @@
-import Head from "next/head";
+﻿import Head from "next/head";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/router";
-// [*] 修改：引入 Repeat 和 LogOut 图标用于下拉菜单
+import { apiRequest } from "@/utils/api";
+import WebUser from "@/utils/user";
+// [*] 淇敼锛氬紩鍏?Repeat 鍜?LogOut 鍥炬爣鐢ㄤ簬涓嬫媺鑿滃崟
 import { Settings, ChevronDown, Plus, Search, ChevronLeft, ChevronRight, Clock, X, Calendar as CalendarIcon, Repeat, LogOut } from "lucide-react";
 
-// --- 自定义侧边栏图标组件 ---
+// --- 鑷畾涔変晶杈规爮鍥炬爣缁勪欢 ---
 
 const IconExpenses = ({ active }: { active?: boolean }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -51,34 +53,397 @@ export const CATEGORIES = [
 	{ id: 'career', name: 'Career', icon: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmlld0JveD0iMCAwIDIwIDIwIiBmaWxsPSJub25lIj4KICA8cGF0aCBkPSJNNSA0VjFDNSAwLjQ0NzcyIDUuNDQ3NzIgMCA2IDBIMTRDMTQuNTUyMyAwIDE1IDAuNDQ3NzIgMTUgMVY0SDE5QzE5LjU1MjMgNCAyMCA0LjQ0NzcyIDIwIDVWMTlDMjAgMTkuNTUyMyAxOS41NTIzIDIwIDE5IDIwSDFDMC40NDc3MiAyMCAwIDE5LjU1MjMgMCAxOVY1QzAgNC40NDc3MiAwLjQ0NzcyIDQgMSA0SDVaTTcgMTJIMlYxOEgxOFYxMkgxM1YxNUg3VjEyWk0xOCA2SDJWMTBIN1Y4SDEzVjEwSDE4VjZaTTkgMTBWMTNIMTFWMTBIOVpNNyAyVjRIMTNWMkg3WiIgZmlsbD0iIzMwMzIzNiIvPgo8L3N2Zz4=", tags: ['Courses', 'Books', 'Software'] }
 ];
 
+type ExpenseCategory = {
+  id: number;
+  name: string;
+  iconUrl?: string | null;
+};
+
+type ExpenseItem = {
+  id: number;
+  amount: number;
+  note: string | null;
+  categoryId: number;
+  category?: ExpenseCategory | null;
+  incurredAt: string;
+};
+
+type DateRange = {
+  from: Date;
+  to: Date;
+};
+
+const CATEGORY_ALIASES: Record<string, string[]> = {
+  housing: ["housing"],
+  utilities: ["utilities"],
+  transport: ["transport", "transportation"],
+  personal: ["personal", "personalcare"],
+  medical: ["medical", "health", "healthcare"],
+  loans: ["loan", "loans"],
+  obligations: ["obligation", "tax", "insurance"],
+  discretionary: ["discretionary", "entertainment"],
+  career: ["career", "education"],
+};
+
+const normalizeCategoryKey = (value?: string | null) =>
+  (value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const formatInputDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const formatInputTime = (date: Date) => {
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+};
+
+const formatDateLabel = (date: Date) =>
+  date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  });
+
+const formatTimeLabel = (date: Date) =>
+  date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+const getInitialDateRange = (): DateRange => {
+  const to = new Date();
+  to.setHours(23, 59, 59, 999);
+  const from = new Date(to);
+  from.setMonth(from.getMonth() - 1);
+  from.setHours(0, 0, 0, 0);
+  return { from, to };
+};
+
+const findUiCategoryByName = (categoryName?: string | null) => {
+  const normalized = normalizeCategoryKey(categoryName);
+  if (!normalized) return null;
+
+  for (const cat of CATEGORIES) {
+    const aliases = [
+      normalizeCategoryKey(cat.id),
+      normalizeCategoryKey(cat.name),
+      ...(CATEGORY_ALIASES[cat.id] ?? []),
+    ].map(normalizeCategoryKey);
+
+    if (aliases.some((alias) => alias && (normalized.includes(alias) || alias.includes(normalized)))) {
+      return cat;
+    }
+  }
+
+  return null;
+};
+
 export default function MyExpenses() {
   const router = useRouter();
   const [activeMenu, setActiveMenu] = useState("Expenses");
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
 
-  // [+] 新增：头像下拉菜单状态和 Ref
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const [currentUser, setCurrentUser] = useState<{
+    name?: string | null;
+    email?: string | null;
+    avartarPicUrl?: string | null;
+  } | null>(null);
 
-  // 弹窗状态管理
+  const initialRangeRef = useRef<DateRange>(getInitialDateRange());
+  const [dateRange, setDateRange] = useState<DateRange>(initialRangeRef.current);
+  const [pickerMonth, setPickerMonth] = useState<Date>(
+    new Date(
+      initialRangeRef.current.to.getFullYear(),
+      initialRangeRef.current.to.getMonth(),
+      1
+    )
+  );
+  const [tempFromDate, setTempFromDate] = useState<Date | null>(
+    initialRangeRef.current.from
+  );
+  const [tempToDate, setTempToDate] = useState<Date | null>(
+    initialRangeRef.current.to
+  );
+
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
+  const [loadingExpenses, setLoadingExpenses] = useState(false);
+  const [totalExpenses, setTotalExpenses] = useState(0);
+  const [categoryIdMap, setCategoryIdMap] = useState<Record<string, number>>({});
+
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null);
   const [selectedCat, setSelectedCat] = useState(CATEGORIES[0]);
   const [selectedTag, setSelectedTag] = useState(CATEGORIES[0].tags[0]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [amount, setAmount] = useState("0.00");
   const [note, setNote] = useState("");
-  
-  // 时间与日期状态
-  const [expenseDate, setExpenseDate] = useState("2026-03-14");
-  const [expenseTime, setExpenseTime] = useState("19:05");
+  const [expenseDate, setExpenseDate] = useState(formatInputDate(new Date()));
+  const [expenseTime, setExpenseTime] = useState(formatInputTime(new Date()));
+  const [isSubmittingExpense, setIsSubmittingExpense] = useState(false);
   const [isInnerCalendarOpen, setIsInnerCalendarOpen] = useState(false);
   const [isInnerTimeOpen, setIsInnerTimeOpen] = useState(false);
+  const [innerCalendarMonth, setInnerCalendarMonth] = useState<Date>(
+    new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  );
   const calendarPopRef = useRef<HTMLDivElement>(null);
   const timePopRef = useRef<HTMLDivElement>(null);
 
-  const [dateRange, setDateRange] = useState({ from: "Oct. 14th 2025", to: "Oct. 14th 2025" });
-  const [tempFrom, setTempFrom] = useState<number | null>(14);
-  const [tempTo, setTempTo] = useState<number | null>(14);
+  const isEditMode = editingExpenseId !== null;
+
+  const isSameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+
+  const resolveCategoryIdForUi = (uiCategory: (typeof CATEGORIES)[number]) => {
+    const keys = [
+      normalizeCategoryKey(uiCategory.id),
+      normalizeCategoryKey(uiCategory.name),
+      ...(CATEGORY_ALIASES[uiCategory.id] ?? []).map(normalizeCategoryKey),
+    ];
+
+    for (const key of keys) {
+      if (key && categoryIdMap[key]) {
+        return categoryIdMap[key];
+      }
+    }
+    return null;
+  };
+
+  const syncCategoryIdMap = (items: ExpenseItem[]) => {
+    setCategoryIdMap((prev) => {
+      const next = { ...prev };
+      for (const item of items) {
+        if (!item.categoryId) continue;
+        const nameKey = normalizeCategoryKey(item.category?.name);
+        if (nameKey) {
+          next[nameKey] = item.categoryId;
+        }
+        const matchedUi = findUiCategoryByName(item.category?.name);
+        if (!matchedUi) continue;
+        next[normalizeCategoryKey(matchedUi.id)] = item.categoryId;
+        next[normalizeCategoryKey(matchedUi.name)] = item.categoryId;
+        for (const alias of CATEGORY_ALIASES[matchedUi.id] ?? []) {
+          next[normalizeCategoryKey(alias)] = item.categoryId;
+        }
+      }
+      return next;
+    });
+  };
+
+  const fetchExpenses = async (
+    range: DateRange = dateRange,
+    keyword: string = searchKeyword
+  ) => {
+    setLoadingExpenses(true);
+    try {
+      const params = new URLSearchParams({
+        _start: "0",
+        _end: "200",
+        _sort: "incurredAt",
+        _order: "DESC",
+        startDate: range.from.toISOString(),
+        endDate: range.to.toISOString(),
+      });
+      if (keyword.trim()) {
+        params.set("q", keyword.trim());
+      }
+
+      const response = await apiRequest(`/api/expenses/search?${params.toString()}`);
+      const list: ExpenseItem[] = Array.isArray(response?.data) ? response.data : [];
+      setExpenses(list);
+      setTotalExpenses(Number(response?.sum ?? 0));
+      syncCategoryIdMap(list);
+    } catch (error) {
+      console.error("Fetch expenses failed:", error);
+      setExpenses([]);
+      setTotalExpenses(0);
+    } finally {
+      setLoadingExpenses(false);
+    }
+  };
+
+  const closeExpenseModal = () => {
+    setIsAddExpenseOpen(false);
+    setEditingExpenseId(null);
+    setIsSubmittingExpense(false);
+    setIsInnerCalendarOpen(false);
+    setIsInnerTimeOpen(false);
+  };
+
+  const resetExpenseForm = () => {
+    const now = new Date();
+    setEditingExpenseId(null);
+    setSelectedCat(CATEGORIES[0]);
+    setSelectedTag(CATEGORIES[0].tags[0]);
+    setSelectedCategoryId(resolveCategoryIdForUi(CATEGORIES[0]));
+    setAmount("0.00");
+    setNote("");
+    setExpenseDate(formatInputDate(now));
+    setExpenseTime(formatInputTime(now));
+    setInnerCalendarMonth(new Date(now.getFullYear(), now.getMonth(), 1));
+    setIsInnerCalendarOpen(false);
+    setIsInnerTimeOpen(false);
+  };
+
+  const handleOpenAddExpense = () => {
+    resetExpenseForm();
+    setIsAddExpenseOpen(true);
+  };
+
+  const handleOpenEditExpense = (expense: ExpenseItem) => {
+    const targetDate = new Date(expense.incurredAt);
+    const matchedCategory = findUiCategoryByName(expense.category?.name) ?? CATEGORIES[0];
+    const matchedTag =
+      matchedCategory.tags.find(
+        (tag) => tag.toLowerCase() === (expense.note ?? "").toLowerCase()
+      ) ?? matchedCategory.tags[0];
+
+    setEditingExpenseId(expense.id);
+    setSelectedCat(matchedCategory);
+    setSelectedTag(matchedTag);
+    setSelectedCategoryId(expense.categoryId);
+    setAmount(Number(expense.amount || 0).toFixed(2));
+    setNote(expense.note ?? "");
+    setExpenseDate(formatInputDate(targetDate));
+    setExpenseTime(formatInputTime(targetDate));
+    setInnerCalendarMonth(
+      new Date(targetDate.getFullYear(), targetDate.getMonth(), 1)
+    );
+    setIsInnerCalendarOpen(false);
+    setIsInnerTimeOpen(false);
+    setIsAddExpenseOpen(true);
+  };
+
+  const handleSelectCategory = (cat: (typeof CATEGORIES)[number]) => {
+    setSelectedCat(cat);
+    setSelectedTag(cat.tags[0]);
+    setSelectedCategoryId(resolveCategoryIdForUi(cat));
+  };
+
+  const handleDeleteExpense = async (id: number) => {
+    const confirmed = window.confirm("Delete this expense record?");
+    if (!confirmed) return;
+
+    try {
+      await apiRequest("/api/expenses/delete", "POST", { id });
+      await fetchExpenses();
+    } catch (error) {
+      console.error("Delete expense failed:", error);
+      window.alert("Delete failed, please try again.");
+    }
+  };
+
+  const handleConfirmExpense = async () => {
+    const amountNumber = Number(amount);
+    if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
+      window.alert("Please enter a valid amount.");
+      return;
+    }
+
+    const finalCategoryId = selectedCategoryId ?? resolveCategoryIdForUi(selectedCat);
+    if (!finalCategoryId) {
+      window.alert("Cannot resolve category ID. Please edit an existing record first to load category mapping.");
+      return;
+    }
+
+    const effectiveDate = expenseDate || formatInputDate(new Date());
+    const effectiveTime = expenseTime || "00:00";
+    const incurredAt = new Date(`${effectiveDate}T${effectiveTime}:00`);
+    if (Number.isNaN(incurredAt.getTime())) {
+      window.alert("Please select a valid date and time.");
+      return;
+    }
+
+    const payload = {
+      amount: amountNumber,
+      categoryId: finalCategoryId,
+      note: note.trim() || selectedTag || null,
+      incurredAt: incurredAt.toISOString(),
+    };
+
+    setIsSubmittingExpense(true);
+    try {
+      if (isEditMode && editingExpenseId !== null) {
+        await apiRequest("/api/expenses/update", "POST", {
+          id: editingExpenseId,
+          ...payload,
+        });
+      } else {
+        await apiRequest("/api/expenses/add", "POST", payload);
+      }
+      closeExpenseModal();
+      await fetchExpenses();
+    } catch (error) {
+      console.error("Save expense failed:", error);
+      window.alert("Save failed, please try again.");
+    } finally {
+      setIsSubmittingExpense(false);
+    }
+  };
+
+  const handleApply = () => {
+    if (!tempFromDate) {
+      window.alert("Please select a date.");
+      return;
+    }
+
+    let from = new Date(tempFromDate);
+    let to = new Date(tempToDate ?? tempFromDate);
+    if (from > to) {
+      const tmp = from;
+      from = to;
+      to = tmp;
+    }
+    from.setHours(0, 0, 0, 0);
+    to.setHours(23, 59, 59, 999);
+    if (from > to) {
+      window.alert("From date cannot be after To date.");
+      return;
+    }
+
+    setDateRange({ from, to });
+    setIsDatePickerOpen(false);
+  };
+
+  const toggleDatePicker = () => {
+    if (!isDatePickerOpen) {
+      setTempFromDate(new Date(dateRange.from));
+      setTempToDate(new Date(dateRange.to));
+      setPickerMonth(new Date(dateRange.to.getFullYear(), dateRange.to.getMonth(), 1));
+    }
+    setIsDatePickerOpen((prev) => !prev);
+  };
+
+  const handleDayClick = (day: number) => {
+    const clickedDate = new Date(
+      pickerMonth.getFullYear(),
+      pickerMonth.getMonth(),
+      day
+    );
+
+    if (!tempFromDate || (tempFromDate && tempToDate)) {
+      setTempFromDate(clickedDate);
+      setTempToDate(null);
+      return;
+    }
+
+    if (clickedDate < tempFromDate) {
+      setTempToDate(tempFromDate);
+      setTempFromDate(clickedDate);
+    } else {
+      setTempToDate(clickedDate);
+    }
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -92,7 +457,6 @@ export default function MyExpenses() {
       if (timePopRef.current && !timePopRef.current.contains(target)) {
         setIsInnerTimeOpen(false);
       }
-      // [+] 处理头像下拉菜单点击外部关闭
       if (profileMenuRef.current && !profileMenuRef.current.contains(target)) {
         setIsProfileOpen(false);
       }
@@ -101,35 +465,34 @@ export default function MyExpenses() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleDayClick = (day: number) => {
-    if (!tempFrom || (tempFrom && tempTo)) {
-      setTempFrom(day);
-      setTempTo(null);
-    } else {
-      if (day < tempFrom) {
-        setTempTo(tempFrom);
-        setTempFrom(day);
-      } else {
-        setTempTo(day);
+  useEffect(() => {
+    let mounted = true;
+    const loadCurrentUser = async () => {
+      try {
+        const userDetails = await WebUser.getInstance().getUserData();
+        if (mounted && userDetails) {
+          setCurrentUser(userDetails);
+        }
+      } catch (error) {
+        console.error("Failed to load current user in myExpenses:", error);
       }
-    }
-  };
+    };
+    void loadCurrentUser();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  const handleApply = () => {
-    if (tempFrom && tempTo) {
-      setDateRange({ from: `Oct. ${tempFrom}th 2025`, to: `Oct. ${tempTo}th 2025` });
-    } else if (tempFrom) {
-      setDateRange({ from: `Oct. ${tempFrom}th 2025`, to: `Oct. ${tempFrom}th 2025` });
-    }
-    setIsDatePickerOpen(false);
-  };
+  useEffect(() => {
+    void fetchExpenses(dateRange, searchKeyword);
+  }, [dateRange, searchKeyword]);
 
   const menuItems = [
     { name: "Expenses", icon: <IconExpenses active={activeMenu === "Expenses"} /> },
     { name: "Income", icon: <IconIncome active={activeMenu === "Income"} /> },
-    { name: "Budgets", icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M17.5001 4.1665H2.50008C2.03984 4.1665 1.66675 4.5396 1.66675 4.99984V15.8332C1.66675 16.2934 2.03984 16.6665 2.50008 16.6665H17.5001C17.9603 16.6665 18.3334 16.2934 18.3334 15.8332V4.99984C18.3334 4.5396 17.9603 4.1665 17.5001 4.1665Z" stroke={activeMenu === "Budgets" ? "white" : "#565656"} strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/><path d="M5.83325 2.5V5.83333" stroke={activeMenu === "Budgets" ? "white" : "#565656"} strokeWidth="1.66667" strokeLinecap="round"/><path d="M10.4166 9.5835H5.83325" stroke={activeMenu === "Budgets" ? "white" : "#565656"} strokeWidth="1.66667" strokeLinecap="round"/><path d="M14.1666 12.9165H5.83325" stroke={activeMenu === "Budgets" ? "white" : "#565656"} strokeWidth="1.66667" strokeLinecap="round"/><path d="M14.1667 2.5V5.83333" stroke={activeMenu === "Budgets" ? "white" : "#565656"} strokeWidth="1.66667" strokeLinecap="round"/></svg> },
-    { name: "Dashboard", icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.624 7.82422C12.624 7.82422 11.2784 11.6168 10.639 12.279C9.99962 12.9411 8.94449 12.9595 8.28237 12.3201C7.6202 11.6807 7.60179 10.6256 8.2412 9.96343C8.88062 9.3013 12.624 7.82422 12.624 7.82422Z" stroke={activeMenu === "Dashboard" ? "white" : "#565656"} strokeWidth="1.66667" strokeLinejoin="round"/><path d="M16.1872 16.1872C17.7706 14.6038 18.75 12.4162 18.75 10C18.75 5.1675 14.8325 1.25 10 1.25C5.1675 1.25 1.25 5.1675 1.25 10C1.25 12.4162 2.22938 14.6038 3.81282 16.1872" stroke={activeMenu === "Dashboard" ? "white" : "#565656"} strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1.6665V3.33317" stroke={activeMenu === "Dashboard" ? "white" : "#565656"} strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/><path d="M16.1856 4.64258L14.8904 5.69141" stroke={activeMenu === "Dashboard" ? "white" : "#565656"} strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/><path d="M17.7177 11.3471L16.0938 10.9722" stroke={activeMenu === "Dashboard" ? "white" : "#565656"} strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/><path d="M2.28223 11.3471L3.90618 10.9722" stroke={activeMenu === "Dashboard" ? "white" : "#565656"} strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/><path d="M3.81445 4.64258L5.10969 5.69145" stroke={activeMenu === "Dashboard" ? "white" : "#565656"} strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/></svg> },
-    { name: "Accounts", icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2.0848 17.5965C2.0848 17.7734 2.23245 17.9168 2.41459 17.9168L17.5842 17.9168C17.7663 17.9168 17.914 17.7734 17.914 17.5965V17.214C17.9216 17.0987 17.937 16.5233 17.5578 15.8872C17.3186 15.4861 16.9715 15.1396 16.5261 14.8574C15.9873 14.5159 15.3018 14.2685 14.4727 14.1195C14.4666 14.1187 13.8518 14.0372 13.222 13.8764C12.1253 13.5963 12.0295 13.3484 12.0288 13.346C12.0224 13.3215 12.013 13.2979 12.0011 13.2758C11.9921 13.2295 11.97 13.0555 12.0123 12.5892C12.1199 11.4047 12.7553 10.7047 13.2658 10.1423C13.4268 9.96495 13.5788 9.79741 13.6959 9.63312C14.201 8.92437 14.2479 8.11845 14.25 8.0685C14.25 7.96729 14.2384 7.88408 14.2135 7.80695C14.164 7.65262 14.0707 7.55645 14.0025 7.48625L14.0025 7.48625C13.9849 7.46808 13.9687 7.45133 13.9555 7.43595C13.9504 7.43008 13.937 7.41454 13.9492 7.33475C13.994 7.04104 14.021 6.79512 14.0339 6.56083C14.0569 6.14341 14.0748 5.51916 13.9672 4.91162C13.9539 4.80787 13.931 4.69829 13.8955 4.56775C13.7818 4.14939 13.599 3.79171 13.3451 3.49651C13.3014 3.449 12.2398 2.3305 9.15775 2.101C8.73159 2.06927 8.3103 2.08636 7.89559 2.10756C7.79563 2.1125 7.65875 2.11928 7.53067 2.15247C7.21246 2.2349 7.12754 2.43659 7.10525 2.54947C7.06829 2.73645 7.13325 2.88189 7.17621 2.97815C7.18246 2.99211 7.19017 3.00938 7.17671 3.05432C7.10517 3.16511 6.99263 3.265 6.87788 3.35963C6.84471 3.38782 6.07188 4.0542 6.02938 4.9247C5.9148 5.58675 5.92346 6.61825 6.05896 7.33116C6.06684 7.37054 6.07846 7.42883 6.05959 7.4682C5.91388 7.59879 5.74871 7.74679 5.74913 8.0845C5.75088 8.11845 5.79775 8.92437 6.30292 9.63312C6.41992 9.79729 6.57184 9.9647 6.73271 10.142L6.73309 10.1423C7.24359 10.7047 7.87888 11.4047 7.9865 12.5891C8.02884 13.0555 8.00667 13.2295 7.99771 13.2757C7.98575 13.2979 7.97642 13.3214 7.97 13.3459C7.96934 13.3483 7.87384 13.5955 6.78209 13.875C6.15225 14.0363 5.53221 14.1187 5.51371 14.1214C4.708 14.2574 4.02675 14.4986 3.48888 14.8383C3.04497 15.1187 2.69723 15.4658 2.45529 15.87C2.06874 16.516 2.07919 17.1042 2.0848 17.2116V17.5965Z" stroke={activeMenu === "Accounts" ? "white" : "#565656"} strokeWidth="1.66667" strokeLinejoin="round"/></svg> },
+    { name: "Budgets", icon: <Settings size={20} color={activeMenu === "Budgets" ? "white" : "#565656"} /> },
+    { name: "Dashboard", icon: <Settings size={20} color={activeMenu === "Dashboard" ? "white" : "#565656"} /> },
+    { name: "Accounts", icon: <Settings size={20} color={activeMenu === "Accounts" ? "white" : "#565656"} /> },
     { name: "Settings", icon: <Settings size={20} color={activeMenu === "Settings" ? "white" : "#565656"} /> },
   ];
 
@@ -143,7 +506,6 @@ export default function MyExpenses() {
         ::-webkit-scrollbar { display: none; }
         * { -ms-overflow-style: none; scrollbar-width: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        
         .icon-gray { filter: brightness(0) saturate(100%) invert(18%) sepia(5%) saturate(417%) hue-rotate(182deg) brightness(91%) contrast(92%); }
         .icon-white { filter: brightness(0) saturate(100%) invert(100%); }
       `}</style>
@@ -163,27 +525,33 @@ export default function MyExpenses() {
       </aside>
 
       <main className="flex-1 flex flex-col h-full overflow-hidden">
-        {/* [*] 修改：Header 部分增加了下拉菜单逻辑 */}
         <header className="h-[60px] bg-white flex items-center justify-end px-10 shrink-0 border-b border-gray-100">
           <div className="relative" ref={profileMenuRef}>
-            <div 
+            <div
               className="flex items-center gap-3 cursor-pointer"
               onClick={() => setIsProfileOpen(!isProfileOpen)}
             >
-              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Moni" alt="Avatar" className="w-9 h-9 rounded-full border border-gray-100"/>
+              <img
+                src={currentUser?.avartarPicUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=Tracka"}
+                alt="Avatar"
+                className="w-9 h-9 rounded-full border border-gray-100"
+              />
               <div className="flex flex-col text-right">
-                <span className="text-[13px] font-bold text-[#202224] font-sf">Moni Roy</span>
-                <span className="text-[11px] text-gray-500 font-nunito">Moni Roy@gmail.com</span>
+                <span className="text-[13px] font-bold text-[#202224] font-sf">
+                  {currentUser?.name || "Guest User"}
+                </span>
+                <span className="text-[11px] text-gray-500 font-nunito">
+                  {currentUser?.email || "No Email"}
+                </span>
               </div>
               <div className="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center">
                 <ChevronDown size={14} className={`text-gray-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
               </div>
             </div>
 
-            {/* [+] 新增：头像下拉菜单 (对齐 image_e2431c.png) */}
             {isProfileOpen && (
               <div className="absolute right-0 top-full mt-2 w-[200px] bg-white border border-gray-100 rounded-[12px] shadow-xl z-[150] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                <button 
+                <button
                   onClick={() => { router.push("/home"); setIsProfileOpen(false); }}
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
                 >
@@ -191,7 +559,7 @@ export default function MyExpenses() {
                   <span className="text-[14px] font-bold font-sf text-gray-700">Switch Module</span>
                 </button>
                 <div className="h-[1px] bg-gray-100 mx-2"></div>
-                <button 
+                <button
                   onClick={() => { router.push("/"); setIsProfileOpen(false); }}
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
                 >
@@ -207,8 +575,8 @@ export default function MyExpenses() {
           <div className="flex-1 p-6 flex flex-col gap-4 overflow-hidden">
             <div className="flex justify-between items-center shrink-0">
               <h2 className="text-[28px] font-bold text-[#202224] font-sf">Expenses</h2>
-              <button 
-                onClick={() => setIsAddExpenseOpen(true)}
+              <button
+                onClick={handleOpenAddExpense}
                 className="bg-[#4880FF] hover:bg-blue-600 text-white px-6 py-2 rounded-[8px] flex items-center gap-2 font-sf font-semibold shadow-sm transition-all active:scale-95"
               >
                 <Plus size={18} /> <span>Add Expense</span>
@@ -218,13 +586,13 @@ export default function MyExpenses() {
             <section className="bg-white rounded-[16px] border border-[#D8D8D8] flex items-center justify-between py-3 px-6 shrink-0 relative">
               <div className="flex items-center gap-6">
                 <span className="text-[#202224] font-bold text-[16px] font-nunito opacity-80">Date Range</span>
-                <div 
+                <div
                   className={`flex items-center gap-4 px-4 py-2 bg-[#F1F4F9] border rounded-[8px] cursor-pointer transition-all ${isDatePickerOpen ? 'border-[#4880FF] bg-white shadow-sm' : 'border-[#D8D8D8]'}`}
-                  onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+                  onClick={toggleDatePicker}
                 >
-                  <span className="text-[14px] text-[#202224] font-semibold font-nunito">{dateRange.from}</span>
+                  <span className="text-[14px] text-[#202224] font-semibold font-nunito">{formatDateLabel(dateRange.from)}</span>
                   <span className="opacity-40 text-[14px]">→</span>
-                  <span className="text-[14px] text-[#202224] font-semibold font-nunito">{dateRange.to}</span>
+                  <span className="text-[14px] text-[#202224] font-semibold font-nunito">{formatDateLabel(dateRange.to)}</span>
                   <div className="ml-4 flex items-center gap-2 border-l border-gray-300 pl-4">
                     <CustomCalendarIcon />
                   </div>
@@ -236,46 +604,95 @@ export default function MyExpenses() {
                       <div className="flex-1">
                         <label className="text-[12px] text-gray-400 font-bold block mb-1">From</label>
                         <div className="flex items-center justify-between px-3 py-2 border border-gray-200 rounded-lg bg-white">
-                          <span className="text-[13px] font-bold text-[#202224]">Oct. {tempFrom}th 2025</span>
+                          <span className="text-[13px] font-bold text-[#202224]">
+                            {tempFromDate ? formatDateLabel(tempFromDate) : "--"}
+                          </span>
                           <CustomCalendarIcon size={14} />
                         </div>
                       </div>
                       <div className="flex-1">
                         <label className="text-[12px] text-gray-400 font-bold block mb-1">To</label>
                         <div className="flex items-center justify-between px-3 py-2 border border-gray-200 rounded-lg bg-white">
-                          <span className="text-[13px] font-bold text-[#202224]">Oct. {tempTo || tempFrom}th 2025</span>
+                          <span className="text-[13px] font-bold text-[#202224]">
+                            {tempToDate ? formatDateLabel(tempToDate) : (tempFromDate ? formatDateLabel(tempFromDate) : "--")}
+                          </span>
                           <CustomCalendarIcon size={14} />
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between mb-4 px-1">
-                      <span className="text-[15px] font-bold text-[#202224]">October 2025</span>
+                      <span className="text-[15px] font-bold text-[#202224]">
+                        {pickerMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                      </span>
                       <div className="flex gap-2">
-                        <button className="p-1 hover:bg-gray-100 rounded-md transition-colors"><ChevronLeft size={16} /></button>
-                        <button className="p-1 hover:bg-gray-100 rounded-md transition-colors"><ChevronRight size={16} /></button>
+                        <button
+                          onClick={() =>
+                            setPickerMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
+                          }
+                          className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <button
+                          onClick={() =>
+                            setPickerMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))
+                          }
+                          className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <ChevronRight size={16} />
+                        </button>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-7 text-center text-[13px] mb-2 font-bold text-gray-400">
-                      {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => <div key={day} className="py-1">{day}</div>)}
+                      {["S", "M", "T", "W", "T", "F", "S"].map((day) => (
+                        <div key={day} className="py-1">{day}</div>
+                      ))}
                     </div>
-                    
+
                     <div className="grid grid-cols-7 text-center text-[13px] gap-y-1 relative">
-                      {Array(3).fill(null).map((_, i) => <div key={`empty-${i}`} className="py-2"></div>)}
-                      {Array.from({ length: 31 }, (_, i) => {
-                        const day = i + 1;
-                        const isStart = day === tempFrom;
-                        const isEnd = day === tempTo;
-                        const isInRange = tempFrom && tempTo && day > tempFrom && day < tempTo;
+                      {Array.from({
+                        length: new Date(
+                          pickerMonth.getFullYear(),
+                          pickerMonth.getMonth(),
+                          1
+                        ).getDay(),
+                      }).map((_, i) => (
+                        <div key={`empty-${i}`} className="py-2"></div>
+                      ))}
+
+                      {Array.from(
+                        {
+                          length: new Date(
+                            pickerMonth.getFullYear(),
+                            pickerMonth.getMonth() + 1,
+                            0
+                          ).getDate(),
+                        },
+                        (_, i) => i + 1
+                      ).map((day) => {
+                        const dayDate = new Date(
+                          pickerMonth.getFullYear(),
+                          pickerMonth.getMonth(),
+                          day
+                        );
+                        const isStart = tempFromDate ? isSameDay(dayDate, tempFromDate) : false;
+                        const isEnd = tempToDate ? isSameDay(dayDate, tempToDate) : false;
+                        const inRange =
+                          tempFromDate &&
+                          tempToDate &&
+                          dayDate > tempFromDate &&
+                          dayDate < tempToDate;
+
                         return (
-                          <div 
-                            key={day} 
+                          <div
+                            key={day}
                             onClick={() => handleDayClick(day)}
-                            className={`py-2 cursor-pointer transition-all relative z-10 group rounded-[12px] ${isStart || isEnd ? 'bg-[#6085FF] text-white' : 'hover:bg-gray-100'}`}
+                            className={`py-2 cursor-pointer transition-all relative z-10 group rounded-[12px] ${isStart || isEnd ? "bg-[#6085FF] text-white" : "hover:bg-gray-100"}`}
                           >
                             <span className="relative z-20 font-bold">{day}</span>
-                            {isInRange && (
+                            {inRange && (
                               <div className="absolute inset-0 bg-[#4880FF] opacity-10 rounded-[12px] z-[5]" />
                             )}
                           </div>
@@ -293,7 +710,7 @@ export default function MyExpenses() {
 
               <div className="flex items-center gap-6">
                 <span className="text-[#202224] font-bold text-[16px] font-nunito opacity-80">Total Expenses</span>
-                <span className="text-[24px] font-bold text-[#202224] font-nunito">$0</span>
+                <span className="text-[24px] font-bold text-[#202224] font-nunito">${Number(totalExpenses).toFixed(2)}</span>
               </div>
             </section>
 
@@ -301,18 +718,24 @@ export default function MyExpenses() {
               <div className="p-4 flex justify-between items-center border-b border-gray-100 shrink-0">
                 <div className="relative w-full max-w-[500px]">
                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  <input type="text" placeholder="Search keywords" className="w-full pl-12 pr-6 py-2 bg-[#F1F4F9] border border-[#D8D8D8] rounded-full focus:outline-none focus:border-[#4880FF] transition-all font-nunito text-[13px]"/>
+                  <input
+                    type="text"
+                    value={searchKeyword}
+                    onChange={(e) => setSearchKeyword(e.target.value)}
+                    placeholder="Search keywords"
+                    className="w-full pl-12 pr-6 py-2 bg-[#F1F4F9] border border-[#D8D8D8] rounded-full focus:outline-none focus:border-[#4880FF] transition-all font-nunito text-[13px]"
+                  />
                 </div>
-                <button className="w-[150px] h-[36px] bg-[#FAFBFD] border border-[#D5D5D5] rounded-[10px] text-[#202224] font-bold font-sf text-[13px] hover:bg-[#F1F4F9] transition-all">Delete Selected</button>
+                <button disabled className="w-[150px] h-[36px] bg-[#FAFBFD] border border-[#D5D5D5] rounded-[10px] text-[#202224] font-bold font-sf text-[13px] opacity-40 cursor-not-allowed">Delete Selected</button>
               </div>
 
-              <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex-1 overflow-auto">
                 <table className="w-full text-left">
                   <thead className="bg-white border-b border-gray-100 sticky top-0 z-10">
                     <tr className="text-[#202224] font-bold text-[12px] font-sf opacity-80 uppercase tracking-wider">
                       <th className="pl-6 py-5 w-[60px]">
                         <div className="flex items-center justify-center">
-                          <input type="checkbox" className="w-4 h-4 rounded border-gray-300 accent-[#4880FF] cursor-pointer" />
+                          <input type="checkbox" disabled className="w-4 h-4 rounded border-gray-300 accent-[#4880FF] cursor-not-allowed opacity-50" />
                         </div>
                       </th>
                       <th className="px-4 py-5">CATEGORY</th>
@@ -323,11 +746,70 @@ export default function MyExpenses() {
                       <th className="pr-10 py-5 text-right">ACTIONS</th>
                     </tr>
                   </thead>
+                  <tbody>
+                    {expenses.map((expense) => {
+                      const incurredAt = new Date(expense.incurredAt);
+                      const safeDate = Number.isNaN(incurredAt.getTime()) ? null : incurredAt;
+                      const categoryIcon =
+                        findUiCategoryByName(expense.category?.name)?.icon ??
+                        expense.category?.iconUrl ??
+                        CATEGORIES[0].icon;
+
+                      return (
+                        <tr key={expense.id} className="border-b border-gray-100 hover:bg-[#FAFBFD] transition-colors">
+                          <td className="pl-6 py-4">
+                            <div className="flex items-center justify-center">
+                              <input type="checkbox" disabled className="w-4 h-4 rounded border-gray-300 accent-[#4880FF] cursor-not-allowed opacity-50" />
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-[#F5F6FA] flex items-center justify-center">
+                                <img src={categoryIcon} alt={expense.category?.name || "Category"} className="w-4 h-4 object-contain icon-gray" />
+                              </div>
+                              <span className="text-[14px] font-semibold text-[#202224]">
+                                {expense.category?.name ?? "Uncategorized"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-[14px] text-[#202224] opacity-80">{expense.note || "-"}</td>
+                          <td className="px-4 py-4 text-center text-[14px] font-semibold text-[#202224]">${Number(expense.amount || 0).toFixed(2)}</td>
+                          <td className="px-4 py-4 text-center text-[14px] text-[#202224]">{safeDate ? formatDateLabel(safeDate) : "-"}</td>
+                          <td className="px-4 py-4 text-center text-[14px] text-[#202224]">{safeDate ? formatTimeLabel(safeDate) : "-"}</td>
+                          <td className="pr-10 py-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleOpenEditExpense(expense)}
+                                className="px-3 h-[30px] rounded-[8px] border border-[#D5D5D5] text-[12px] font-bold text-[#202224] hover:bg-[#F1F4F9] transition-all"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => void handleDeleteExpense(expense.id)}
+                                className="px-3 h-[30px] rounded-[8px] border border-[#F4C5CE] text-[12px] font-bold text-[#D33D5C] hover:bg-[#FFF1F4] transition-all"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
                 </table>
-                <div className="flex-1 flex flex-col items-center justify-center opacity-25">
-                  <IconExpenses active={false} />
-                  <p className="mt-3 text-[15px] font-sf font-semibold">No records found</p>
-                </div>
+
+                {!loadingExpenses && expenses.length === 0 && (
+                  <div className="h-[280px] flex flex-col items-center justify-center opacity-25">
+                    <IconExpenses active={false} />
+                    <p className="mt-3 text-[15px] font-sf font-semibold">No records found</p>
+                  </div>
+                )}
+
+                {loadingExpenses && (
+                  <div className="h-[280px] flex flex-col items-center justify-center text-[14px] text-gray-400 font-semibold">
+                    Loading expenses...
+                  </div>
+                )}
               </div>
 
               <div className="p-4 border-t border-gray-100 flex justify-end gap-2 shrink-0">
@@ -347,35 +829,34 @@ export default function MyExpenses() {
         )}
       </main>
 
-      {/* Add Expense 弹窗 */}
       {isAddExpenseOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-200"
-          onClick={() => setIsAddExpenseOpen(false)}
+          onClick={closeExpenseModal}
         >
-          <div 
+          <div
             onClick={(e) => e.stopPropagation()}
             style={{ width: '681px', padding: '40px 58px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '10px' }}
             className="bg-white rounded-[32px] shadow-2xl relative animate-in zoom-in-95 duration-200"
           >
-            <button onClick={() => setIsAddExpenseOpen(false)} className="absolute right-8 top-8 text-gray-400 hover:text-gray-600 transition-colors">
+            <button onClick={closeExpenseModal} className="absolute right-8 top-8 text-gray-400 hover:text-gray-600 transition-colors">
               <X size={24} />
             </button>
 
             <div className="mb-8 w-full">
-              <h3 className="text-[20px] font-bold text-[#202224] font-sf mb-8">Select Category</h3>
+              <h3 className="text-[20px] font-bold text-[#202224] font-sf mb-8">{isEditMode ? "Edit Expense" : "Select Category"}</h3>
               <div className="flex justify-between items-start w-full">
                 {CATEGORIES.map((cat) => (
                   <div key={cat.id} className="flex flex-col items-center gap-2">
-                    <button 
-                      onClick={() => { setSelectedCat(cat); setSelectedTag(cat.tags[0]); }}
+                    <button
+                      onClick={() => handleSelectCategory(cat)}
                       style={{ width: '35px', height: '35px', borderRadius: '35px', backgroundColor: selectedCat.id === cat.id ? '#4880FF' : '#F5F5F5' }}
                       className={`flex items-center justify-center transition-all ${selectedCat.id === cat.id ? 'shadow-md' : 'hover:bg-[#EEEEEE]'}`}
                     >
-                      <img 
-                        src={cat.icon} 
-                        alt={cat.name} 
-                        className={`w-4 h-4 object-contain ${selectedCat.id === cat.id ? 'icon-white' : 'icon-gray'}`} 
+                      <img
+                        src={cat.icon}
+                        alt={cat.name}
+                        className={`w-4 h-4 object-contain ${selectedCat.id === cat.id ? 'icon-white' : 'icon-gray'}`}
                       />
                     </button>
                     <span className={`text-[10px] font-bold font-sf text-center w-full truncate ${selectedCat.id === cat.id ? 'text-[#4880FF]' : 'text-gray-400'}`}>
@@ -388,7 +869,7 @@ export default function MyExpenses() {
 
             <div className="flex flex-wrap gap-3 mb-8 pt-6 border-t border-gray-50 w-full">
               {selectedCat.tags.map(tag => (
-                <button key={tag} onClick={() => setSelectedTag(tag)} className={`px-5 py-2.5 rounded-full text-[13px] font-bold border transition-all ${selectedTag === tag ? 'bg-gray-100 border-transparent text-[#202224]' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'}`}>
+                <button key={tag} onClick={() => { setSelectedTag(tag); setNote(tag); }} className={`px-5 py-2.5 rounded-full text-[13px] font-bold border transition-all ${selectedTag === tag ? 'bg-gray-100 border-transparent text-[#202224]' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'}`}>
                   {tag}
                 </button>
               ))}
@@ -406,39 +887,119 @@ export default function MyExpenses() {
                     <span className="text-[36px] font-bold text-[#FF718B]">$</span>
                     <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="text-[36px] font-bold text-[#FF718B] bg-transparent outline-none w-full" placeholder="0.00" />
                   </div>
-                  
+
                   <div className="flex gap-3 mb-2 shrink-0 ml-4 relative">
                     <div onClick={() => setIsInnerCalendarOpen(!isInnerCalendarOpen)} className="px-4 py-2 bg-[#F5F6FA] rounded-full flex items-center gap-2 cursor-pointer hover:bg-gray-100 border border-gray-200 transition-all">
                       <CalendarIcon size={14} className="text-gray-400" />
-                      <span className="text-[12px] font-bold text-gray-600 font-sf">{expenseDate}</span>
+                      <span className="text-[12px] font-bold text-gray-600 font-sf">
+                        {expenseDate || "--"}
+                      </span>
                     </div>
 
                     <div onClick={() => setIsInnerTimeOpen(!isInnerTimeOpen)} className="px-4 py-2 bg-[#F5F6FA] rounded-full flex items-center gap-2 cursor-pointer hover:bg-gray-100 border border-gray-200 transition-all">
                       <Clock size={14} className="text-gray-400" />
-                      <span className="text-[12px] font-bold text-gray-600 font-sf">{expenseTime}</span>
+                      <span className="text-[12px] font-bold text-gray-600 font-sf">
+                        {expenseTime || "--:--"}
+                      </span>
                     </div>
 
                     {isInnerCalendarOpen && (
                       <div ref={calendarPopRef} onClick={(e) => e.stopPropagation()} className="absolute bottom-full right-0 mb-4 w-[280px] bg-white border border-gray-200 rounded-[12px] shadow-2xl z-[300] p-4 animate-in slide-in-from-bottom-2">
                         <div className="flex items-center justify-between mb-4 px-1">
-                          <button className="text-[14px] font-bold flex items-center gap-1 hover:text-[#4880FF]">March 2026 <ChevronDown size={14} /></button>
+                          <button className="text-[14px] font-bold flex items-center gap-1 hover:text-[#4880FF]">
+                            {innerCalendarMonth.toLocaleDateString("en-US", {
+                              month: "long",
+                              year: "numeric",
+                            })} <ChevronDown size={14} />
+                          </button>
                           <div className="flex gap-3 text-gray-400">
-                            <ChevronLeft size={16} className="cursor-pointer hover:text-[#4880FF]" />
-                            <ChevronRight size={16} className="cursor-pointer hover:text-[#4880FF]" />
+                            <ChevronLeft
+                              size={16}
+                              className="cursor-pointer hover:text-[#4880FF]"
+                              onClick={() =>
+                                setInnerCalendarMonth(
+                                  (prev) =>
+                                    new Date(prev.getFullYear(), prev.getMonth() - 1, 1)
+                                )
+                              }
+                            />
+                            <ChevronRight
+                              size={16}
+                              className="cursor-pointer hover:text-[#4880FF]"
+                              onClick={() =>
+                                setInnerCalendarMonth(
+                                  (prev) =>
+                                    new Date(prev.getFullYear(), prev.getMonth() + 1, 1)
+                                )
+                              }
+                            />
                           </div>
                         </div>
                         <div className="grid grid-cols-7 text-center text-[11px] font-bold text-gray-400 mb-2">
-                          {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => <div key={d}>{d}</div>)}
+                          {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
+                            <div key={d}>{d}</div>
+                          ))}
                         </div>
                         <div className="grid grid-cols-7 text-center gap-y-1">
-                          {Array(5).fill(null).map((_, i) => <div key={`pre-${i}`} className="py-2 text-gray-300 text-[12px] font-bold">{23 + i}</div>)}
-                          {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31].map(d => (
-                            <div key={d} onClick={() => { setExpenseDate(`2026-03-${String(d).padStart(2, '0')}`); setIsInnerCalendarOpen(false); }} className={`py-2 text-[12px] font-bold rounded-lg cursor-pointer transition-all ${d === Number(expenseDate.split('-')[2]) ? 'bg-[#4880FF] text-white' : 'hover:bg-gray-100'}`}>{d}</div>
+                          {Array.from({
+                            length:
+                              (new Date(
+                                innerCalendarMonth.getFullYear(),
+                                innerCalendarMonth.getMonth(),
+                                1
+                              ).getDay() + 6) % 7,
+                          }).map((_, i) => (
+                            <div key={`pre-${i}`} className="py-2"></div>
                           ))}
+                          {Array.from(
+                            {
+                              length: new Date(
+                                innerCalendarMonth.getFullYear(),
+                                innerCalendarMonth.getMonth() + 1,
+                                0
+                              ).getDate(),
+                            },
+                            (_, i) => i + 1
+                          ).map((d) => {
+                            const candidate = new Date(
+                              innerCalendarMonth.getFullYear(),
+                              innerCalendarMonth.getMonth(),
+                              d
+                            );
+                            const selectedDate =
+                              expenseDate && !Number.isNaN(new Date(`${expenseDate}T00:00:00`).getTime())
+                                ? new Date(`${expenseDate}T00:00:00`)
+                                : null;
+                            const isSelected =
+                              selectedDate !== null && isSameDay(candidate, selectedDate);
+                            return (
+                              <div
+                                key={d}
+                                onClick={() => {
+                                  setExpenseDate(formatInputDate(candidate));
+                                  setIsInnerCalendarOpen(false);
+                                }}
+                                className={`py-2 text-[12px] font-bold rounded-lg cursor-pointer transition-all ${isSelected ? "bg-[#4880FF] text-white" : "hover:bg-gray-100"}`}
+                              >
+                                {d}
+                              </div>
+                            );
+                          })}
                         </div>
                         <div className="flex justify-between border-t border-gray-100 mt-4 pt-3">
                           <button onClick={() => setExpenseDate("")} className="text-[#4880FF] text-[12px] font-bold hover:underline">Clear</button>
-                          <button onClick={() => setExpenseDate("2026-03-14")} className="text-[#4880FF] text-[12px] font-bold hover:underline">Today</button>
+                          <button
+                            onClick={() => {
+                              const now = new Date();
+                              setExpenseDate(formatInputDate(now));
+                              setInnerCalendarMonth(
+                                new Date(now.getFullYear(), now.getMonth(), 1)
+                              );
+                            }}
+                            className="text-[#4880FF] text-[12px] font-bold hover:underline"
+                          >
+                            Today
+                          </button>
                         </div>
                       </div>
                     )}
@@ -447,16 +1008,32 @@ export default function MyExpenses() {
                       <div ref={timePopRef} onClick={(e) => e.stopPropagation()} className="absolute bottom-full right-0 mb-4 w-[160px] bg-white border border-gray-200 rounded-[16px] shadow-2xl z-[300] p-1 flex animate-in slide-in-from-bottom-2">
                         <div className="flex-1 max-h-[220px] overflow-y-auto no-scrollbar py-1 border-r border-gray-50">
                           {Array.from({ length: 24 }).map((_, h) => {
-                            const hh = String(h).padStart(2, '0');
+                            const hh = String(h).padStart(2, "0");
                             const isSelected = expenseTime.startsWith(hh);
-                            return <div key={`h-${h}`} onClick={() => setExpenseTime(`${hh}:${expenseTime.split(':')[1]}`)} className={`h-[36px] flex items-center justify-center text-[13px] font-bold cursor-pointer transition-all ${isSelected ? 'bg-gray-100 text-[#4880FF]' : 'hover:bg-gray-50 text-gray-600'}`}>{hh}</div>;
+                            return (
+                              <div
+                                key={`h-${h}`}
+                                onClick={() => setExpenseTime(`${hh}:${(expenseTime.split(":")[1] || "00")}`)}
+                                className={`h-[36px] flex items-center justify-center text-[13px] font-bold cursor-pointer transition-all ${isSelected ? "bg-gray-100 text-[#4880FF]" : "hover:bg-gray-50 text-gray-600"}`}
+                              >
+                                {hh}
+                              </div>
+                            );
                           })}
                         </div>
                         <div className="flex-1 max-h-[220px] overflow-y-auto no-scrollbar py-1">
                           {Array.from({ length: 60 }).map((_, m) => {
-                            const mm = String(m).padStart(2, '0');
+                            const mm = String(m).padStart(2, "0");
                             const isSelected = expenseTime.endsWith(mm);
-                            return <div key={`m-${m}`} onClick={() => setExpenseTime(`${expenseTime.split(':')[0]}:${mm}`)} className={`h-[36px] flex items-center justify-center text-[13px] font-bold cursor-pointer transition-all ${isSelected ? 'bg-gray-100 text-[#4880FF]' : 'hover:bg-gray-50 text-gray-600'}`}>{mm}</div>;
+                            return (
+                              <div
+                                key={`m-${m}`}
+                                onClick={() => setExpenseTime(`${(expenseTime.split(":")[0] || "00")}:${mm}`)}
+                                className={`h-[36px] flex items-center justify-center text-[13px] font-bold cursor-pointer transition-all ${isSelected ? "bg-gray-100 text-[#4880FF]" : "hover:bg-gray-50 text-gray-600"}`}
+                              >
+                                {mm}
+                              </div>
+                            );
                           })}
                         </div>
                       </div>
@@ -467,20 +1044,22 @@ export default function MyExpenses() {
             </div>
 
             <div className="flex justify-center items-center w-full gap-10 mt-6 pb-2">
-              <button 
-                onClick={() => setIsAddExpenseOpen(false)} 
-                className="flex items-center justify-center opacity-90 transition-all active:scale-[0.98] hover:opacity-100"
+              <button
+                onClick={closeExpenseModal}
+                disabled={isSubmittingExpense}
+                className="flex items-center justify-center opacity-90 transition-all active:scale-[0.98] hover:opacity-100 disabled:opacity-50"
                 style={{ width: '191px', height: '43px', backgroundColor: '#F4F4F4', border: '0.3px solid #757575', borderRadius: '8px' }}
               >
                 <span className="text-[#202224] font-bold text-[15px]">Cancel</span>
               </button>
-              
-              <button 
-                onClick={() => setIsAddExpenseOpen(false)} 
-                className="flex items-center justify-center opacity-90 text-white font-bold text-[15px] transition-all active:scale-[0.98] shadow-lg shadow-blue-100 hover:opacity-100"
+
+              <button
+                onClick={() => void handleConfirmExpense()}
+                disabled={isSubmittingExpense}
+                className="flex items-center justify-center opacity-90 text-white font-bold text-[15px] transition-all active:scale-[0.98] shadow-lg shadow-blue-100 hover:opacity-100 disabled:opacity-50"
                 style={{ width: '191px', height: '43px', backgroundColor: '#4880FF', borderRadius: '8px' }}
               >
-                Confirm
+                {isSubmittingExpense ? 'Saving...' : (isEditMode ? 'Save' : 'Confirm')}
               </button>
             </div>
           </div>
@@ -489,3 +1068,4 @@ export default function MyExpenses() {
     </div>
   );
 }
+

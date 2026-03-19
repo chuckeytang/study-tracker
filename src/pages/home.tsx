@@ -7,6 +7,11 @@ import WebUser from "@/utils/user";
 import { ChevronDown, Repeat, LogOut } from "lucide-react";
 
 const CourseHome = () => {
+  const [currentUser, setCurrentUser] = useState<{
+    name?: string | null;
+    email?: string | null;
+    avartarPicUrl?: string | null;
+  } | null>(null);
   const [courseName, setCourseName] = useState<string | null>(null);
   const [courseId, setCourseId] = useState<number | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
@@ -46,6 +51,7 @@ const CourseHome = () => {
           if (userDetails && userDetails.id) {
             currentUserId = userDetails.id;
             setUserId(currentUserId);
+            setCurrentUser(userDetails);
           }
         } catch (e) {
           console.log("No valid logged-in user, switching to guest mode.");
@@ -53,6 +59,12 @@ const CourseHome = () => {
 
         if (!currentUserId) {
           currentUserId = await registerTempUserAndJoinCourse();
+          try {
+            const userDetails = await WebUser.getInstance().getUserData();
+            if (userDetails) setCurrentUser(userDetails);
+          } catch (e) {
+            console.log("Failed to fetch temp user profile");
+          }
         }
 
         const homepageCourse = await apiRequest(
@@ -118,13 +130,17 @@ const CourseHome = () => {
             onClick={() => setIsProfileOpen(!isProfileOpen)}
           >
             <img 
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Moni" 
+              src={currentUser?.avartarPicUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=Tracka"} 
               alt="Avatar" 
               className="w-9 h-9 rounded-full border border-gray-100 shadow-sm"
             />
             <div className="flex flex-col text-right">
-              <span className="text-[13px] font-bold text-[#202224] font-sf leading-tight">Moni Roy</span>
-              <span className="text-[11px] text-gray-400 font-medium">Moni Roy@gmail.com</span>
+              <span className="text-[13px] font-bold text-[#202224] font-sf leading-tight">
+                {currentUser?.name || "Guest User"}
+              </span>
+              <span className="text-[11px] text-gray-400 font-medium">
+                {currentUser?.email || "No Email"}
+              </span>
             </div>
             <div className="w-5 h-5 rounded-full border border-gray-200 flex items-center justify-center">
               <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />

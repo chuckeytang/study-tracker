@@ -10,45 +10,102 @@ import WebUser from "@/utils/user";
 export default function RegisterPage() {
   const router = useRouter();
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
   const [formKey, setFormKey] = useState(0);
 
   const [registerError, setRegisterError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [countdown, setCountdown] = useState(0);
 
   // 校验逻辑
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPassLengthValid = password.length >= 6 && password.length <= 15;
   const isPassContentValid = /[A-Za-z]/.test(password) && /\d/.test(password);
-  const isFormValid = isEmailValid && isPassLengthValid && isPassContentValid;
+  const isCodeValid = code.trim().length > 0;
+  const isFormValid =
+    isEmailValid && isPassLengthValid && isPassContentValid && isCodeValid;
 
   useEffect(() => {
-    setFormKey(prev => prev + 1);
+    setFormKey((prev) => prev + 1);
     return () => {
       if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (countdown <= 0) {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
+    }
+
+    timerRef.current = setInterval(() => {
+      setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [countdown]);
+
+  const handleSendCode = async () => {
+    if (!isEmailValid || countdown > 0 || isSubmitting) return;
+
+    setRegisterError("");
+    try {
+      await apiRequest(
+        "/api/auth/send-code",
+        "POST",
+        { email, type: "register" },
+        true
+      );
+      setCountdown(60);
+    } catch (error: any) {
+      const msg =
+        error?.data?.message || error?.message || "Failed to send code";
+      setRegisterError(msg);
+    }
+  };
 
   const handleRegister = async () => {
     if (!isFormValid || isSubmitting) return;
     try {
       setIsSubmitting(true);
-      const data = await apiRequest("/api/system/register", "POST", { email, password }, true);
+      setRegisterError("");
+      const data = await apiRequest(
+        "/api/auth/register",
+        "POST",
+        { email, password, code: code.trim() },
+        true
+      );
       if (!data?.token) {
         setRegisterError(data?.message || "Registration failed");
         return;
       }
       localStorage.setItem("token", data.token);
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
       WebUser.getInstance().markAsExpired();
       setShowSuccessToast(true);
       redirectTimerRef.current = setTimeout(() => {
         router.push("/selection");
       }, 1200);
     } catch (error: any) {
-      setRegisterError(error?.message || "Registration failed");
+      const msg =
+        error?.data?.message || error?.message || "Registration failed";
+      setRegisterError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -127,6 +184,28 @@ export default function RegisterPage() {
                 Please enter a valid email address
               </p>
             )}
+          </div>
+
+          <div className="mb-[24px] w-full max-w-[516px]">
+            <label className="text-[#202224] text-[14px] font-semibold mb-2 block opacity-80">
+              Verification Code
+            </label>
+            <div className="flex items-center gap-3">
+              <Input
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="Enter verification code"
+                className={!isCodeValid && registerError ? "input-error-fix" : ""}
+              />
+              <button
+                type="button"
+                onClick={handleSendCode}
+                disabled={!isEmailValid || countdown > 0 || isSubmitting}
+                className="text-[#5A8CFF] text-[14px] font-bold underline whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {countdown > 0 ? `Resend (${countdown}s)` : "Send code"}
+              </button>
+            </div>
           </div>
 
           {/* Password 输入框 */}
