@@ -20,6 +20,7 @@
     "final-form": "^4.20.10",
     "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.577.0",
     "multer": "1.4.5-lts.1",
     "mysql2": "^3.11.2",
     "next": "14.2.11",
