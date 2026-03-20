@@ -30,3 +30,28 @@ body {
 .RaConfigurable-root span {
   display: none !important;
 }
+
+.auth-success-toast {
+  min-height: 64px;
+  border-radius: 16px;
+  background: #d7e4ff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  color: #303236;
+  padding: 0;
+}
+
+.auth-success-toast__body {
+  margin: 0;
+  padding: 0;
+}
+
+.auth-success-toast__content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 20px;
+  font-family: "SF Pro", -apple-system, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}

@@ -5,6 +5,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import EmailInput from "@/components/ui/EmailInput";
 import { apiRequest } from "@/utils/api";
+import { showAuthSuccessToast } from "@/utils/showAuthSuccessToast";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -16,7 +17,6 @@ export default function ForgotPasswordPage() {
   
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -82,7 +82,7 @@ export default function ForgotPasswordPage() {
         },
         true
       );
-      setShowSuccessToast(true);
+      showAuthSuccessToast("Success", 1500);
       setTimeout(() => { 
         router.push("/"); 
       }, 1500);
@@ -229,20 +229,6 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
       </main>
-
-      {showSuccessToast && (
-        <div className="fixed top-[24px] right-[24px] z-[1000]">
-          <div className="rounded-[16px] shadow-[0_6px_20_rgba(0,0,0,0.18)] flex flex-col justify-center items-center gap-[10px]" style={{ width: "250px", height: "79px", background: "#D7E4FF" }}>
-            <div className="flex items-center gap-[10px]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
-                <path d="M15.9998 29.3334C19.6817 29.3334 23.015 27.841 25.4279 25.4281C27.8408 23.0153 29.3332 19.6819 29.3332 16.0001C29.3332 12.3182 27.8408 8.98488 25.4279 6.57199C23.015 4.15913 19.6817 2.66675 15.9998 2.66675C12.318 2.66675 8.98464 4.15913 6.57174 6.57199C4.15889 8.98488 2.6665 12.3182 2.6665 16.0001C2.6665 19.6819 4.15889 23.0153 6.57174 25.4281C8.98464 27.841 12.318 29.3334 15.9998 29.3334Z" stroke="#303236" strokeWidth="3" />
-                <path d="M10.6665 16L14.6665 20L22.6665 12" stroke="#303236" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span style={{ color: "#303236", fontFamily: '"SF Pro", sans-serif', fontSize: "28px", fontWeight: 510 }}>Success</span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
