@@ -1,9 +1,13 @@
 import { createRouter } from "next-connect";
 import type { NextApiRequest, NextApiResponse } from "next";
 import prisma from "@/lib/prisma";
-import redis from "@/lib/redis";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import {
+  buildVerificationCodeKey,
+  deleteVerificationCode,
+  getVerificationCode,
+} from "@/lib/verification-code-store";
 // 引入 Prisma 的错误类型定义，用于精确捕获错误
 import { Prisma } from "@prisma/client"; 
 
@@ -21,8 +25,8 @@ router.post(async (req, res) => {
 
   try {
     // --- Step 1: 验证码校验 ---
-    const redisKey = `verify:register:${email}`;
-    const savedCode = await redis.get(redisKey);
+    const verificationCodeKey = buildVerificationCodeKey("register", email);
+    const savedCode = await getVerificationCode(verificationCodeKey);
 
     if (!savedCode) {
       console.log(`[Register] 验证码不存在或过期: ${email}`);
@@ -34,8 +38,8 @@ router.post(async (req, res) => {
       return res.status(400).json({ message: "验证码错误" });
     }
 
-    // 验证通过，删除 Redis (不阻塞主流程，不等待它完成)
-    redis.del(redisKey); 
+    // 验证通过后异步删除验证码，不阻塞主流程
+    void deleteVerificationCode(verificationCodeKey);
 
     // --- Step 2: 查重 ---
     // 为了防止并发，其实 prisma.create 的唯一性约束才是最后一道防线

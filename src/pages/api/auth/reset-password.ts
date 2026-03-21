@@ -2,8 +2,12 @@
 import { createRouter } from "next-connect";
 import type { NextApiRequest, NextApiResponse } from "next";
 import prisma from "@/lib/prisma";
-import redis from "@/lib/redis";
 import bcrypt from "bcryptjs"; // 确保使用 bcryptjs
+import {
+  buildVerificationCodeKey,
+  deleteVerificationCode,
+  getVerificationCode,
+} from "@/lib/verification-code-store";
 
 const router = createRouter<NextApiRequest, NextApiResponse>();
 
@@ -16,8 +20,11 @@ router.post(async (req, res) => {
 
   try {
     // 1. 验证码校验
-    const redisKey = `verify:forgot-password:${email}`;
-    const savedCode = await redis.get(redisKey);
+    const verificationCodeKey = buildVerificationCodeKey(
+      "forgot-password",
+      email,
+    );
+    const savedCode = await getVerificationCode(verificationCodeKey);
 
     if (!savedCode) {
       return res.status(400).json({ message: "Verification code expired or invalid" });
@@ -43,7 +50,7 @@ router.post(async (req, res) => {
     });
 
     // 5. 销毁验证码 (防止重复使用)
-    await redis.del(redisKey);
+    await deleteVerificationCode(verificationCodeKey);
 
     console.log(`[System] Password reset successfully for ${email}`);
     res.status(200).json({ message: "Password reset successfully" });

@@ -1,8 +1,11 @@
 import { createRouter } from "next-connect";
 import type { NextApiRequest, NextApiResponse } from "next";
 import prisma from "@/lib/prisma";
-import redis from "@/lib/redis";
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+import {
+  buildVerificationCodeKey,
+  setVerificationCode,
+} from "@/lib/verification-code-store";
 import {
   isVerificationCodeType,
   sendVerificationCodeEmail,
@@ -31,7 +34,7 @@ router.post(async (req, res) => {
   const code = Math.floor(100000 + Math.random() * 900000).toString();
 
   try {
-    await redis.set(`verify:${type}:${email}`, code, "EX", 300);
+    await setVerificationCode(buildVerificationCodeKey(type, email), code, 300);
 
     const result = await sendVerificationCodeEmail({
       email,
